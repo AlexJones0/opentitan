@@ -1250,6 +1250,7 @@ module chip_darjeeling_asic #(
   };
 
   // TODO: connect
+  // otp DFT
   prim_otp_cfg_pkg::otp_cfg_t     otp_cfg;
   prim_otp_cfg_pkg::otp_cfg_rsp_t otp_cfg_rsp;
   assign otp_cfg = '0;
@@ -1614,6 +1615,7 @@ module chip_darjeeling_asic #(
     // Bus ECC is checked at the consumer side.
     .rerror_o (),
     .cfg_i    (ram_1p_cfg),
+    .cfg_rsp_o(),
     .alert_o()
   );
 
@@ -1692,6 +1694,7 @@ module chip_darjeeling_asic #(
     .clks_ast_o                        ( clkmgr_aon_clocks          ),
     .clk_main_jitter_en_o              ( jen                        ),
     .rsts_ast_o                        ( rstmgr_aon_resets          ),
+    .integrator_id_i                   ( '0                         ),
     .sck_monitor_o                     ( sck_monitor                ),
     .pwrmgr_ast_req_o                  ( base_ast_pwr               ),
     .pwrmgr_ast_rsp_i                  ( ast_base_pwr               ),
