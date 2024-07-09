@@ -49,6 +49,9 @@ ci/scripts/python-lint.sh $tgt_branch || {
 echo -e "\n### Run Python lint (mypy)"
 ci/scripts/mypy.sh $tgt_branch
 
+echo -e "\n### Use a json schema to lint testplans formatting"
+ci/scripts/testplans_lint.sh
+
 echo -e "\n### Use clang-format to check C/C++ coding style"
 ci/scripts/clang-format.sh $tgt_branch
 
