@@ -77,7 +77,6 @@
       si_stage: SV3
       lc_states: ["PROD"]
       tests: []
-      bazel: []
     }
   ]
 }
