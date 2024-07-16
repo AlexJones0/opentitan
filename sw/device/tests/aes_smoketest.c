@@ -39,7 +39,7 @@ status_t execute_test(dif_aes_t *aes) {
 
 bool test_main(void) {
   dif_aes_t aes;
-
+  LOG_INFO("percent_r_status: %r %!r", DEADLINE_EXCEEDED(), DEADLINE_EXCEEDED());
   // Initialise AES.
   CHECK_DIF_OK(
       dif_aes_init(mmio_region_from_addr(TOP_EARLGREY_AES_BASE_ADDR), &aes));

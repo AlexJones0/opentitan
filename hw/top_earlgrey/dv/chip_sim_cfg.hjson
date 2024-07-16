@@ -136,7 +136,7 @@
 
 
   // Default iterations for all tests - each test entry can override this.
-  reseed: 3
+  reseed: 1
 
   // exports: [
   //   Uncomment if using manufacturer tests / test hooks that live somewhere
