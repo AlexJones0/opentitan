@@ -106,7 +106,7 @@ def get_string_format_specifier_indices(_format):
     for match in m:
         if match[1] == '%':
             continue
-        if match[0] == 's':
+        if match[0] == 's' or match[0] == 'r':
             result.append(str(index))
         index += 1
     return ' '.join(result).strip()
