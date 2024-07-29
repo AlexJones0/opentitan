@@ -26,8 +26,11 @@ if __name__ == "__main__":
     os.environ["XDG_CACHE_HOME"] = tempdir 
 
     # Start fusesoc
-    rc = main()
-    
-    # Cleanup temporary cache dir
-    os.removedirs(tempdir)
+    try:
+        rc = main()
+    except:
+        pass
+    finally:
+        # Cleanup temporary cache dir
+        os.removedirs(tempdir)
     sys.exit(rc)
