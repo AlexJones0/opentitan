@@ -10,6 +10,7 @@ is used for generators.
 import os
 import sys
 import tempfile
+import shutil
 from fusesoc.main import main
 
 if __name__ == "__main__":
@@ -32,5 +33,5 @@ if __name__ == "__main__":
         pass
     finally:
         # Cleanup temporary cache dir
-        os.removedirs(tempdir)
+        shutil.rmtree(tempdir)
     sys.exit(rc)
