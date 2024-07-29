@@ -9,6 +9,7 @@ is used for generators.
 
 import os
 import sys
+import tempfile
 from fusesoc.main import main
 
 if __name__ == "__main__":
@@ -20,6 +21,13 @@ if __name__ == "__main__":
     path_env = os.path.dirname(sys.executable) + path_env
     os.environ["PATH"] = path_env
 
+    # Initialise temporary directory to use for FuseSoC cache
+    tempdir = tempfile.mkdtemp()
+    os.environ["XDG_CACHE_HOME"] = tempdir 
+
     # Start fusesoc
     rc = main()
+    
+    # Cleanup temporary cache dir
+    os.removedirs(tempdir)
     sys.exit(rc)
