@@ -66,6 +66,24 @@ enum {
    * firmware override mode.
    */
   kEntropyFifoBufferSize = 12,
+  /**
+   * The amount of random numbers to generate as entropy consumers in each test.
+   */
+  kRandomNumberCount = 16,
+  /*
+   * Timeout to generate a random number in micro seconds.
+   */
+  kRandomNumberTimeoutUsec = 100 * 1000,
+  /**
+   * Timeout to generate a random number in micro seconds when running in a
+   * Verilator simulation environment. Verilator observes entropy more slowly
+   * than other environments, and so is given a longer timeout.
+   */
+  kVerilatorRandomNumberTimeoutUsec = 3 * 1000 * 1000,
+  /**
+   * Timeout to run AES testutils in micro seconds.
+   */
+  kAesTestutilsTimeoutUsec = 1 * 1000 * 1000,
 };
 
 static dif_aes_t aes;
@@ -360,11 +378,27 @@ status_t firmware_override_extract_insert(
 
   // Generate some random numbers.
   LOG_INFO("Generating random numbers...");
+  uint32_t rnd_timeout_usec = kRandomNumberTimeoutUsec;
+  if (kDeviceType == kDeviceSimVerilator) {
+    // Simulation on Verilator generates entropy much more slowly than other
+    // execution environments. As a result, the timeout to generate random
+    // numbers is increased only when running on Verilator.
+    rnd_timeout_usec = kVerilatorRandomNumberTimeoutUsec;
+  }
   uint32_t data;
-  for (size_t i = 0; i < 16; i++) {
+  for (size_t i = 0; i < kRandomNumberCount; i++) {
     TRY(rv_core_ibex_testutils_get_rnd_data(&rv_core_ibex,
-                                            /*timeout_usec=*/100 * 1000,
+                                            /*timeout_usec=*/rnd_timeout_usec,
                                             &data));
+  }
+
+  if (kDeviceType == kDeviceSimVerilator) {
+    // If running on Verilator then entropy is generated much more slowly.
+    // It would take an impractical amount of time to generate the thousands
+    // of words of entropy that are required by all entropy consumers, and so
+    // since we are not concerned with the rate of entropy on Verilator, we
+    // stop at just generating some random numbers only.
+    return OK_STATUS();
   }
 
   if (reenable_es) {
@@ -388,7 +422,7 @@ status_t firmware_override_extract_insert(
   LOG_INFO("Running AES...");
   TRY(aes_testutils_setup_encryption(transaction, &aes));
   AES_TESTUTILS_WAIT_FOR_STATUS(&aes, kDifAesStatusOutputValid, true,
-                                /*timeout_usec=*/1 * 1000 * 1000);
+                                /*timeout_usec=*/kAesTestutilsTimeoutUsec);
   TRY(aes_testutils_decrypt_ciphertext(transaction, &aes));
 
   // Run KMAC
