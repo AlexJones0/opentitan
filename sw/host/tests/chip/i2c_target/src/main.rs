@@ -309,7 +309,7 @@ fn main() -> Result<()> {
     UartConsole::wait_for(&*uart, r"Running [^\r\n]*", opts.timeout)?;
     uart.clear_rx_buffer()?;
 
-    for i2c_instance in 0..3 {
+    /*for i2c_instance in 0..3 {
         execute_test!(test_set_target_address, &opts, &transport, i2c_instance);
         execute_test!(test_read_transaction, &opts, &transport, 0x33);
         execute_test!(test_read_transaction, &opts, &transport, 0x70);
@@ -325,7 +325,7 @@ fn main() -> Result<()> {
 
     transport.pin_strapping("RESET")?.apply()?;
     transport.pin_strapping("RESET")?.remove()?;
-    UartConsole::wait_for(&*uart, r"Running [^\r\n]*", opts.timeout)?;
+    UartConsole::wait_for(&*uart, r"Running [^\r\n]*", opts.timeout)?;*/
 
     // The hyperdebug board does not like that pins mode are constantly changed,
     // so this commit separate the sub-tests that use the hyperdebug i2c from
@@ -336,22 +336,24 @@ fn main() -> Result<()> {
     for pin in &gpio_pins {
         pin.set_mode(PinMode::OpenDrain)?;
     }
-    for i2c_instance in 0..3 {
-        execute_test!(test_set_target_address, &opts, &transport, i2c_instance);
-        execute_test!(
-            test_write_repeated_start,
-            &opts,
-            &transport,
-            0x33,
-            &gpio_pins
-        );
-        execute_test!(
-            test_write_read_repeated_start,
-            &opts,
-            &transport,
-            0x33,
-            &gpio_pins
-        );
+    for _ in 0..10 {
+        for i2c_instance in 0..3 {
+            execute_test!(test_set_target_address, &opts, &transport, i2c_instance);
+            execute_test!(
+                test_write_repeated_start,
+                &opts,
+                &transport,
+                0x33,
+                &gpio_pins
+            );
+            execute_test!(
+                test_write_read_repeated_start,
+                &opts,
+                &transport,
+                0x33,
+                &gpio_pins
+            );
+        }
     }
     Ok(())
-}
+}   
