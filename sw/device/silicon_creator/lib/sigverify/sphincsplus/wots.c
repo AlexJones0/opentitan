@@ -7,6 +7,7 @@
 
 #include "sw/device/silicon_creator/lib/sigverify/sphincsplus/wots.h"
 
+#include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/base/memory.h"
 #include "sw/device/silicon_creator/lib/drivers/hmac.h"
 #include "sw/device/silicon_creator/lib/error.h"

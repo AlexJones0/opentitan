@@ -4,6 +4,7 @@
 
 #include "sw/device/lib/crypto/drivers/entropy.h"
 
+#include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/base/abs_mmio.h"
 #include "sw/device/lib/base/bitfield.h"
 #include "sw/device/lib/base/math.h"
@@ -828,17 +829,25 @@ static status_t edn_check(const edn_config_t *config) {
 }
 
 status_t entropy_complex_init(void) {
+  LOG_INFO("1\r\n");
   entropy_complex_stop_all();
+  LOG_INFO("2\r\n");
 
   const entropy_complex_config_t *config =
       &kEntropyComplexConfigs[kEntropyComplexConfigIdContinuous];
+  LOG_INFO("3\r\n");
   if (launder32(config->id) != kEntropyComplexConfigIdContinuous) {
+    LOG_INFO("4A\r\n");
     return OTCRYPTO_RECOV_ERR;
   }
+  LOG_INFO("4B\r\n");
 
   HARDENED_TRY(entropy_src_configure(&config->entropy_src));
+  LOG_INFO("5\r\n");
   csrng_configure();
+  LOG_INFO("6\r\n");
   HARDENED_TRY(edn_configure(&config->edn0));
+  LOG_INFO("7\r\n");
   return edn_configure(&config->edn1);
 }
 

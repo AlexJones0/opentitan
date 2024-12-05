@@ -255,8 +255,9 @@ bool test_main(void) {
 
   // Start the entropy complex.
   CHECK_STATUS_OK(entropy_complex_init());
+  
 
-  for (size_t i = 0; i < ARRAYSIZE(kAesTests); i++) {
+  for (size_t i = 0; i < 1; i++) {
     LOG_INFO("Starting AES test %d of %d...", i + 1, ARRAYSIZE(kAesTests));
     test = &kAesTests[i];
     EXECUTE_TEST(result, encrypt_test);

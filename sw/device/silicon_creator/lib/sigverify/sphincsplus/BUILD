@@ -129,5 +129,6 @@ cc_library(
         "//sw/device/lib/base:memory",
         "//sw/device/silicon_creator/lib:error",
         "//sw/device/silicon_creator/lib/drivers:hmac",
+        "//sw/device/lib/runtime:log",
     ],
 )
