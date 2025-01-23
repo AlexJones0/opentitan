@@ -1143,6 +1143,9 @@ module chip_darjeeling_asic #(
   // monitored clock
   logic sck_monitor;
 
+  // debug policy bus
+  soc_dbg_ctrl_pkg::soc_dbg_policy_t soc_dbg_policy_bus;
+
   // observe interface
   logic [7:0] otp_obs;
   ast_pkg::ast_obs_ctrl_t obs_ctrl;
@@ -1232,13 +1235,19 @@ module chip_darjeeling_asic #(
     default: '0
   };
 
-  prim_rom_pkg::rom_cfg_t rom_cfg;
-  assign rom_cfg = '{
+  prim_rom_pkg::rom_cfg_t rom_ctrl0_cfg;
+  prim_rom_pkg::rom_cfg_t rom_ctrl1_cfg;
+
+  assign rom_ctrl0_cfg = '{
     test: ast_rom_cfg.test,
     cfg_en: ast_rom_cfg.marg_en,
     cfg: ast_rom_cfg.marg
   };
-
+  assign rom_ctrl1_cfg = '{
+    test: ast_rom_cfg.test,
+    cfg_en: ast_rom_cfg.marg_en,
+    cfg: ast_rom_cfg.marg
+  };
 
   //////////////////////////////////
   // AST - Custom for targets     //
@@ -1265,6 +1274,8 @@ module chip_darjeeling_asic #(
   logic unused_pwr_clamp;
   assign unused_pwr_clamp = base_ast_pwr.pwr_clamp;
 
+
+  prim_mubi_pkg::mubi4_t ast_init_done;
 
   ast #(
     .EntropyStreams(ast_pkg::EntropyStreams),
@@ -1295,7 +1306,7 @@ module chip_darjeeling_asic #(
     .tl_i                  ( base_ast_bus ),
     .tl_o                  ( ast_base_bus ),
     // init done indication
-    .ast_init_done_o       (  ),
+    .ast_init_done_o       ( ast_init_done ),
     // buffered clocks & resets
     .clk_ast_tlul_i (clkmgr_aon_clocks.clk_io_div4_infra),
     .clk_ast_adc_i (clkmgr_aon_clocks.clk_aon_peri),
@@ -1673,6 +1684,8 @@ module chip_darjeeling_asic #(
     .ctn_tl_d2h_i                      ( ctn_tl_d2h[0]              ),
     .soc_gpi_async_o                   (                            ),
     .soc_gpo_async_i                   ( '0                         ),
+    .soc_dbg_policy_bus_o              ( soc_dbg_policy_bus         ),
+    .debug_halt_cpu_boot_i             ( '0                         ),
     .dma_sys_req_o                     (                            ),
     .dma_sys_rsp_i                     ( '0                         ),
     .dma_ctn_tl_h2d_o                  ( ctn_tl_h2d[1]              ),
@@ -1737,6 +1750,7 @@ module chip_darjeeling_asic #(
     .all_clk_byp_ack_i                 ( all_clk_byp_ack            ),
     .hi_speed_sel_o                    ( hi_speed_sel               ),
     .div_step_down_req_i               ( div_step_down_req          ),
+    .calib_rdy_i                       ( ast_init_done              ),
 
     // OTP external voltage
     .otp_ext_voltage_h_io              ( OTP_EXT_VOLT               ),
@@ -1761,8 +1775,8 @@ module chip_darjeeling_asic #(
     .dio_attr_o                        ( dio_attr                   ),
 
     // Memory attributes
-    .rom_ctrl0_cfg_i                           ( '0 ),
-    .rom_ctrl1_cfg_i                           ( '0 ),
+    .rom_ctrl0_cfg_i                           ( rom_ctrl0_cfg ),
+    .rom_ctrl1_cfg_i                           ( rom_ctrl1_cfg ),
     .i2c_ram_1p_cfg_i                          ( ram_1p_cfg ),
     .i2c_ram_1p_cfg_rsp_o                      (   ),
     .sram_ctrl_ret_aon_ram_1p_cfg_i            ( ram_1p_cfg ),

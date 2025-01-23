@@ -983,6 +983,9 @@ module chip_darjeeling_cw310 #(
   // monitored clock
   logic sck_monitor;
 
+  // debug policy bus
+  soc_dbg_ctrl_pkg::soc_dbg_policy_t soc_dbg_policy_bus;
+
   // observe interface
   logic [7:0] otp_obs;
   ast_pkg::ast_obs_ctrl_t obs_ctrl;
@@ -1072,13 +1075,19 @@ module chip_darjeeling_cw310 #(
     default: '0
   };
 
-  prim_rom_pkg::rom_cfg_t rom_cfg;
-  assign rom_cfg = '{
+  prim_rom_pkg::rom_cfg_t rom_ctrl0_cfg;
+  prim_rom_pkg::rom_cfg_t rom_ctrl1_cfg;
+
+  assign rom_ctrl0_cfg = '{
     test: ast_rom_cfg.test,
     cfg_en: ast_rom_cfg.marg_en,
     cfg: ast_rom_cfg.marg
   };
-
+  assign rom_ctrl1_cfg = '{
+    test: ast_rom_cfg.test,
+    cfg_en: ast_rom_cfg.marg_en,
+    cfg: ast_rom_cfg.marg
+  };
 
   //////////////////////////////////
   // AST - Custom for targets     //
@@ -1121,6 +1130,8 @@ module chip_darjeeling_cw310 #(
   };
 
 
+  prim_mubi_pkg::mubi4_t ast_init_done;
+
   ast #(
     .EntropyStreams(ast_pkg::EntropyStreams),
     .AdcChannels(ast_pkg::AdcChannels),
@@ -1154,7 +1165,7 @@ module chip_darjeeling_cw310 #(
     .tl_i                  ( base_ast_bus ),
     .tl_o                  ( ast_base_bus ),
     // init done indication
-    .ast_init_done_o       (  ),
+    .ast_init_done_o       ( ast_init_done ),
     // buffered clocks & resets
     .clk_ast_tlul_i (clkmgr_aon_clocks.clk_io_div4_infra),
     .clk_ast_adc_i (clkmgr_aon_clocks.clk_aon_peri),
@@ -1543,12 +1554,15 @@ assign unused_signals = ^{pwrmgr_boot_status.clk_status,
     .ctn_tl_d2h_i                 ( ctn_tl_d2h[0]              ),
     .soc_gpi_async_o              (                            ),
     .soc_gpo_async_i              ( '0                         ),
+    .soc_dbg_policy_bus_o         ( soc_dbg_policy_bus         ),
+    .debug_halt_cpu_boot_i        ( '0                         ),
     .dma_sys_req_o                (                            ),
     .dma_sys_rsp_i                ( '0                         ),
     .dma_ctn_tl_h2d_o             ( ctn_tl_h2d[1]              ),
     .dma_ctn_tl_d2h_i             ( ctn_tl_d2h[1]              ),
     .entropy_src_hw_if_req_o      ( entropy_src_hw_if_req      ),
     .entropy_src_hw_if_rsp_i      ( entropy_src_hw_if_rsp      ),
+    .calib_rdy_i                  ( ast_init_done              ),
 
     // DMI TL-UL
     .dbg_tl_req_i                 ( dmi_h2d                    ),
