@@ -70,6 +70,7 @@ opentitan_test(
     srcs = [":empty_test"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         otp = ":otp_img_default",
@@ -149,6 +150,7 @@ opentitan_test(
         ecdsa_key = ecdsa_key_by_name(ECDSA_ONLY_KEY_STRUCTS, key),
         exec_env = {
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
             "//hw/top_earlgrey:sim_dv": None,
             "//hw/top_earlgrey:sim_verilator": None,
         },
@@ -195,6 +197,7 @@ opentitan_test(
     for group in [
         "fpga_cw310_rom_with_fake_keys",
         "sim_dv",
+        "sim_qemu_rom_with_fake_keys",
     ]
 ]
 
@@ -216,6 +219,7 @@ opentitan_test(
     for group in [
         "fpga_cw310_rom_with_fake_keys",
         "sim_dv",
+        "sim_qemu_rom_with_fake_keys",
     ]
 ]
 
@@ -267,6 +271,7 @@ opentitan_test(
     srcs = ["rom_e2e_flash_ctrl_init_test.c"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     deps = [
         "//sw/device/lib/testing/test_framework:ottf_main",
@@ -285,6 +290,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:sim_dv": None,
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         "//hw/top_earlgrey:sim_verilator_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
@@ -342,6 +348,7 @@ opentitan_test(
         "//hw/top_earlgrey:sim_dv": None,
         "//hw/top_earlgrey:sim_verilator": None,
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     manifest = "//sw/device/silicon_creator/rom_ext:manifest",
     verilator = verilator_params(
@@ -361,6 +368,7 @@ opentitan_test(
     srcs = ["rom_e2e_c_init_test.c"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         exit_failure = CONST.SHUTDOWN.PREFIX.BFV,
@@ -388,6 +396,7 @@ opentitan_test(
     srcs = [":empty_test"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         otp = "//hw/top_earlgrey/data/otp:img_dev",
@@ -413,6 +422,7 @@ opentitan_test(
     },
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         exit_failure = MSG_PASS,
@@ -433,6 +443,7 @@ opentitan_test(
     srcs = ["rom_ext_upgrade_test.c"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         # Fail if we see version 3, because the test has updated twice, FAIL, version 0 twice, or PASS

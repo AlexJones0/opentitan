@@ -802,7 +802,10 @@ opentitan_test(
         # changing the key for a single environment.
         dicts.omit(
             EARLGREY_TEST_ENVS,
-            ["//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys"],
+            [
+                "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys",
+                "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys",
+            ],
         ),
         {"//hw/top_earlgrey:fpga_cw310_sival": None},
     ),
@@ -1772,6 +1775,7 @@ _FLASH_CTRL_INFO_ACCESS_LC_STATES = get_lc_items(
         exec_env = {
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
             "//hw/top_earlgrey:fpga_cw310_sival": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         },
         fpga = fpga_params(
             otp = "//hw/top_earlgrey/data/otp:img_{}".format(lc_state),
@@ -2425,6 +2429,7 @@ _KMAC_APP_ROM_LIST = [
     ("//sw/device/lib/testing/test_rom:test_rom_sim_verilator_hashfile", "sim_verilator"),
     ("//sw/device/lib/testing/test_rom:test_rom_fpga_cw310_hashfile", "fpga_cw310_test_rom"),
     ("//sw/device/silicon_creator/rom:mask_rom_fpga_cw310_hashfile", "fpga_cw310_rom_with_fake_keys"),
+    ("//sw/device/silicon_creator/rom:mask_rom_fpga_cw310_hashfile", "sim_qemu_rom_with_fake_keys"),
     ("//sw/device/silicon_creator/rom:mask_rom_fpga_cw310_hashfile", "fpga_cw310_sival"),
     ("//sw/device/silicon_creator/rom:mask_rom_fpga_cw340_hashfile", "fpga_cw340_sival"),
     ("//sw/device/lib/testing/test_rom:test_rom_sim_dv_hashfile", "sim_dv"),
@@ -2887,6 +2892,7 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:sim_dv": None,
         "//hw/top_earlgrey:sim_verilator": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         changes_otp = True,
@@ -3795,6 +3801,7 @@ opentitan_test(
         {
             "//hw/top_earlgrey:fpga_cw310_sival_rom_ext": None,
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         },
     ),
     fpga = fpga_params(
@@ -4162,6 +4169,7 @@ opentitan_test(
         {
             "//hw/top_earlgrey:fpga_cw310_sival_rom_ext": None,
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         },
         EARLGREY_CW340_TEST_ENVS,
     ),
@@ -5253,6 +5261,7 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:sim_dv": None,
         "//hw/top_earlgrey:sim_verilator": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     deps = [
         "//hw/top_earlgrey/sw/autogen:top_earlgrey",
@@ -6124,6 +6133,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_sival": None,
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         needs_jtag = True,
@@ -6655,6 +6665,7 @@ opentitan_binary(
     ],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     kind = "ram",
     linker_script = "//sw/device/silicon_creator/manuf/lib:sram_program_linker_script",
@@ -6741,6 +6752,7 @@ opentitan_binary(
     ],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     kind = "ram",
     linker_script = "//sw/device/silicon_creator/manuf/lib:sram_program_linker_script",
@@ -6773,6 +6785,7 @@ opentitan_test(
             # See #23468, currently broken on SAM3X execution environments.
             "//hw/top_earlgrey:fpga_cw310_test_rom": "broken",
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": "broken",
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "broken",
         },
     ),
     fpga = fpga_params(
@@ -6862,6 +6875,7 @@ opentitan_binary(
     srcs = ["rv_core_ibex_mem_test.c"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         "//hw/top_earlgrey:silicon_creator": None,
     },
     kind = "ram",
@@ -6972,6 +6986,7 @@ opentitan_test(
             # See #23468: currently broken over the SAM3X interface.
             "//hw/top_earlgrey:fpga_cw310_test_rom": "broken",
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": "broken",
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "broken",
         },
     ),
     fpga = fpga_params(
@@ -7054,6 +7069,7 @@ opentitan_test(
             # See #23468: currently broken over the SAM3X interface.
             "//hw/top_earlgrey:fpga_cw310_test_rom": "broken",
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": "broken",
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "broken",
         },
     ),
     fpga = fpga_params(
@@ -7240,6 +7256,7 @@ opentitan_test(
             # See #23468, currently broken in SAM3X execution environments.
             "//hw/top_earlgrey:fpga_cw310_test_rom": "broken",
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": "broken",
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "broken",
         },
     ),
     fpga = fpga_params(

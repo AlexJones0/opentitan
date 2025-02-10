@@ -54,6 +54,7 @@ opentitan_test(
         EARLGREY_SILICON_OWNER_ROM_EXT_ENVS,
         {
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
             "//hw/top_earlgrey:fpga_cw310_test_rom": None,
             # Custom execution environment must be used for SiVal ROM EXT
             # to ensure that all the PMOD pins are available.
@@ -101,6 +102,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         tags = [
@@ -131,6 +133,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         tags = [
@@ -162,6 +165,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         tags = [
@@ -193,6 +197,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         tags = [
@@ -224,6 +229,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         tags = [
@@ -255,6 +261,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         tags = [
@@ -432,6 +439,7 @@ opentitan_test(
         {
             "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
             "//hw/top_earlgrey:fpga_cw310_test_rom": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         },
     ),
     fpga = fpga_params(
