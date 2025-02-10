@@ -440,7 +440,9 @@ class chip_env_cfg #(type RAL_T = chip_ral_pkg::chip_reg_block) extends cip_base
           // If Test type (e.g., opentitan_functest) and flash image was by a
           // `opentitan_flash_binary` macro, then no need to tweak the name.
           end else begin
-            sw_images[i] = $sformatf("%0s_prog_%0s", sw_images[i], sw_build_device);
+            // TODO: Flash is presently the easier Bazel target for Darjeeling bring up.
+            // sw_images[i] = $sformatf("%0s_prog_%0s", sw_images[i], sw_build_device);
+            sw_images[i] = $sformatf("%0s_%0s", sw_images[i], sw_build_device);
           end
           // A flash image could be signed, and if it is, Bazel will attach a
           // suffix to the image name.
