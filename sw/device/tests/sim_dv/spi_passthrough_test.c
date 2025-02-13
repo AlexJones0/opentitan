@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "dt/dt_api.h"         // Generated
 #include "sw/device/lib/arch/device.h"
 #include "sw/device/lib/base/bitfield.h"
 #include "sw/device/lib/base/mmio.h"
@@ -43,37 +44,37 @@ static dif_spi_host_t spi_host1;
 // Enable pull-ups for spi_host data pins to avoid floating inputs.
 static const pinmux_pad_attributes_t pinmux_pad_config[] = {
     {
-        .pad = kTopEarlgreyMuxedPadsIob1,
+        .pad = kDtPadIob1,
         .kind = kDifPinmuxPadKindMio,
         .flags = kDifPinmuxPadAttrPullResistorEnable |
                  kDifPinmuxPadAttrPullResistorUp,
     },
     {
-        .pad = kTopEarlgreyMuxedPadsIob3,
+        .pad = kDtPadIob3,
         .kind = kDifPinmuxPadKindMio,
         .flags = kDifPinmuxPadAttrPullResistorEnable |
                  kDifPinmuxPadAttrPullResistorUp,
     },
     {
-        .pad = kTopEarlgreyDirectPadsSpiHost0Sd0,
+        .pad = kDtPadSpiHost0Sd0,
         .kind = kDifPinmuxPadKindDio,
         .flags = kDifPinmuxPadAttrPullResistorEnable |
                  kDifPinmuxPadAttrPullResistorUp,
     },
     {
-        .pad = kTopEarlgreyDirectPadsSpiHost0Sd1,
+        .pad = kDtPadSpiHost0Sd1,
         .kind = kDifPinmuxPadKindDio,
         .flags = kDifPinmuxPadAttrPullResistorEnable |
                  kDifPinmuxPadAttrPullResistorUp,
     },
     {
-        .pad = kTopEarlgreyDirectPadsSpiHost0Sd2,
+        .pad = kDtPadSpiHost0Sd2,
         .kind = kDifPinmuxPadKindDio,
         .flags = kDifPinmuxPadAttrPullResistorEnable |
                  kDifPinmuxPadAttrPullResistorUp,
     },
     {
-        .pad = kTopEarlgreyDirectPadsSpiHost0Sd3,
+        .pad = kDtPadSpiHost0Sd3,
         .kind = kDifPinmuxPadKindDio,
         .flags = kDifPinmuxPadAttrPullResistorEnable |
                  kDifPinmuxPadAttrPullResistorUp,
