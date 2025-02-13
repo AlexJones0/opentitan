@@ -382,10 +382,10 @@ registers to connect a peripheral to this pad.""",  # noqa:E501
                 pad_type = Name.from_snake_case("mio")
                 pad_mio_out_or_direct_pad = "0"
                 pad_insel = "0"
-                if pad["port_type"] in ["input", "inout"]:
+                if pad["port_type"] in ["input", "inout", "`INOUT_AO"]:
                     pad_mio_out_or_direct_pad = \
                         Name.from_snake_case(f"top_{topname}_pinmux_mio_out_{padname}").as_c_enum()
-                if pad["port_type"] in ["output", "inout"]:
+                if pad["port_type"] in ["output", "inout", "`INOUT_AO"]:
                     pad_insel = \
                         Name.from_snake_case(f"top_{topname}_pinmux_insel_{padname}").as_c_enum()
             elif pad["connection"] == "direct":
