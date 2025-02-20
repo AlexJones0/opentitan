@@ -66,6 +66,12 @@ MEMORY {
   % if "memory" in m:
     % for key, mem in m["memory"].items():
       % if addr_space in m["base_addrs"][key]:
+        ## TODO: See the comment in `toplevel_pkg.sv.tpl`: we need a more holistic approach
+        ## to declare memories and IPs sitting in the CTN address space. FOr now, we create
+        ## the base and offset for the CTN SRAM with a workaround.
+        % if key == "ctn":
+  ${mem["label"].replace('ctn', 'ram_ctn')}(${flags(mem)}) : ORIGIN = ${str(hex(int(m["base_addrs"][key][addr_space], 16) + 0x01000000))}, LENGTH = 0x100000
+        % endif
   ${mem["label"]}(${flags(mem)}) : ORIGIN = ${m["base_addrs"][key][addr_space]}, LENGTH = ${mem["size"]}
       % endif
     % endfor

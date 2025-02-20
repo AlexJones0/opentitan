@@ -4,7 +4,7 @@
 
 /* TODO This configuration should be split into per-top headers */
 #ifdef OPENTITAN_IS_DARJEELING
-REGION_ALIAS("ottf_storage", ctn)
+REGION_ALIAS("ottf_storage", ram_ctn)
 #else
 REGION_ALIAS("ottf_storage", eflash)
 #endif

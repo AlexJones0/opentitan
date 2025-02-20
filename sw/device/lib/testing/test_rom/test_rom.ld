@@ -22,7 +22,7 @@ INCLUDE OPENTITAN_TOP_MEMORY_LD
  */
 #ifdef OPENTITAN_IS_DARJEELING
 REGION_ALIAS("test_rom", rom0)
-REGION_ALIAS("test_code_region", ctn)
+REGION_ALIAS("test_code_region", ram_ctn)
 #else
 REGION_ALIAS("test_rom", rom)
 REGION_ALIAS("test_code_region", eflash)

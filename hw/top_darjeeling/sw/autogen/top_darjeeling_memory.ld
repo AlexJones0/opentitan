@@ -14,6 +14,7 @@
  * address for whichever half of the flash contains the corresponding boot stage.
  */
 MEMORY {
+  ram_ctn(rwx) : ORIGIN = 0x41000000, LENGTH = 0x100000
   ctn(rwx) : ORIGIN = 0x40000000, LENGTH = 0x40000000
   ram_ret_aon(rwx) : ORIGIN = 0x30600000, LENGTH = 0x1000
   ram_main(rwx) : ORIGIN = 0x10000000, LENGTH = 0x10000
