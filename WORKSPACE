@@ -111,9 +111,10 @@ load("//rules:nonhermetic.bzl", "nonhermetic_repo")
 nonhermetic_repo(name = "nonhermetic")
 
 # Binary firmware image for HyperDebug
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
-http_file(
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
     name = "hyperdebug_firmware",
-    urls = ["https://storage.googleapis.com/aoa-recovery-test-images/hyperdebug_v2.0.20491-956ccf530.bin"],
-    sha256 = "e9c93d2935b9b6a571b547f20fe6177c48a909535d87533b7a0c64fb049bd643",
+    urls = ["https://github.com/lowRISC/hyperdebug-firmware/releases/download/20250131_01/hyperdebug-firmware.tar.gz"],
+    sha256 = "8595340b347531438ce07f7d678ec24038b4fa2edd7f4a620bd8c5130d72c2ce",
+    build_file = "@lowrisc_opentitan//third_party/hyperdebug:BUILD",
 )
