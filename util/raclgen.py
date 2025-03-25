@@ -109,7 +109,7 @@ def main():
     register_mapping, window_mapping, range_mapping, racl_group, policy_names\
         = parse_racl_mapping(parsed_racl_config, args.mapping, args.if_name, ip_block)
 
-    print(Template(filename='util/topgen/templates/toplevel_racl_pkg_parameters.tpl').render(
+    print(Template(filename='util/topgen/templates/toplevel_racl_pkg_parameters.sv.tpl').render(
         register_mapping=register_mapping,
         window_mapping=window_mapping,
         range_mapping=range_mapping,

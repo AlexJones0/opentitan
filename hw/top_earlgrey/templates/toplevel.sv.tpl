@@ -502,7 +502,7 @@ max_intrwidth = (max(len(x.name) for x in block.interrupts)
 %>\
   % if m["param_list"] or block.alerts:
   ${m["type"]} #(
-<%include file="/toplevel_racl.tpl" args="m=m,top=top"/>\
+<%include file="/toplevel_racl.sv.tpl" args="m=m,top=top"/>\
   % if block.alerts:
 <%
 w = len(block.alerts)

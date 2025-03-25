@@ -41,7 +41,7 @@ package top_${topcfg["name"]}_racl_pkg;
         "if_name"          : if_name
       }
 %>\
-<%include file="toplevel_racl_pkg_parameters.tpl" args="**racl_tpl_args"/>\
+<%include file="toplevel_racl_pkg_parameters.sv.tpl" args="**racl_tpl_args"/>\
 
   % endfor
 % endfor
