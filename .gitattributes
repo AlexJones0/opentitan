@@ -27,5 +27,51 @@ sw/**/*.svg doc
 sw/**/*.jpg doc
 sw/**/*.png doc
 
-# Generated lock files
+# Github-linguist configuration
+## Vendored files
+**/vendor/*/** linguist-vendored=true
+
+## Generated lock files
 MODULE.bazel.lock linguist-generated=true
+**/Cargo.lock linguist-generated=true
+
+## Waivers / exclusion files are often generated and have poor linguist support.
+**/*.el linguist-language=None
+**/*.el.tpl linguist-language=None
+**/*.vlt linguist-language=None
+**/*.vlt.tpl linguist-language=None
+**/*.waiver linguist-language=None
+**/*.waiver.tpl linguist-language=None
+
+## The same is true for DV tool configuration files.
+**/*.cfg linguist-language=None
+**/*.cfg.tpl linguist-language=None
+
+## Treat HJSON files as JSON
+**/*.hjson linguist-language=JSON
+
+## Cadence Formal .do files for LEC scripts
+**/*.do linguist-language=Cadence
+
+## FuseSoC Core Files
+**/*.core linguist-language=YAML
+
+## Template files. Opt to recognise the language of the file being templated,
+## rather than the Mako templating Python code, as typically (though not
+## always) the Python is the smaller of the two.
+**/*.c.tpl linguist-language=c
+**/*.h.tpl linguist-language=c
+**/*.cc.tpl linguist-language=C++
+**/*.hh.tpl linguist-language=C++
+**/*.cpp.tpl linguist-language=C++
+**/*.hpp.tpl linguist-language=C++
+**/*.rs.tpl linguist-language=Rust
+**/*.ld.tpl linguist-language=Linker-Script
+**/*.tcl.tpl linguist-language=tcl
+**/*.hjson.tpl linguist-language=JSON
+**/*.core.tpl linguist-language=YAML
+**/*.sv.tpl linguist-language=SystemVerilog
+**/*.md.tpl linguist-language=Markdown
+**/*BUILD.tpl linguist-language=Starlark
+**/*.bazel.tpl linguist-language=Starlark
+**/*.bzl.tpl linguist-language=Starlark
