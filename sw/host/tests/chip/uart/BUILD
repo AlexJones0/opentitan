@@ -23,6 +23,22 @@ rust_binary(
 )
 
 rust_binary(
+    name = "uart_bitbang",
+    srcs = [
+        "src/uart_bitbang.rs",
+    ],
+    deps = [
+        "//sw/host/opentitanlib",
+        "@crate_index//:anyhow",
+        "@crate_index//:clap",
+        "@crate_index//:humantime",
+        "@crate_index//:log",
+        "@crate_index//:object",
+        "@crate_index//:serialport",
+    ],
+)
+
+rust_binary(
     name = "uart_baud_rate",
     srcs = [
         "src/uart_baud_rate.rs",
