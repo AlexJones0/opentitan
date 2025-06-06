@@ -39,6 +39,12 @@ pub struct BackendOpts {
     #[arg(long)]
     pub disable_dft_on_reset: bool,
 
+    /// Whether to wrap transport functionality on the requested backend to exclusively use a
+    /// GPIO bitbanging interface. Requires the backend to have GPIO_BITBANGING and GPIO_MONITORING
+    /// capabilities.
+    #[arg(long)]
+    pub wrap_bitbangs: bool,
+
     /// USB Vendor ID of the interface.
     #[arg(long, value_parser = u16::from_str)]
     pub usb_vid: Option<u16>,
@@ -82,7 +88,7 @@ pub enum Error {
 /// Creates the requested backend interface according to [`BackendOpts`].
 pub fn create(args: &BackendOpts) -> Result<TransportWrapper> {
     let interface = args.interface.as_str();
-    let mut env = TransportWrapperBuilder::new(interface.to_string(), args.disable_dft_on_reset);
+    let mut env = TransportWrapperBuilder::new(interface.to_string(), args.disable_dft_on_reset, args.wrap_bitbangs);
 
     for conf_file in &args.conf {
         process_config_file(&mut env, conf_file.as_ref())?

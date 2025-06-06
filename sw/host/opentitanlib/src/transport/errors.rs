@@ -51,6 +51,10 @@ pub enum TransportError {
     UnsupportedOperation,
     #[error("Requested operation invalid at this time")]
     InvalidOperation,
+    #[error("Transport does not support GPIO bitbanging & monitoring despite requesting it")]
+    BitbangMonitoringUnsupported,
+    #[error("Requested operation is not supported for GPIO bitbanging at this time")]
+    UnsupportedBitbangOperation,
     #[error("Error communicating with FTDI: {0}")]
     FtdiError(String),
     #[error("Error communicating with debugger: {0}")]
