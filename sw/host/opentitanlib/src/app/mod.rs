@@ -6,6 +6,7 @@
 pub mod command;
 pub mod config;
 
+mod bitbang_wrapper;
 mod gpio;
 mod i2c;
 mod spi;
@@ -843,18 +844,22 @@ impl TransportWrapper {
 
     /// Returns a [`Uart`] implementation.
     pub fn uart(&self, name: &str) -> Result<Rc<dyn Uart>> {
+        let uart_name = map_name(&self.uart_map, name);
         if self.wrap_bitbangs.get() {
-            // Stubbed out for now: currently not supported for bitbang wrapping.
-            bail!(TransportError::UnsupportedBitbangOperation);
+            let uart = self.transport.uart(uart_name.as_str())?;
+            let rx = self.gpio_pin(&(uart_name.clone() + "_RX"))?;
+            let tx = self.gpio_pin(&(uart_name.clone() + "_TX"))?;
+            Ok(Rc::new(bitbang_wrapper::BitbangWrapperUart::new(uart, rx, tx)?))
+        } else {
+            self.transport.uart(map_name(&self.uart_map, name).as_str())
         }
-        self.transport.uart(map_name(&self.uart_map, name).as_str())
     }
 
     /// Returns a [`GpioPin`] implementation.
     pub fn gpio_pin(&self, name: &str) -> Result<Rc<dyn GpioPin>> {
         if self.wrap_bitbangs.get() {
-            // Stubbed out for now: currently not supported for bitbang wrapping.
-            bail!(TransportError::UnsupportedBitbangOperation);
+            // TODO: pass-through for now. Not sure if additional logic will
+            // be required here or not in the future.
         }
         let resolved_pin_name = map_name(&self.pin_map, name);
         let mut pin_instance_map = self.pin_instance_map.borrow_mut();
