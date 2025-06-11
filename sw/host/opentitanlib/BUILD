@@ -65,6 +65,8 @@ rust_library(
         "src/app/i2c.rs",
         "src/app/mod.rs",
         "src/app/spi.rs",
+        "src/bitbanging/mod.rs",
+        "src/bitbanging/uart.rs",
         "src/backend/chip_whisperer.rs",
         "src/backend/ftdi.rs",
         "src/backend/hyperdebug.rs",

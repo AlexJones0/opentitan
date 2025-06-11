@@ -94,13 +94,13 @@ fn uart_tx_rx(
     } = test_data;
 
     UartConsole::wait_for(console, r"waiting for commands", opts.timeout)?;
-    MemWriteReq::execute(console, *uart_id_addr as u32, &[*uart_id])?;
 
     let uart = transport.uart("dut")?;
     uart.set_parity(Parity::None)
         .context("failed to set parity")?;
     uart.clear_rx_buffer()?;
 
+    MemWriteReq::execute(console, *uart_id_addr as u32, &[*uart_id])?;
     UartConsole::wait_for(console, r"Executing the test[^\n]*\n", opts.timeout)?;
 
     log::info!("Sending data...");

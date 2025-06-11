@@ -62,8 +62,13 @@ fn main() -> Result<()> {
         .context("failed to find kUartIdx symbol")?
         .address();
 
+    log::info!("Creating transport wrapper");
     let transport = opts.init.init_target()?;
+    log::info!("Enabling bitbang wrapper");
+    transport.enable_gpio_bitbang_wrapper(true)?;
+    log::info!("Creating console UART");
     let uart_console = transport.uart("console")?;
+    log::info!("Created console UART");
 
     for uart_id in 0..4 {
         transport.reset_target(Duration::from_millis(500), true)?;
@@ -94,13 +99,14 @@ fn uart_bitbang(
     } = test_data;
 
     UartConsole::wait_for(console, r"waiting for commands", opts.timeout)?;
-    MemWriteReq::execute(console, *uart_id_addr as u32, &[*uart_id])?;
-
+    log::info!("Creating dut UART");
     let uart = transport.uart("dut")?;
+    log::info!("Created dut UART");
     uart.set_parity(Parity::None)
         .context("failed to set parity")?;
     uart.clear_rx_buffer()?;
 
+    MemWriteReq::execute(console, *uart_id_addr as u32, &[*uart_id])?;
     UartConsole::wait_for(console, r"Executing the test[^\n]*\n", opts.timeout)?;
 
     log::info!("Sending data...");

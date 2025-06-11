@@ -124,6 +124,18 @@ static bool uart_transfer_ongoing_bytes(const dif_uart_t *uart,
   }
   *dataset_index += bytes_transferred;
   *transfer_done = *dataset_index == dataset_size;
+  if (*transfer_done) {
+    switch (uart_direction) {
+      case kUartSend:
+        LOG_INFO("UART send done!");
+       break;
+      case kUartReceive:
+       LOG_INFO("UART receive done!");
+       break;
+      default:
+       LOG_FATAL("Invalid UART data transfer direction!");
+    }
+  }
   return result;
 }
 
@@ -140,9 +152,6 @@ static void execute_test(const dif_uart_t *uart) {
   LOG_INFO("Executing the test.");
   while (!uart_tx_done || !uart_rx_done) {
     if (!uart_tx_done) {
-      // Send the remaining kUartTxData as and when the TX watermark fires.
-      // Intentionally limit the transfer size to 32 bytes at a time. This means
-      // we see multiple TX watermark interrupts in the test.
       CHECK(uart_transfer_ongoing_bytes(
           uart, kUartSend, (uint8_t *)kUartTxData, UART_DATASET_SIZE,
           &uart_tx_bytes_written, UART_DATASET_SIZE, &uart_tx_done));
@@ -174,7 +183,11 @@ bool test_main(void) {
   base_addr = mmio_region_from_addr(TOP_EARLGREY_PINMUX_AON_BASE_ADDR);
   CHECK_DIF_OK(dif_pinmux_init(base_addr, &pinmux));
 
+  LOG_INFO("START_TEST");
+
   OTTF_WAIT_FOR(kUartIdx != 0xff, kCommandTimeout);
+
+  LOG_INFO("PAST OTTF_WAIT_FOR");
 
   // Use the default UART baud rate and clock frequency for the target device.
   uint64_t uartBaudrate = kUartBaudrate;
