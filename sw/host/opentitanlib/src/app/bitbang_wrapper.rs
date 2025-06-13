@@ -308,13 +308,28 @@ impl BitbangWrapperUart {
         loop {
             if let Some(t) = timeout { 
                 if (start.elapsed() > t) {
-                    bail!("UART read timeout");
+                    break;
                 }
             }
             let decoded = self.pins.borrow_mut().bitbang_rx(*self.baud_rate.borrow())?;
             if !decoded.is_empty() {
                 let mut rx_buffer = self.rx_buffer.borrow_mut();
-                rx_buffer.extend(decoded);
+                for &ch in decoded.iter() {
+                    if *self.flow_control.borrow() == FlowControl::None {
+                        rx_buffer.push_back(ch);
+                        continue;
+                    }
+                    if ch == FlowControl::Resume as u8 {
+                        log::debug!("Got RESUME");
+                        *self.flow_control.borrow_mut() = FlowControl::Resume;
+                        continue;
+                    } else if ch == FlowControl::Pause as u8 {
+                        log::debug!("Got PAUSE");
+                        *self.flow_control.borrow_mut() = FlowControl::Pause;
+                        continue;
+                    }
+                    rx_buffer.push_back(ch);
+                }
                 break;
             }
         }
@@ -357,9 +372,6 @@ impl Uart for BitbangWrapperUart {
     }
 
     fn set_flow_control(&self, flow_control: bool) -> Result<()> {
-        if flow_control {
-            unimplemented!("Not yet implemented flow control");  // TODO
-        }
         match self.underlying.set_flow_control(flow_control) {
             Ok(r) => {
                 *self.flow_control.borrow_mut() = self.underlying.get_flow_control()?;
@@ -391,12 +403,35 @@ impl Uart for BitbangWrapperUart {
         // Note: as this is a software-controlled bitbanging implementation, bitbanging
         // is synchronous and will not complete until at least when all data to be written
         // has been transferred to Hyperdebug as a waveform to it to bitbang.
-        let chars = buf.iter().map(|c| UartTransfer::Byte { data: *c }).collect::<Vec<_>>();
+        if *self.flow_control.borrow() == FlowControl::None {
+            let chars = buf.iter().map(|c| UartTransfer::Byte { data: *c }).collect::<Vec<_>>();
+            let mut trans = vec![];
+            self.encoder.encode_characters(&chars, &mut trans)?;
+            self.pins.borrow().bitbang_tx(&trans, *self.baud_rate.borrow());
+            return Ok(());
+        }
+
+        // Warning: using flow control will likely slow down UART operation (perhaps even
+        // to the point where flow control is not needed) since it splits up the single
+        // encoded bitbang transmission to hyperdebug with one transmission per frame.
         let mut trans = vec![];
-        self.encoder.encode_characters(&chars, &mut trans)?;
-        log::info!("unencoded transaction: {:?}", chars);
-        log::info!("encoded transaction: {:?}", trans);
-        self.pins.borrow().bitbang_tx(&trans, *self.baud_rate.borrow());
+        for &char in buf.iter() {
+            // If flow control is enabled, read data from the input stream, and
+            // process the flow control characters.
+            loop {
+                self.read_worker(Some(Duration::ZERO))?;
+                // If we're okay to send, break out of the loop and send the data
+                if *self.flow_control.borrow() == FlowControl::Resume {
+                    break;
+                }
+            }
+            trans.clear();
+            self.encoder.encode_characters(&[UartTransfer::Byte { data: char }], &mut trans)?;
+            self.pins.borrow().bitbang_tx(&trans, *self.baud_rate.borrow());
+            // No need to pace by sleeping uart character time to account for device-internal
+            // buffers as hyperdebug bitbanging is synchronous - when it returns, the bitbanging
+            // is already completed.
+        }
         Ok(())
     }
 
