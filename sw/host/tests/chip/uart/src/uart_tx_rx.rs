@@ -63,6 +63,7 @@ fn main() -> Result<()> {
         .address();
 
     let transport = opts.init.init_target()?;
+    transport.enable_gpio_bitbang_wrapper(true)?;
     let uart_console = transport.uart("console")?;
 
     for uart_id in 0..4 {

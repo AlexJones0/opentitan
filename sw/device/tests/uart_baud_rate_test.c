@@ -111,11 +111,9 @@ bool test_main(void) {
 
   size_t baud_count = ARRAYSIZE(kBauds);
 
-  // We only want to run the highest bauds (1MBd and 1.5MBd) on chips going
-  // at the real speed (24MHz). FPGAs clocking slower cannot test these.
-  if (kClockFreqPeripheralHz < 24 * 1000 * 1000) {
-    baud_count -= 2;
-  }
+  // Bitbanging only supports up to 57600Bd. 115200Bd and beyond are not supported
+  // due to Hyperdebug's GPIO bitbanging accuracy.
+  baud_count -= 6;
 
   // Check every baud rate is sent and received okay.
   status_t result = OK_STATUS();

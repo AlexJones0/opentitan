@@ -63,6 +63,7 @@ fn main() -> Result<()> {
     let test_phase_addr = test_utils::object::symbol_addr(&object, "test_phase")?;
 
     let transport = opts.init.init_target()?;
+    transport.enable_gpio_bitbang_wrapper(true)?;
     let uart_console = transport.uart("console")?;
 
     for uart_idx in 0..4 {
@@ -88,7 +89,7 @@ fn main() -> Result<()> {
     // Reset baud rate to the default.
     // HyperDebug doesn't seem to clear this properly between tests.
     let uart = transport.uart("dut")?;
-    uart.set_baudrate(115200)?;
+    uart.set_baudrate(57600)?;
     uart.clear_rx_buffer()?;
 
     Ok(())

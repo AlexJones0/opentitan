@@ -58,6 +58,7 @@ fn main() -> Result<()> {
     let test_phase_addr = test_utils::object::symbol_addr(&object, "test_phase")?;
 
     let transport = opts.init.init_target()?;
+    transport.enable_gpio_bitbang_wrapper(true)?;
     let uart_console = transport.uart("console")?;
 
     for uart_idx in 0..4 {

@@ -64,6 +64,7 @@ fn main() -> Result<()> {
     let test_phase_addr = test_utils::object::symbol_addr(&object, "test_phase")?;
 
     let transport = opts.init.init_target()?;
+    transport.enable_gpio_bitbang_wrapper(true)?;
     let uart_console = transport.uart("console")?;
 
     // Test all four UARTs with both parities.
@@ -172,7 +173,12 @@ fn uart_parity_break(
 
         // At 115200 baud each character spans ~800us. A 16 character break takes
         // ~14ms. We sleep for long enough that all the break levels will trigger.
+        let baud_rate = uart.get_baudrate().context("failed to get baud rate")?;
+        let bit_time = Duration::from_micros(1_000_000u64 / baud_rate as u64);
+        let char_time = bit_time * 11; // Start (1) + data (8) + parity (0|1) + stop (1)
+        let break_time = bit_time * 16;
         uart.set_break(true).context("failed to set break")?;
+        //std::thread::sleep(break_time);
         std::thread::sleep(Duration::from_millis(15));
         uart.set_break(false).context("failed to unset break")?;
     }
