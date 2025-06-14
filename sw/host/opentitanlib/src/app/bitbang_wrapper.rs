@@ -22,7 +22,7 @@ use crate::transport::Transport;
 pub struct UartPins {
     rx: Rc<dyn GpioPin>,
     tx: Rc<dyn GpioPin>,
-    decoder: UartBitbangDecoder<0>,
+    pub decoder: UartBitbangDecoder<0>,
     gpio_bitbanging: Rc<dyn GpioBitbanging>,
     gpio_monitoring: Rc<dyn GpioMonitoring>,
     started_monitoring: bool,
@@ -270,8 +270,9 @@ pub struct BitbangWrapperUart {
     baud_rate: RefCell<u32>,
     parity: RefCell<Parity>,
     flow_control: RefCell<FlowControl>,
+    break_condition: RefCell<bool>,
     pins: RefCell<UartPins>,
-    encoder: UartBitbangEncoder<0>,
+    encoder: RefCell<UartBitbangEncoder<0>>,
     rx_buffer: RefCell<VecDeque<u8>>,
 }
 
@@ -297,8 +298,9 @@ impl BitbangWrapperUart {
             baud_rate,
             parity,
             flow_control,
+            break_condition: RefCell::new(false),
             pins: RefCell::new(pins),
-            encoder: UartBitbangEncoder::new(bitbang_config)?,
+            encoder: RefCell::new(UartBitbangEncoder::new(bitbang_config)?),
             rx_buffer: RefCell::new(VecDeque::new()),
         })
     }
@@ -403,10 +405,13 @@ impl Uart for BitbangWrapperUart {
         // Note: as this is a software-controlled bitbanging implementation, bitbanging
         // is synchronous and will not complete until at least when all data to be written
         // has been transferred to Hyperdebug as a waveform to it to bitbang.
+        if *self.break_condition.borrow() {
+            bail!("Bitbanging UART does not support writes while in a break condition.");
+        }
         if *self.flow_control.borrow() == FlowControl::None {
             let chars = buf.iter().map(|c| UartTransfer::Byte { data: *c }).collect::<Vec<_>>();
             let mut trans = vec![];
-            self.encoder.encode_characters(&chars, &mut trans)?;
+            self.encoder.borrow().encode_characters(&chars, &mut trans)?;
             self.pins.borrow().bitbang_tx(&trans, *self.baud_rate.borrow());
             return Ok(());
         }
@@ -426,7 +431,7 @@ impl Uart for BitbangWrapperUart {
                 }
             }
             trans.clear();
-            self.encoder.encode_characters(&[UartTransfer::Byte { data: char }], &mut trans)?;
+            self.encoder.borrow().encode_characters(&[UartTransfer::Byte { data: char }], &mut trans)?;
             self.pins.borrow().bitbang_tx(&trans, *self.baud_rate.borrow());
             // No need to pace by sleeping uart character time to account for device-internal
             // buffers as hyperdebug bitbanging is synchronous - when it returns, the bitbanging
@@ -446,6 +451,7 @@ impl Uart for BitbangWrapperUart {
         // since the UART trait interface doesn't yet support this functionality,
         // we instead just directly write to the pin.
         // (enable break = hold low)
+        *self.break_condition.borrow_mut() = _enable;
         self.pins.borrow().set_tx(!_enable)
     }
 
@@ -457,6 +463,9 @@ impl Uart for BitbangWrapperUart {
         match self.underlying.set_parity(parity) {
             Ok(r) => {
                 *self.parity.borrow_mut() = parity;
+                // TODO refactor when combined with UartPins.
+                self.encoder.borrow_mut().set_parity(parity);
+                self.pins.borrow_mut().decoder.set_parity(parity);
                 Ok(r)
             }
             Err(err) => Err(err)

@@ -10,12 +10,12 @@ use thiserror::Error;
 // Configuration to use for UART bitbanging
 #[derive(Clone)]
 pub struct UartBitbangConfig {
-    data_bits: u8,  // Currently assumes <= 8 data bits
-    stop_bits: u8,
+    pub data_bits: u8,  // Currently assumes <= 8 data bits
+    pub stop_bits: u8,
     // The number of character cycles for which RX is held low during
     // transmission of a break character
-    break_char_cycles: u8, 
-    parity: Parity,
+    pub break_char_cycles: u8, 
+    pub parity: Parity,
 }
 
 impl UartBitbangConfig {
@@ -71,6 +71,10 @@ impl<const TX: u8> UartBitbangEncoder<TX> {
     // Constructor to create a UART bitbanging encoder.
     pub fn new(config: UartBitbangConfig) -> Result<Self> {
         Ok(Self { config })
+    }
+
+    pub fn set_parity(&mut self, parity: Parity) {
+        self.config.parity = parity;
     }
 
     // Encode the transmission of a UART break condition into a bitbanging
@@ -159,6 +163,10 @@ impl<const RX: u8> UartBitbangDecoder<RX> {
             data: 0x00,
             parity: None,
         })
+    }
+
+    pub fn set_parity(&mut self, parity: Parity) {
+        self.config.parity = parity;
     }
 
     // Completes the decoding of the UART character transmission using the
