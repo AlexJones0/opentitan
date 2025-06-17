@@ -19,6 +19,7 @@ use crate::io::nonblocking_help::{NoNonblockingHelp, NonblockingHelp};
 use crate::io::spi::Target;
 use crate::io::uart::Uart;
 
+pub mod bitbanging;
 pub mod chip_whisperer;
 pub mod common;
 pub mod dediprog;
