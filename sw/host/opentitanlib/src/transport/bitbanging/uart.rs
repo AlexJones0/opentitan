@@ -383,6 +383,20 @@ impl UartBitbangInterface {
             let decoded = self.read_decoded(self.config.baud_rate)?;
             if !decoded.is_empty() {
                 for &ch in decoded.iter() {
+                    if self.config.flow_control == FlowControl::None {
+                        self.rx_buffer.push_back(ch);
+                        continue;
+                    }
+                    // Handle XON/XOFF flow control characters
+                    if ch == FlowControl::Resume as u8 {
+                        log::debug!("Got RESUME");
+                        self.config.flow_control = FlowControl::Resume;
+                        continue;
+                    } else if ch == FlowControl::Pause as u8 {
+                        log::debug!("Got PAUSE");
+                        self.config.flow_control = FlowControl::Pause;
+                        continue;
+                    }
                     self.rx_buffer.push_back(ch);
                 }
                 break; // Read until we get any data
@@ -423,9 +437,32 @@ impl UartBitbangInterface {
         if self.config.break_condition {
             bail!(UartBitbangError::TransmitDuringBreak);
         }
+        if self.config.flow_control == FlowControl::None {
+            let mut transaction = vec![];
+            self.encoder.encode_characters(buf, &mut transaction);
+            self.pins.bitbang_tx(&transaction, self.config.baud_rate)?;
+            return Ok(());
+        }
+
+        // Warning: using flow control will likely slow down UART operation, since it
+        // splits up transmissions into individual bitbang operations per UART frame,
+        // which may be costly.
         let mut transaction = vec![];
-        self.encoder.encode_characters(buf, &mut transaction);
-        self.pins.bitbang_tx(&transaction, self.config.baud_rate)?;
+        for &char in buf.iter() {
+            // Read to check for any XOFF characters, and only send when flow
+            // control is resumed.
+            loop {
+                self.read_worker(Some(Duration::ZERO))?;
+                if self.config.flow_control == FlowControl::Resume {
+                    break;
+                }
+            }
+            transaction.clear();
+            self.encoder.encode_character(char, &mut transaction);
+            self.pins.bitbang_tx(&transaction, self.config.baud_rate)?;
+            // No need to pace to account for device-internal buffer as bitbanging
+            // operation should be synchronous (already completed).
+        }
         Ok(())
     }
 
