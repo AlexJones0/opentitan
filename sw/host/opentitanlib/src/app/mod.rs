@@ -235,6 +235,7 @@ pub struct TransportWrapper {
     spi_conf_map: HashMap<String, SpiConfiguration>,
     i2c_conf_map: HashMap<String, I2cConfiguration>,
     strapping_conf_map: HashMap<String, HashMap<String, PinConfiguration>>,
+    bitbang_wrapper: RefCell<bitbanging::BitbangWrapperBuilder>,
     //
     // Below fields are lazily populated, as instances are requested.
     //
@@ -718,6 +719,7 @@ impl TransportWrapperBuilder {
         let uart_conf_map = Self::consolidate_uart_conf_map(&self.uart_conf_map)?;
         let spi_conf_map = Self::consolidate_spi_conf_map(&self.spi_conf_map, &self.pin_alias_map)?;
         let i2c_conf_map = Self::consolidate_i2c_conf_map(&self.i2c_conf_map)?;
+        let bitbang_wrapper = bitbanging::BitbangWrapperBuilder::new();
         let mut transport_wrapper = TransportWrapper {
             transport: Rc::from(transport),
             disable_dft_on_reset: Cell::new(self.disable_dft_on_reset),
@@ -731,6 +733,7 @@ impl TransportWrapperBuilder {
             spi_conf_map,
             i2c_conf_map,
             strapping_conf_map,
+            bitbang_wrapper: RefCell::new(bitbang_wrapper),
             pin_instance_map: RefCell::new(HashMap::new()),
             spi_physical_map: RefCell::new(HashMap::new()),
             spi_logical_map: RefCell::new(HashMap::new()),
@@ -918,17 +921,15 @@ impl TransportWrapper {
         let uart_name = uart_conf
             .map(|uart_conf| uart_conf.underlying_instance.as_str())
             .unwrap_or(name);
-        let mut uart = self.transport.uart(uart_name)?;
-        if self.wrap_bitbangs.get() {
+        let uart = if self.wrap_bitbangs.get() {
             let rx = self.gpio_pin((uart_name.to_string() + "_RX").as_str())?;
             let tx = self.gpio_pin((uart_name.to_string() + "_TX").as_str())?;
-            uart = Rc::new(bitbanging::uart::BitbangWrapperUart::new(
-                uart,
-                rx,
-                tx,
-                Rc::clone(&self.transport),
-            )?);
-        }
+            self.bitbang_wrapper
+                .borrow_mut()
+                .uart(uart_name, rx, tx, Rc::clone(&self.transport))?
+        } else {
+            self.transport.uart(uart_name)?
+        };
         if let Some(conf) = uart_conf {
             if let Some(baud_rate) = conf.baud_rate {
                 // Ignore errors as some transports don't let you set baudrate
