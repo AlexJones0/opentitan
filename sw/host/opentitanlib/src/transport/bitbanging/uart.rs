@@ -4,50 +4,104 @@
 
 use std::borrow::Borrow;
 use std::cell::RefCell;
+use std::collections::VecDeque;
+use std::iter::Peekable;
 use std::rc::Rc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
+use std::vec::Vec;
 
 use anyhow::{bail, Result};
 use serialport::Parity;
 use thiserror::Error;
 
-use crate::io::gpio::GpioBitbanging;
 use crate::io::gpio::{BitbangEntry, GpioPin, PinMode, PullMode};
+use crate::io::gpio::{
+    ClockNature, Edge, GpioBitbanging, GpioMonitoring, MonitoringEvent, MonitoringReadResponse,
+};
 use crate::io::uart::{FlowControl, Uart};
-use crate::test_utils::bitbanging::uart::{UartBitbangConfig, UartBitbangEncoder, UartStopBits};
+use crate::test_utils::bitbanging::uart::{
+    UartBitbangConfig, UartBitbangDecoder, UartBitbangEncoder, UartStopBits, UartTransfer,
+};
 use crate::transport::Transport;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum UartBitbangError {
+    #[error("Uart bitbanging RX monitoring needs a more reliable clock source")]
+    InaccurateMonitoringClock,
+    #[error("Cannot start monitoring UART RX as already monitoring")]
+    AlreadyMonitoring,
+    #[error("RX monitoring recorded double rising edge")]
+    DoubleRisingEdge,
+    #[error("RX monitoring recorded double falling edge")]
+    DoubleFallingEdge,
+    #[error("RX monitoring provided edges out-of-order")]
+    EdgesOutOfOrder,
     #[error("Cannot write to UART TX while break is enabled")]
     TransmitDuringBreak,
 }
 
 /// Information related to bitbanging/sampling UART TX/RX pins respectively.
 struct UartPins {
-    #[allow(dead_code)]
     rx: Rc<dyn GpioPin>,
     tx: Rc<dyn GpioPin>,
     gpio_bitbanging: Rc<dyn GpioBitbanging>,
+    gpio_monitoring: Rc<dyn GpioMonitoring>,
+    pub started_monitoring: bool,
+    pub clock_resolution: u64,
+    pub initial_timestamp: Option<u64>,
 }
 
 impl UartPins {
     fn new(rx: Rc<dyn GpioPin>, tx: Rc<dyn GpioPin>, transport: Rc<dyn Transport>) -> Result<Self> {
+        let gpio_monitoring = transport.gpio_monitoring()?;
+        let clock_nature = gpio_monitoring.get_clock_nature()?;
+        let ClockNature::Wallclock { resolution, .. } = clock_nature else {
+            bail!(UartBitbangError::InaccurateMonitoringClock);
+        };
         Ok(Self {
             rx,
             tx,
             gpio_bitbanging: transport.gpio_bitbanging()?,
+            gpio_monitoring,
+            started_monitoring: false,
+            clock_resolution: resolution,
+            initial_timestamp: None,
         })
     }
 
-    /// Configure pinmux to allow TX bitbanging
+    fn start_monitoring_rx(&mut self) -> Result<()> {
+        if self.started_monitoring {
+            bail!(UartBitbangError::AlreadyMonitoring);
+        }
+        self.started_monitoring = true;
+        log::debug!(
+            "Monitoring RX pin: {}",
+            self.rx.get_internal_pin_name().unwrap()
+        );
+        let start = self.gpio_monitoring.monitoring_start(&[self.rx.borrow()])?;
+        self.initial_timestamp = Some(start.timestamp);
+        Ok(())
+    }
+
+    /// Configure pinmux & start GPIO monitoring to allow TX/RX bitbanging.
     fn setup(&mut self) -> Result<()> {
+        self.rx.set_mode(PinMode::Input)?;
         self.tx.set(
             Some(PinMode::PushPull),
             Some(true), // UART is idle high
             Some(PullMode::PullUp),
             None,
         )?;
+        self.start_monitoring_rx()?;
+        Ok(())
+    }
+
+    /// Clear all RX edge read events from the GPIO monitor
+    fn reset_rx_events(&mut self) -> Result<()> {
+        if self.started_monitoring {
+            self.gpio_monitoring
+                .monitoring_read(&[self.rx.borrow()], true)?;
+        }
         Ok(())
     }
 
@@ -64,6 +118,27 @@ impl UartPins {
         let gpio_pins = [self.tx.borrow()];
         self.gpio_bitbanging.run(&gpio_pins, period, waveform)?;
         Ok(())
+    }
+
+    /// Read the UART RX waveform as an ordered list of events (edges) since the
+    /// last read / since monitoring started.
+    fn bitbang_rx(&self) -> Result<MonitoringReadResponse> {
+        self.gpio_monitoring
+            .monitoring_read(&[self.rx.borrow()], true)
+    }
+}
+
+impl Drop for UartPins {
+    fn drop(&mut self) {
+        // Stop monitoring the RX pin.
+        if self.started_monitoring
+            && self
+                .gpio_monitoring
+                .monitoring_read(&[self.rx.borrow()], false)
+                .is_err()
+        {
+            log::warn!("Error when trying to stop monitoring the RX pin");
+        }
     }
 }
 
@@ -82,14 +157,218 @@ struct UartBitbangInterface {
     config: UartConfiguration,
     pins: UartPins,
     encoder: UartBitbangEncoder<0>,
+    decoder: UartBitbangDecoder<0>,
+    rx_buffer: VecDeque<u8>,
+    last_event: Option<MonitoringEvent>,
+    next_sample_time: Option<u64>,
 }
 
 impl UartBitbangInterface {
     /// Set the parity of the UART bitbanging interface, propagating the parity
-    /// change to the bitbanging encoder.
+    /// change to the bitbanging encoder/decoder.
     fn set_parity(&mut self, parity: Parity) {
         self.config.parity = parity;
         self.encoder.set_parity(parity);
+        self.decoder.set_parity(parity);
+    }
+
+    /// Convert a timestamp received from the gpio monitoring interface to a
+    /// time relative to the started of RX monitoring, in nanoseconds.
+    fn timestamp_to_nanos(&self, timestamp: u64) -> Result<u64> {
+        let Some(initial_timestamp) = self.pins.initial_timestamp else {
+            bail!("Cannot compute time before measuring an initial timestamp");
+        };
+        let timestamp_delta = (timestamp - initial_timestamp) as u128;
+        let nanos = timestamp_delta * 1_000_000_000u128 / self.pins.clock_resolution as u128;
+        Ok(nanos as u64)
+    }
+
+    /// Determine the next sample time and current RX value from state info.
+    /// If not previously sampled, consumes events until the RX transmission
+    /// is stable and synchronises with the next falling edge.
+    fn get_last_state<I: Iterator<Item = MonitoringEvent>>(
+        &mut self,
+        events: &mut Peekable<I>,
+        period_ns: u64,
+    ) -> Result<Option<(u64, u8)>> {
+        // If we have information stored from a previous sample, retrieve it.
+        if let Some(next_sample_time) = self.next_sample_time {
+            let Some(last_event) = self.last_event else {
+                bail!("Previous sampling time exists but previous event does not");
+            };
+            let value = match last_event.edge {
+                Edge::Rising => 0x01,
+                Edge::Falling => 0x00,
+            };
+            return Ok(Some((next_sample_time, value)));
+        };
+
+        // Identify & synchronise with the first falling edge. Assumes
+        // that we start monitoring when the UART is idle high, and
+        // not in the middle of a transaction.
+        let Some(first_event) = events.peek() else {
+            return Ok(None);
+        };
+        let edge_time = self.timestamp_to_nanos(first_event.timestamp)?;
+        let next_sample_time = edge_time + period_ns / 2;
+        Ok(Some((next_sample_time, 0x01)))
+    }
+
+    /// Uses the bitbanging decoder to decode a given RX pin sample.
+    fn decode_sample(&mut self, sample: u8, decoded: &mut Vec<u8>) -> Result<()> {
+        if let Some(transfer) = self.decoder.decode_sample(sample)? {
+            match transfer {
+                UartTransfer::Byte { data } => decoded.push(data),
+                UartTransfer::Broken { error, .. } => {
+                    bail!(error)
+                }
+                UartTransfer::Break => (),
+            }
+        }
+        Ok(())
+    }
+
+    /// Decodes a given RX waveform edge, calculating and decoding samples of
+    /// the RX pin between this edge and the previously decoded edge.
+    fn decode_edge(
+        &mut self,
+        event: MonitoringEvent,
+        decoded: &mut Vec<u8>,
+        period_ns: u64,
+        next_sample_time: &mut u64,
+        value: &mut u8,
+    ) -> Result<()> {
+        if event.edge == Edge::Falling && *value == 0 {
+            bail!(UartBitbangError::DoubleFallingEdge);
+        } else if event.edge == Edge::Rising && *value == 1 {
+            bail!(UartBitbangError::DoubleRisingEdge);
+        }
+        let sampling_end = self.timestamp_to_nanos(event.timestamp)? + period_ns;
+        if sampling_end < *next_sample_time {
+            bail!(UartBitbangError::EdgesOutOfOrder)
+        }
+
+        // Calculate & decode samples between edges
+        let time_elapsed = sampling_end - *next_sample_time;
+        let num_samples = time_elapsed / period_ns;
+        *next_sample_time += period_ns * num_samples;
+        for _ in 0..num_samples {
+            if self.decoder.is_idle() && event.edge == Edge::Falling {
+                // Optimisation: don't decode idle-high samples between frames
+                break;
+            }
+            self.decode_sample(*value, decoded)?;
+        }
+
+        if self.decoder.is_idle() && event.edge == Edge::Falling {
+            // Reset sampling time at the start of each transaction
+            *next_sample_time = self.timestamp_to_nanos(event.timestamp)? + period_ns / 2;
+        }
+        self.last_event = Some(event);
+        *value = if *value == 0x00 { 0x01 } else { 0x00 };
+        Ok(())
+    }
+
+    /// Decode a given RX waveform into UART frames, where the waveform is an
+    /// ordered vector of edges monitored on RX, and the time at which the
+    /// monitoring was performed (i.e. the end).
+    fn decode_waveform(
+        &mut self,
+        events: Vec<MonitoringEvent>,
+        end_time: u64,
+        period: &Duration,
+    ) -> Result<Vec<u8>> {
+        let mut decoded = Vec::new();
+        let mut events_iter = events.into_iter().peekable();
+        let period_ns = period.as_nanos() as u64;
+        let last_state = self.get_last_state(&mut events_iter, period_ns)?;
+        let Some((mut next_sample_time, mut value)) = last_state else {
+            // Not enough events recorded to find a starting state.
+            return Ok(decoded);
+        };
+        for event in events_iter {
+            self.decode_edge(
+                event,
+                &mut decoded,
+                period_ns,
+                &mut next_sample_time,
+                &mut value,
+            )?;
+        }
+        self.next_sample_time = Some(next_sample_time);
+        // When a frame finishes, a final rising edge leaves the RX line high,
+        // but our sampling mechanism only decodes samples between edges. To
+        // avoid requiring subsequent transmissions, add idle bits until the
+        // read timestamp (while the decoder is active).
+        if value != 0x00 {
+            while !self.decoder.is_idle() {
+                next_sample_time += period_ns;
+                if next_sample_time >= end_time {
+                    break;
+                }
+                self.next_sample_time = Some(next_sample_time);
+                self.decode_sample(value, &mut decoded)?;
+            }
+        }
+        Ok(decoded)
+    }
+
+    /// Read an event-based RX waveform using the `gpio_monitoring` interface,
+    /// then perform uniform sampling and decode the sampled UART output.
+    fn read_decoded(&mut self, baud_rate: u32) -> Result<Vec<u8>> {
+        let sampling_period = Duration::from_nanos(1_000_000_000u64 / baud_rate as u64);
+        let events = self.pins.bitbang_rx()?;
+        let read_timestamp = self.timestamp_to_nanos(events.timestamp)?;
+        let decoded = self.decode_waveform(events.events, read_timestamp, &sampling_period)?;
+        Ok(decoded)
+    }
+
+    /// Read & decode any incoming UART data and store it in the `rx_buffer`.
+    fn read_worker(&mut self, timeout: Option<Duration>) -> Result<()> {
+        let start = Instant::now();
+        loop {
+            if let Some(t) = timeout {
+                if start.elapsed() > t {
+                    break;
+                }
+            }
+            let decoded = self.read_decoded(self.config.baud_rate)?;
+            if !decoded.is_empty() {
+                for &ch in decoded.iter() {
+                    self.rx_buffer.push_back(ch);
+                }
+                break; // Read until we get any data
+            }
+        }
+        Ok(())
+    }
+
+    /// Read received data out of FIFO `rx_buffer` into a given buffer.
+    fn read_buffer(&mut self, buf: &mut [u8]) -> Result<usize> {
+        // Read as many bytes as we can & have available
+        let mut bytes_read = 0;
+        for byte in buf.iter_mut() {
+            let Some(rx) = self.rx_buffer.pop_front() else {
+                break;
+            };
+            *byte = rx;
+            bytes_read += 1;
+        }
+        Ok(bytes_read)
+    }
+
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        if self.rx_buffer.is_empty() {
+            self.read_worker(None)?;
+        }
+        self.read_buffer(buf)
+    }
+
+    fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> Result<usize> {
+        if self.rx_buffer.is_empty() {
+            self.read_worker(Some(timeout))?;
+        }
+        self.read_buffer(buf)
     }
 
     fn write(&mut self, buf: &[u8]) -> Result<()> {
@@ -99,6 +378,15 @@ impl UartBitbangInterface {
         let mut transaction = vec![];
         self.encoder.encode_characters(buf, &mut transaction);
         self.pins.bitbang_tx(&transaction, self.config.baud_rate)?;
+        Ok(())
+    }
+
+    fn clear_rx_buffer(&mut self) -> Result<()> {
+        self.pins.reset_rx_events()?;
+        self.rx_buffer.clear();
+        self.decoder.reset();
+        self.last_event = None;
+        self.next_sample_time = None;
         Ok(())
     }
 
@@ -138,7 +426,11 @@ impl BitbangWrapperUart {
         let wrapper = UartBitbangInterface {
             config,
             pins,
-            encoder: UartBitbangEncoder::new(encoding_config),
+            encoder: UartBitbangEncoder::new(encoding_config.clone()),
+            decoder: UartBitbangDecoder::new(encoding_config),
+            rx_buffer: VecDeque::new(),
+            last_event: None,
+            next_sample_time: None,
         };
         Ok(Self {
             underlying: uart,
@@ -196,13 +488,11 @@ impl Uart for BitbangWrapperUart {
     }
 
     fn read(&self, buf: &mut [u8]) -> Result<usize> {
-        // Not yet implemented
-        self.underlying.read(buf)
+        self.wrapper.borrow_mut().read(buf)
     }
 
     fn read_timeout(&self, buf: &mut [u8], timeout: Duration) -> Result<usize> {
-        // Not yet implemented
-        self.underlying.read_timeout(buf, timeout)
+        self.wrapper.borrow_mut().read_timeout(buf, timeout)
     }
 
     fn write(&self, buf: &[u8]) -> Result<()> {
@@ -210,8 +500,7 @@ impl Uart for BitbangWrapperUart {
     }
 
     fn clear_rx_buffer(&self) -> Result<()> {
-        // Not yet implemented
-        self.underlying.clear_rx_buffer()
+        self.wrapper.borrow_mut().clear_rx_buffer()
     }
 
     fn set_break(&self, _enable: bool) -> Result<()> {
