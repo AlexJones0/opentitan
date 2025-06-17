@@ -174,6 +174,7 @@ rust_library(
         "src/tpm/mod.rs",
         "src/tpm/status.rs",
         "src/transport/bitbanging/mod.rs",
+        "src/transport/bitbanging/spi.rs",
         "src/transport/bitbanging/uart.rs",
         "src/transport/chip_whisperer/board.rs",
         "src/transport/chip_whisperer/gpio.rs",
