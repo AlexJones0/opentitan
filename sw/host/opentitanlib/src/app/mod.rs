@@ -205,6 +205,7 @@ pub struct I2cConfiguration {
 pub struct TransportWrapperBuilder {
     interface: String,
     disable_dft_on_reset: bool,
+    wrap_bitbangs: bool,
     openocd_adapter_config: Option<PathBuf>,
     provides_list: Vec<(String, String)>,
     requires_list: Vec<(String, String)>,
@@ -224,6 +225,7 @@ pub struct TransportWrapperBuilder {
 pub struct TransportWrapper {
     transport: Rc<dyn Transport>,
     disable_dft_on_reset: Cell<bool>,
+    wrap_bitbangs: Cell<bool>,
     openocd_adapter_config: Option<PathBuf>,
     provides_map: HashMap<String, String>,
     pin_map: HashMap<String, String>,
@@ -249,10 +251,11 @@ pub struct TransportWrapper {
 }
 
 impl TransportWrapperBuilder {
-    pub fn new(interface: String, disable_dft_on_reset: bool) -> Self {
+    pub fn new(interface: String, disable_dft_on_reset: bool, wrap_bitbangs: bool) -> Self {
         Self {
             interface,
             disable_dft_on_reset,
+            wrap_bitbangs,
             openocd_adapter_config: None,
             provides_list: Vec::new(),
             requires_list: Vec::new(),
@@ -692,6 +695,16 @@ impl TransportWrapperBuilder {
         Self::consolidate_provides_map(&mut provides_map, self.provides_list)?;
         Self::verify_requires_list(&provides_map, &self.requires_list)?;
 
+        if self.wrap_bitbangs
+            && transport
+                .capabilities()?
+                .request(Capability::GPIO_BITBANGING | Capability::GPIO_MONITORING)
+                .ok()
+                .is_err()
+        {
+            bail!(TransportError::BitbangMonitoringUnsupported);
+        }
+
         let pin_conf_map =
             Self::consolidate_pin_conf_map(&self.pin_alias_map, &self.pin_conf_list)?;
         let mut strapping_conf_map: HashMap<String, HashMap<String, PinConfiguration>> =
@@ -708,6 +721,7 @@ impl TransportWrapperBuilder {
         let mut transport_wrapper = TransportWrapper {
             transport: Rc::from(transport),
             disable_dft_on_reset: Cell::new(self.disable_dft_on_reset),
+            wrap_bitbangs: Cell::new(self.wrap_bitbangs),
             openocd_adapter_config: self.openocd_adapter_config,
             provides_map,
             pin_map: self.pin_alias_map,
@@ -758,6 +772,24 @@ impl TransportWrapper {
         Ok(())
     }
 
+    /// Sets the `wrap_bitbangs` option for the TransportWrapper. This requires the underlying
+    /// transport to support bitbanging and monitoring. If enabled, transmissions (e.g. UART or
+    /// SPI) will be processed as GPIO bit-banging / monitoring operations instead.
+    pub fn enable_gpio_bitbang_wrapper(&self, enable: bool) -> Result<()> {
+        if enable
+            && self
+                .transport
+                .capabilities()?
+                .request(Capability::GPIO_BITBANGING | Capability::GPIO_MONITORING)
+                .ok()
+                .is_err()
+        {
+            bail!(TransportError::BitbangMonitoringUnsupported);
+        }
+        self.wrap_bitbangs.set(enable);
+        Ok(())
+    }
+
     /// Returns a `Capabilities` object to check the capabilities of this
     /// transport object.
     pub fn capabilities(&self) -> Result<crate::transport::Capabilities> {
@@ -802,6 +834,9 @@ impl TransportWrapper {
 
     /// Returns a SPI [`Target`] implementation.
     pub fn spi(&self, name: &str) -> Result<Rc<dyn Target>> {
+        if self.wrap_bitbangs.get() {
+            log::warn!("Bitbanging is not yet implemented for SPI - using default implementation.");
+        }
         let name = name.to_uppercase();
         let mut spi_logical_map = self.spi_logical_map.borrow_mut();
         if let Some(instance) = spi_logical_map.get(&name) {
@@ -839,6 +874,9 @@ impl TransportWrapper {
 
     /// Returns a I2C [`Bus`] implementation.
     pub fn i2c(&self, name: &str) -> Result<Rc<dyn Bus>> {
+        if self.wrap_bitbangs.get() {
+            log::warn!("Bitbanging is not yet implemented for I2C - using default implementation.");
+        }
         let name = name.to_uppercase();
         let mut i2c_logical_map = self.i2c_logical_map.borrow_mut();
         if let Some(instance) = i2c_logical_map.get(&name) {
@@ -876,6 +914,11 @@ impl TransportWrapper {
 
     /// Returns a [`Uart`] implementation.
     pub fn uart(&self, name: &str) -> Result<Rc<dyn Uart>> {
+        if self.wrap_bitbangs.get() {
+            log::warn!(
+                "Bitbanging is not yet implemented for UART - using default implementation."
+            );
+        }
         let uart_conf = self.uart_conf_map.get(name.to_uppercase().as_str());
         let uart_name = uart_conf
             .map(|uart_conf| uart_conf.underlying_instance.as_str())
