@@ -106,6 +106,11 @@ impl<const TX: u8> UartBitbangEncoder<TX> {
         Self { config }
     }
 
+    /// A helper function to set the parity used by the encoder
+    pub fn set_parity(&mut self, parity: Parity) {
+        self.config.parity = parity;
+    }
+
     /// Encode the transmission of a UART break condition into a bitbanging
     /// sample, to be used on the TX pin.
     pub fn encode_break(&self, samples: &mut Vec<u8>) {
@@ -221,6 +226,11 @@ impl<const RX: u8> UartBitbangDecoder<RX> {
             config,
             state: DecodingState::Idle,
         }
+    }
+
+    /// A helper function to set the parity used by the decoder
+    pub fn set_parity(&mut self, parity: Parity) {
+        self.config.parity = parity;
     }
 
     /// Finishes decoding a break transmission in the current UART transfer
