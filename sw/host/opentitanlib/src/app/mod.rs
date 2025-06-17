@@ -20,7 +20,7 @@ use crate::io::nonblocking_help::NonblockingHelp;
 use crate::io::spi::{Target, TransferMode};
 use crate::io::uart::Uart;
 use crate::transport::{
-    ioexpander, Capability, MaintainConnection, ProgressIndicator, ProxyOps, Transport,
+    bitbanging, ioexpander, Capability, MaintainConnection, ProgressIndicator, ProxyOps, Transport,
     TransportError, TransportInterfaceType,
 };
 
@@ -914,16 +914,21 @@ impl TransportWrapper {
 
     /// Returns a [`Uart`] implementation.
     pub fn uart(&self, name: &str) -> Result<Rc<dyn Uart>> {
-        if self.wrap_bitbangs.get() {
-            log::warn!(
-                "Bitbanging is not yet implemented for UART - using default implementation."
-            );
-        }
         let uart_conf = self.uart_conf_map.get(name.to_uppercase().as_str());
         let uart_name = uart_conf
             .map(|uart_conf| uart_conf.underlying_instance.as_str())
             .unwrap_or(name);
-        let uart = self.transport.uart(uart_name)?;
+        let mut uart = self.transport.uart(uart_name)?;
+        if self.wrap_bitbangs.get() {
+            let rx = self.gpio_pin((uart_name.to_string() + "_RX").as_str())?;
+            let tx = self.gpio_pin((uart_name.to_string() + "_TX").as_str())?;
+            uart = Rc::new(bitbanging::uart::BitbangWrapperUart::new(
+                uart,
+                rx,
+                tx,
+                Rc::clone(&self.transport),
+            )?);
+        }
         if let Some(conf) = uart_conf {
             if let Some(baud_rate) = conf.baud_rate {
                 // Ignore errors as some transports don't let you set baudrate
