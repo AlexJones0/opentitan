@@ -1306,6 +1306,9 @@ module kmac
       .count_error_o      (kmac_entropy_hash_counter_error),
       .err_processed_i    (err_processed)
     );
+
+    assign hw2reg.entropy_sm_state.de = 1'b 1;
+    assign hw2reg.entropy_sm_state.d = u_entropy.st;
   end else begin : gen_empty_entropy
     // If Masking is not used, no need of entropy. Ignore inputs and config; tie output to 0.
     edn_pkg::edn_rsp_t unused_entropy_input;

@@ -61,9 +61,9 @@ module kmac_reg_top (
 
   // also check for spurious write enables
   logic reg_we_err;
-  logic [56:0] reg_we_check;
+  logic [57:0] reg_we_check;
   prim_reg_we_check #(
-    .OneHotWidth(57)
+    .OneHotWidth(58)
   ) u_prim_reg_we_check (
     .clk_i(clk_i),
     .rst_ni(rst_ni),
@@ -373,6 +373,7 @@ module kmac_reg_top (
   logic [31:0] prefix_10_qs;
   logic [31:0] prefix_10_wd;
   logic [31:0] err_code_qs;
+  logic [9:0] entropy_sm_state_qs;
 
   // Register instances
   // R[intr_state]: V(False)
@@ -2588,8 +2589,36 @@ module kmac_reg_top (
   );
 
 
+  // R[entropy_sm_state]: V(False)
+  prim_subreg #(
+    .DW      (10),
+    .SwAccess(prim_subreg_pkg::SwAccessRO),
+    .RESVAL  (10'h0),
+    .Mubi    (1'b0)
+  ) u_entropy_sm_state (
+    .clk_i   (clk_i),
+    .rst_ni  (rst_ni),
 
-  logic [56:0] addr_hit;
+    // from register interface
+    .we     (1'b0),
+    .wd     ('0),
+
+    // from internal hardware
+    .de     (hw2reg.entropy_sm_state.de),
+    .d      (hw2reg.entropy_sm_state.d),
+
+    // to internal hardware
+    .qe     (),
+    .q      (),
+    .ds     (),
+
+    // to register interface (read)
+    .qs     (entropy_sm_state_qs)
+  );
+
+
+
+  logic [57:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == KMAC_INTR_STATE_OFFSET);
@@ -2649,6 +2678,7 @@ module kmac_reg_top (
     addr_hit[54] = (reg_addr == KMAC_PREFIX_9_OFFSET);
     addr_hit[55] = (reg_addr == KMAC_PREFIX_10_OFFSET);
     addr_hit[56] = (reg_addr == KMAC_ERR_CODE_OFFSET);
+    addr_hit[57] = (reg_addr == KMAC_ENTROPY_SM_STATE_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -2712,7 +2742,8 @@ module kmac_reg_top (
                (addr_hit[53] & (|(KMAC_PERMIT[53] & ~reg_be))) |
                (addr_hit[54] & (|(KMAC_PERMIT[54] & ~reg_be))) |
                (addr_hit[55] & (|(KMAC_PERMIT[55] & ~reg_be))) |
-               (addr_hit[56] & (|(KMAC_PERMIT[56] & ~reg_be)))));
+               (addr_hit[56] & (|(KMAC_PERMIT[56] & ~reg_be))) |
+               (addr_hit[57] & (|(KMAC_PERMIT[57] & ~reg_be)))));
   end
 
   // Generate write-enables
@@ -2980,6 +3011,7 @@ module kmac_reg_top (
     reg_we_check[54] = prefix_9_gated_we;
     reg_we_check[55] = prefix_10_gated_we;
     reg_we_check[56] = 1'b0;
+    reg_we_check[57] = 1'b0;
   end
 
   // Read data return
@@ -3240,6 +3272,10 @@ module kmac_reg_top (
 
       addr_hit[56]: begin
         reg_rdata_next[31:0] = err_code_qs;
+      end
+
+      addr_hit[57]: begin
+        reg_rdata_next[9:0] = entropy_sm_state_qs;
       end
 
       default: begin

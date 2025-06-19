@@ -230,6 +230,11 @@ package kmac_reg_pkg;
     logic        de;
   } kmac_hw2reg_err_code_reg_t;
 
+  typedef struct packed {
+    logic [9:0] d;
+    logic        de;
+  } kmac_hw2reg_entropy_sm_state_reg_t;
+
   // Register -> HW type
   typedef struct packed {
     kmac_reg2hw_intr_state_reg_t intr_state; // [1534:1532]
@@ -250,11 +255,12 @@ package kmac_reg_pkg;
 
   // HW -> register type
   typedef struct packed {
-    kmac_hw2reg_intr_state_reg_t intr_state; // [62:57]
-    kmac_hw2reg_cfg_regwen_reg_t cfg_regwen; // [56:56]
-    kmac_hw2reg_status_reg_t status; // [55:44]
-    kmac_hw2reg_entropy_refresh_hash_cnt_reg_t entropy_refresh_hash_cnt; // [43:33]
-    kmac_hw2reg_err_code_reg_t err_code; // [32:0]
+    kmac_hw2reg_intr_state_reg_t intr_state; // [73:68]
+    kmac_hw2reg_cfg_regwen_reg_t cfg_regwen; // [67:67]
+    kmac_hw2reg_status_reg_t status; // [66:55]
+    kmac_hw2reg_entropy_refresh_hash_cnt_reg_t entropy_refresh_hash_cnt; // [54:44]
+    kmac_hw2reg_err_code_reg_t err_code; // [43:11]
+    kmac_hw2reg_entropy_sm_state_reg_t entropy_sm_state; // [10:0]
   } kmac_hw2reg_t;
 
   // Register offsets
@@ -315,6 +321,7 @@ package kmac_reg_pkg;
   parameter logic [BlockAw-1:0] KMAC_PREFIX_9_OFFSET = 12'h d8;
   parameter logic [BlockAw-1:0] KMAC_PREFIX_10_OFFSET = 12'h dc;
   parameter logic [BlockAw-1:0] KMAC_ERR_CODE_OFFSET = 12'h e0;
+  parameter logic [BlockAw-1:0] KMAC_ENTROPY_SM_STATE_OFFSET = 12'h e4;
 
   // Reset values for hwext registers and their fields
   parameter logic [2:0] KMAC_INTR_TEST_RESVAL = 3'h 0;
@@ -432,11 +439,12 @@ package kmac_reg_pkg;
     KMAC_PREFIX_8,
     KMAC_PREFIX_9,
     KMAC_PREFIX_10,
-    KMAC_ERR_CODE
+    KMAC_ERR_CODE,
+    KMAC_ENTROPY_SM_STATE
   } kmac_id_e;
 
   // Register width information to check illegal writes
-  parameter logic [3:0] KMAC_PERMIT [57] = '{
+  parameter logic [3:0] KMAC_PERMIT [58] = '{
     4'b 0001, // index[ 0] KMAC_INTR_STATE
     4'b 0001, // index[ 1] KMAC_INTR_ENABLE
     4'b 0001, // index[ 2] KMAC_INTR_TEST
@@ -493,7 +501,8 @@ package kmac_reg_pkg;
     4'b 1111, // index[53] KMAC_PREFIX_8
     4'b 1111, // index[54] KMAC_PREFIX_9
     4'b 1111, // index[55] KMAC_PREFIX_10
-    4'b 1111  // index[56] KMAC_ERR_CODE
+    4'b 1111, // index[56] KMAC_ERR_CODE
+    4'b 0011  // index[57] KMAC_ENTROPY_SM_STATE
   };
 
 endpackage

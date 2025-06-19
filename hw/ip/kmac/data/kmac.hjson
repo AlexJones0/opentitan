@@ -986,6 +986,21 @@
         }
       ]
     } // R: ERR_CODE
+    { name: "ENTROPY_SM_STATE",
+      desc: "KMAC_ENTROPY State Machine State",
+      swaccess: "ro",
+      hwaccess: "hwo",
+      fields: [
+        { bits: "9:0",
+          name: "sm_state"
+          desc: '''
+                The state of the state machine in `kmac_entropy.sv`.
+                '''
+          tags: [// Randomly write mem will cause this reg updated by design
+                 "excl:CsrNonInitTests:CsrExclWriteCheck"]
+        }
+      ]
+    } // R: ENTROPY_SM_STATE
     { skipto: "0x400"}
     { window: {
         name: "STATE"
