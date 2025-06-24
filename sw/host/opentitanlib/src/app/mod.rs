@@ -848,7 +848,6 @@ impl TransportWrapper {
             self.gpio_pin((name.to_string() + "_MISO").as_str())?,
             self.gpio_pin((name.to_string() + "_CS").as_str())?,
             d2_3,
-            None,
             Rc::clone(&self.transport),
         )
     }
