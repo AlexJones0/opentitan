@@ -18,7 +18,11 @@ pub enum Bit {
 
 impl From<bool> for Bit {
     fn from(val: bool) -> Self {
-        if val { Self::High } else { Self::Low }
+        if val {
+            Self::High
+        } else {
+            Self::Low
+        }
     }
 }
 

@@ -4,25 +4,29 @@
 
 use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::collections::VecDeque;
-use std::iter::Peekable;
 use std::rc::Rc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use std::vec::Vec;
 
 use anyhow::{bail, ensure, Result};
 use thiserror::Error;
 
+use crate::io::gpio::GpioBitbanging;
 use crate::io::gpio::{BitbangEntry, GpioPin, PinMode, PullMode};
-use crate::io::gpio::{Edge, GpioBitbanging};
 use crate::io::spi::{
-    AssertChipSelect, ClockPhase, ClockPolarity, MaxSizes, SpiError, Target, TargetChipDeassert, Transfer, TransferMode,
+    AssertChipSelect, ClockPhase, ClockPolarity, MaxSizes, SpiError, Target, TargetChipDeassert,
+    Transfer, TransferMode,
 };
-use crate::test_utils::bitbanging::spi::{SpiDataMode, SpiBitbangConfig, SpiBitbangDecoder, SpiBitbangEncoder};
+use crate::test_utils::bitbanging::spi::{
+    SpiBitbangConfig, SpiBitbangDecoder, SpiBitbangEncoder, SpiDataMode, SpiEncodingDelays,
+    SpiEndpoint,
+};
 use crate::transport::{Transport, TransportError};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum SpiBitbangError {
+    #[error("Cannot bitbang SPI pins before configuring them for the required data mode")]
+    PinsNotConfigured,
     #[error("Mismatched SPI decoding length: {0} != {1}")]
     MismatchedDecodingLength(usize, usize),
 }
@@ -35,6 +39,7 @@ pub struct SpiPins {
     d2_3: Option<[Rc<dyn GpioPin>; 2]>, // Extra data lines for Quad SPI
     cs: Rc<dyn GpioPin>,
     gpio_bitbanging: Rc<dyn GpioBitbanging>,
+    configured_data_mode: Option<SpiDataMode>,
 }
 
 impl SpiPins {
@@ -53,27 +58,66 @@ impl SpiPins {
             cs,
             d2_3,
             gpio_bitbanging: transport.gpio_bitbanging()?,
+            configured_data_mode: None,
         })
+    }
+
+    fn update_pins(
+        &mut self,
+        sck: Option<&Rc<dyn GpioPin>>,
+        copi: Option<&Rc<dyn GpioPin>>,
+        cipo: Option<&Rc<dyn GpioPin>>,
+        cs: Option<&Rc<dyn GpioPin>>,
+    ) {
+        if sck.is_some() || copi.is_some() || cipo.is_some() || cs.is_some() {
+            self.configured_data_mode = None;
+        }
+        if let Some(sck_pin) = sck {
+            self.sck = Rc::clone(sck_pin);
+        }
+        if let Some(copi_pin) = copi {
+            self.copi = Rc::clone(copi_pin);
+        }
+        if let Some(cipo_pin) = cipo {
+            self.cipo = Rc::clone(cipo_pin);
+        }
+        if let Some(cs_pin) = cs {
+            self.cs = Rc::clone(cs_pin);
+        }
     }
 
     // Configure pinmux to allow SPI bitbanging.
     // Only supports single data transfer mode for now (no dual/quad SPI).
-    fn setup(&mut self, transfer_mode: TransferMode) -> Result<()> {
+    fn setup(&mut self, data_mode: SpiDataMode, transfer_mode: TransferMode) -> Result<()> {
         let clk_idle_level = transfer_mode.polarity() == ClockPolarity::IdleHigh;
-        self.sck.set(
-            Some(PinMode::PushPull),
-            Some(clk_idle_level),  // Match CPOL configuration
-            Some(PullMode::PullUp),
-            None,
-        );
-        self.cs.set(
-            Some(PinMode::PushPull),
-            Some(true),  // CS is active-low
-            Some(PullMode::PullUp),
-            None,
-        );
-        self.copi.set_mode(PinMode::PushPull);
-        self.cipo.set_mode(PinMode::Input);
+        match data_mode {
+            SpiDataMode::Single => {
+                self.sck.set(
+                    Some(PinMode::PushPull),
+                    Some(clk_idle_level), // Match CPOL configuration
+                    Some(PullMode::PullUp),
+                    None,
+                )?;
+                self.cs.set(
+                    Some(PinMode::PushPull),
+                    Some(true), // CS is active-low
+                    Some(PullMode::PullUp),
+                    None,
+                )?;
+                self.copi.set_mode(PinMode::PushPull)?;
+                self.cipo.set_mode(PinMode::Input)?;
+                //self.d2_3.as_ref().unwrap()[0].set_mode(PinMode::PushPull)?;
+                //self.d2_3.as_ref().unwrap()[1].set_mode(PinMode::PushPull)?;
+            }
+            // TODO: add dual/quad data mode support
+            SpiDataMode::Dual => bail!(TransportError::CommunicationError(
+                "Bitbanged transport does not support Dual SPI".to_string()
+            )),
+            SpiDataMode::Quad => bail!(TransportError::CommunicationError(
+                "Bitbanged transport does not support Quad SPI".to_string()
+            )),
+        }
+        self.configured_data_mode = Some(data_mode);
         Ok(())
     }
 
@@ -85,19 +129,31 @@ impl SpiPins {
     /// `gpio_bitbanging.run()` blocks. The bitbanging/sampling behaviour depends
     /// on the `BitbangEntry` type provided.
     fn bitbang(&self, samples: BitbangEntry, clock_rate: u32) -> Result<()> {
+        ensure!(
+            self.configured_data_mode.is_some(),
+            SpiBitbangError::PinsNotConfigured
+        );
         // 2 samples per clock (falling & rising edge), so the bitbanging
         // waveform `clock_tick` should be half the SPI clock period.
         let period = Duration::from_nanos((1_000_000_000u64 / clock_rate as u64) / 2);
         let waveform = Box::new([samples]);
+        // The order of these GPIO pins should match the index order used for
+        // the bitbanging encoder/decoder.
         let mut gpio_pins = Vec::from([
             self.sck.borrow(),
             self.cs.borrow(),
             self.copi.borrow(),
             self.cipo.borrow(),
         ]);
-        if let Some(data_pins) = &self.d2_3 {
-            gpio_pins.push(data_pins[0].borrow());
-            gpio_pins.push(data_pins[1].borrow());
+        if let Some(data_mode) = self.configured_data_mode {
+            // TODO: Using the HyperDebug backend, the `gpio bit-bang` command
+            // times out when these extra pins are given for no clear reason.
+            if data_mode == SpiDataMode::Quad {
+                if let Some(data_pins) = &self.d2_3 {
+                    gpio_pins.push(data_pins[0].borrow());
+                    gpio_pins.push(data_pins[1].borrow());
+                }
+            }
         }
         self.gpio_bitbanging.run(&gpio_pins, period, waveform)?;
         Ok(())
@@ -108,6 +164,7 @@ impl SpiPins {
 #[derive(Debug)]
 struct SpiConfiguration {
     transfer_mode: TransferMode,
+    data_mode: SpiDataMode,
     bits_per_word: u32,
     max_speed: u32,
     max_transfer_count: usize,
@@ -124,8 +181,8 @@ struct SpiBitbangInterface {
     config: SpiConfiguration,
     pins: SpiPins,
     cs_asserted_count: u32,
-    encoder: SpiBitbangEncoder<2,3,4,5,0,1>,
-    decoder: SpiBitbangDecoder<2,3,4,5,0,1>,
+    encoder: SpiBitbangEncoder<2, 3, 4, 5, 0, 1>,
+    decoder: SpiBitbangDecoder<2, 3, 4, 5, 0, 1>,
 }
 
 impl SpiBitbangInterface {
@@ -145,44 +202,70 @@ impl SpiBitbangInterface {
         Ok(())
     }
 
-    fn get_clock_rate(&self) -> u32 {
-        // TODO test and figure out what bitbanging supports well.
-        // For now just try to run at 50 kHz.
-        const max_bitbang_rate: u32 = 50_000;
-        if self.config.max_speed < max_bitbang_rate { 
-            self.config.max_speed 
-        } else {
-            max_bitbang_rate
-        }
+    fn set_pins(
+        &mut self,
+        sck: Option<&Rc<dyn GpioPin>>,
+        copi: Option<&Rc<dyn GpioPin>>,
+        cipo: Option<&Rc<dyn GpioPin>>,
+        cs: Option<&Rc<dyn GpioPin>>,
+    ) -> Result<()> {
+        self.pins.update_pins(sck, copi, cipo, cs);
+        self.pins
+            .setup(self.config.data_mode, self.config.transfer_mode)?;
+        Ok(())
     }
 
-    fn run_transaction(&self, transaction: &mut [Transfer], supports_bidirectional: bool) -> Result<()> {
+    fn get_clock_rate(&self) -> u32 {
+        // TODO: maybe we should / shouldn't always run at max speed?
+        // Hyperdebug's bitbanging takes clock rates that are too high
+        // and just bitbangs at the fastest speed it can, so this isn't
+        // a problem there. But if a backend is added that requires
+        // valid bitbanging rates we need a better solution.
+        self.config.max_speed / 2
+    }
+
+    fn run_transaction(
+        &self,
+        transaction: &mut [Transfer],
+        supports_bidirectional: bool,
+    ) -> Result<()> {
         let mut samples = vec![];
         let mut reads = vec![];
-        
+
         self.encoder.cs_active(true, &mut samples);
+        let mut first_transfer = true;
         for transfer in transaction {
             match transfer {
                 Transfer::Write(wbuf) => {
+                    //log::info!("Doing a write of len {} with data {:?}", wbuf.len(), wbuf);
                     ensure!(
                         wbuf.len() <= self.config.max_transfer_sizes.write,
                         SpiError::InvalidDataLength(wbuf.len())
                     );
-                    self.encoder.run(wbuf, false, &mut samples);
+                    //log::info!("Read params valid.");
+                    self.encoder.run(wbuf, false, first_transfer, &mut samples);
                 }
                 Transfer::Read(rbuf) => {
+                    //log::info!("Doing a read of len {}", rbuf.len());
                     ensure!(
                         rbuf.len() <= self.config.max_transfer_sizes.read,
                         SpiError::InvalidDataLength(rbuf.len())
                     );
+                    //log::info!("Read params valid.");
                     let read_start = samples.len();
                     let bytes_per_word = self.config.bits_per_word.div_ceil(8) as usize;
                     let words = rbuf.len().div_ceil(bytes_per_word);
-                    self.encoder.encode_read(words, false, &mut samples);
+                    self.encoder
+                        .encode_read(words, false, first_transfer, &mut samples);
                     let read_end = samples.len() - 1;
                     reads.push((rbuf, read_start, read_end));
                 }
                 Transfer::Both(wbuf, rbuf) => {
+                    //log::info!(
+                    //    "Doing a write & read of len {} with data {:?}",
+                    //    wbuf.len(),
+                    //    wbuf
+                    //);
                     ensure!(
                         supports_bidirectional,
                         TransportError::CommunicationError(
@@ -194,36 +277,54 @@ impl SpiBitbangInterface {
                         SpiError::MismatchedDataLength(wbuf.len(), rbuf.len())
                     );
                     ensure!(
-                        rbuf.len() <= self.config.max_transfer_sizes.read && wbuf.len() <= self.config.max_transfer_sizes.write,
+                        rbuf.len() <= self.config.max_transfer_sizes.read
+                            && wbuf.len() <= self.config.max_transfer_sizes.write,
                         SpiError::InvalidDataLength(wbuf.len())
                     );
+                    //log::info!("Write/Read params valid.");
                     let read_start = samples.len();
-                    self.encoder.run(wbuf, false, &mut samples);
+                    self.encoder.run(wbuf, false, first_transfer, &mut samples);
                     let read_end = samples.len() - 1;
                     reads.push((rbuf, read_start, read_end));
                 }
                 Transfer::TpmPoll => bail!(TransportError::UnsupportedOperation),
                 Transfer::GscReady => bail!(TransportError::UnsupportedOperation),
             }
+            first_transfer = false;
         }
         self.encoder.cs_active(false, &mut samples);
+        //log::info!("Got encoded samples: {:?}", samples);
 
         let clock_rate = self.get_clock_rate();
         if reads.is_empty() {
-            self.pins.bitbang(BitbangEntry::Write(&samples), clock_rate)?;
+            //log::info!("Starting bitbanging");
+            self.pins
+                .bitbang(BitbangEntry::Write(&samples), clock_rate)?;
+            //log::info!("Ending bitbanging");
         } else {
-            // TODO: len here is + 1? If so, what about read indexes? Need to 
+            // TODO: len here is + 1? If so, what about read indexes? Need to
             // make sure this is matched up
             // TODO: maybe use the `BothOwned` interface instead?
-            let mut read_samples = Vec::with_capacity(samples.len() + 1);
+            // Inputs are captured before outputs are applied, so to get the final
+            // input we must include one extra dummy sample at the end.
+            if let Some(&sample) = samples.last() {
+                samples.push(sample);
+            }
+            let mut read_samples = vec![0; samples.len()];
             let waveform = BitbangEntry::Both(&samples, &mut read_samples);
+            //log::info!("Starting bitbanging write/read");
             self.pins.bitbang(waveform, clock_rate)?;
+            //log::info!("Ending bitbanging write/read");
             for (rbuf, start, end) in reads {
-                let decoded = self.decoder.run(read_samples[start..=end].to_vec())?;
+                //log::info!("Read samples = {:?}", read_samples[(start+1)..=(end+1)].to_vec());
+                let decoded = self
+                    .decoder
+                    .run(read_samples[(start + 1)..=(end + 1)].to_vec())?;
                 ensure!(
                     decoded.len() == rbuf.len(),
                     SpiBitbangError::MismatchedDecodingLength(decoded.len(), rbuf.len())
                 );
+                //log::info!("Decoded read data: {:?}", decoded);
                 let mut decoded = decoded.iter();
                 for byte in rbuf.iter_mut() {
                     let Some(rx) = decoded.next() else {
@@ -251,6 +352,9 @@ impl BitbangWrapperSpi {
     pub fn new(spi: Rc<dyn Target>, mut pins: SpiPins) -> Result<Self> {
         let config = SpiConfiguration {
             transfer_mode: spi.get_transfer_mode().unwrap_or(TransferMode::Mode0),
+            // TODO: for now, we don't have a way of knowing the data mode of the
+            // underlying SPI, so stick to single mode for now.
+            data_mode: SpiDataMode::Single,
             bits_per_word: spi.get_bits_per_word().unwrap_or(8),
             max_speed: spi.get_max_speed().unwrap_or(50_000),
             max_transfer_count: spi.get_max_transfer_count().unwrap_or(usize::MAX),
@@ -259,24 +363,28 @@ impl BitbangWrapperSpi {
                 write: 1024,
             }),
         };
-        // TODO: we have no way to know what the underyling SPI speed is, so we
-        // use a speed suitable for bitbanging that conforms to `max_speed`.
-        // TODO: for now, we don't have a way of knowing if the underlying SPI is using
-        // single/dual/quad data mode, so stick to using single mode for now.
         let encoding_config = SpiBitbangConfig {
             cpol: config.transfer_mode.polarity() == ClockPolarity::IdleHigh,
             cpha: config.transfer_mode.phase() == ClockPhase::SampleTrailing,
-            data_mode: SpiDataMode::Single,
+            data_mode: config.data_mode,
             bits_per_word: config.bits_per_word,
-            wait_cycles: 8,  // TODO: how do we query this? Default to 8 for now.
         };
-        pins.setup(config.transfer_mode)?;
+        // TODO: we have no easy way to query the underlying SPI for this, nor
+        // to incorporate some mechanism for changing it.
+        let encoding_delays = SpiEncodingDelays {
+            // Wait for 8 clock cycles between SPI words
+            inter_word_delay: 8,
+            // 8 clock cycles between driving CS and first/last SPI word
+            cs_hold_delay: 8,
+            cs_release_delay: 8,
+        };
+        pins.setup(encoding_config.data_mode, config.transfer_mode)?;
         let wrapper = SpiBitbangInterface {
             config,
             pins,
             cs_asserted_count: 0,
-            encoder: SpiBitbangEncoder::new(encoding_config.clone()),
-            decoder: SpiBitbangDecoder::new(encoding_config),
+            encoder: SpiBitbangEncoder::new(encoding_config.clone(), encoding_delays),
+            decoder: SpiBitbangDecoder::new(encoding_config, SpiEndpoint::Host),
         };
         Ok(Self {
             underlying: spi,
@@ -333,7 +441,7 @@ impl Target for BitbangWrapperSpi {
     }
 
     fn supports_tpm_poll(&self) -> Result<bool> {
-        Ok(false) // TODO: say no for now to simplify, but consider if we can do this later.
+        Ok(false)
     }
 
     fn get_max_transfer_count(&self) -> Result<usize> {
@@ -345,7 +453,10 @@ impl Target for BitbangWrapperSpi {
     }
 
     fn run_transaction(&self, transaction: &mut [Transfer]) -> Result<()> {
-        unimplemented!(); // TODO
+        let bidirectional_support = self.supports_bidirectional_transfer().unwrap_or(false);
+        self.wrapper
+            .borrow()
+            .run_transaction(transaction, bidirectional_support)
     }
 
     fn assert_cs(self: Rc<Self>) -> Result<AssertChipSelect> {
@@ -353,7 +464,26 @@ impl Target for BitbangWrapperSpi {
         Ok(AssertChipSelect::new(self))
     }
 
-    // TODO others: `set_pins`, `set_voltage`, `get_eeprom_max_transfer_sizes`, `run_eeprom_transactions`
+    // TODO: can we do this?
+    fn set_pins(
+        &self,
+        _serial_clock: Option<&Rc<dyn GpioPin>>,
+        _host_out_device_in: Option<&Rc<dyn GpioPin>>,
+        _host_in_device_out: Option<&Rc<dyn GpioPin>>,
+        _chip_select: Option<&Rc<dyn GpioPin>>,
+        _gsc_ready: Option<&Rc<dyn GpioPin>>,
+    ) -> Result<()> {
+        if _gsc_ready.is_some() {
+            bail!(SpiError::InvalidPin);
+        }
+        self.wrapper.borrow_mut().set_pins(
+            _serial_clock,
+            _host_out_device_in,
+            _host_in_device_out,
+            _chip_select,
+        )?;
+        Ok(())
+    }
 }
 
 impl TargetChipDeassert for BitbangWrapperSpi {
