@@ -557,6 +557,7 @@ impl Inner {
 
     /// Send a command to HyperDebug firmware, with a callback to receive any output.
     fn execute_command(&self, cmd: &str, callback: impl FnMut(&str)) -> Result<()> {
+        log::info!("Executing command :: {}", cmd);
         // Open console device, if not already open.
         let conn = self.connect()?;
         // Perform requested command, passing any output to callback.

@@ -31,6 +31,7 @@ pub struct SpiBitbangConfig {
     pub cpha: bool, // Clock Phase
     pub data_mode: SpiDataMode,
     pub bits_per_word: u32,
+    //pub ddr: bool, // Dual Data Rate (/ Dual Transfer Rate)
 }
 
 /// Additional delays required to synchronise with a SPI device, all
@@ -52,8 +53,8 @@ pub struct SpiBitbangEncoder<
     const CLK: u8,
     const CS: u8,
 > {
-    config: SpiBitbangConfig,
-    delays: SpiEncodingDelays,
+    pub config: SpiBitbangConfig,
+    pub delays: SpiEncodingDelays,
 }
 
 // Since bits corresponding to unused pins should not be used (high-
@@ -68,6 +69,10 @@ impl<const D0: u8, const D1: u8, const D2: u8, const D3: u8, const CLK: u8, cons
     pub fn new(config: SpiBitbangConfig, delays: SpiEncodingDelays) -> Self {
         log::info!("cpol: {}, cpha: {}, data_mode: {:?}, bits_per_word: {}, inter_word_delay: {}, cs_hold_delay: {}, cs_release_delay: {}", config.cpol, config.cpha, config.data_mode, config.bits_per_word, delays.inter_word_delay, delays.cs_hold_delay, delays.cs_release_delay);
         Self { config, delays }
+    }
+
+    pub fn set_data_mode(&mut self, mode: SpiDataMode) {
+        self.config.data_mode = mode;
     }
 
     /// Construct a sample bitmap for a set of values on SPI pins
@@ -319,8 +324,8 @@ pub struct SpiBitbangDecoder<
     const CLK: u8,
     const CS: u8,
 > {
-    config: SpiBitbangConfig,
-    endpoint: SpiEndpoint,
+    pub config: SpiBitbangConfig,
+    pub endpoint: SpiEndpoint,
 }
 
 impl<const D0: u8, const D1: u8, const D2: u8, const D3: u8, const CLK: u8, const CS: u8>
@@ -328,6 +333,10 @@ impl<const D0: u8, const D1: u8, const D2: u8, const D3: u8, const CLK: u8, cons
 {
     pub fn new(config: SpiBitbangConfig, endpoint: SpiEndpoint) -> Self {
         Self { config, endpoint }
+    }
+
+    pub fn set_data_mode(&mut self, mode: SpiDataMode) {
+        self.config.data_mode = mode;
     }
 
     /// Iterate through samples until a low (active) CS level is found. Then, check

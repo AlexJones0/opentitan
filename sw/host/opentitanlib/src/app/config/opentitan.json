@@ -141,7 +141,13 @@
   "uarts": [
     {
       "name": "console",
-      "baudrate": 115200,
+      "baudrate": 57600,
+      "parity": "None",
+      "stopbits": "Stop1"
+    },
+    {
+      "name": "dut",
+      "baudrate": 57600,
       "parity": "None",
       "stopbits": "Stop1"
     }

@@ -62,6 +62,10 @@ impl SpiPins {
         })
     }
 
+    fn supports_quad_data_mode(&self) -> bool {
+        self.d2_3.is_some()
+    }
+
     fn update_pins(
         &mut self,
         sck: Option<&Rc<dyn GpioPin>>,
@@ -106,8 +110,8 @@ impl SpiPins {
                 )?;
                 self.copi.set_mode(PinMode::PushPull)?;
                 self.cipo.set_mode(PinMode::Input)?;
-                //self.d2_3.as_ref().unwrap()[0].set_mode(PinMode::PushPull)?;
-                //self.d2_3.as_ref().unwrap()[1].set_mode(PinMode::PushPull)?;
+                self.d2_3.as_ref().unwrap()[0].set_mode(PinMode::PushPull)?;
+                self.d2_3.as_ref().unwrap()[1].set_mode(PinMode::PushPull)?;
             }
             // TODO: add dual/quad data mode support
             SpiDataMode::Dual => bail!(TransportError::CommunicationError(
@@ -145,7 +149,7 @@ impl SpiPins {
             self.copi.borrow(),
             self.cipo.borrow(),
         ]);
-        if let Some(data_mode) = self.configured_data_mode {
+        /*if let Some(data_mode) = self.configured_data_mode {
             // TODO: Using the HyperDebug backend, the `gpio bit-bang` command
             // times out when these extra pins are given for no clear reason.
             if data_mode == SpiDataMode::Quad {
@@ -154,6 +158,10 @@ impl SpiPins {
                     gpio_pins.push(data_pins[1].borrow());
                 }
             }
+        }*/
+        if let Some(data_pins) = &self.d2_3 {
+            gpio_pins.push(data_pins[0].borrow());
+            gpio_pins.push(data_pins[1].borrow());
         }
         self.gpio_bitbanging.run(&gpio_pins, period, waveform)?;
         Ok(())
@@ -221,7 +229,7 @@ impl SpiBitbangInterface {
         // and just bitbangs at the fastest speed it can, so this isn't
         // a problem there. But if a backend is added that requires
         // valid bitbanging rates we need a better solution.
-        self.config.max_speed / 2
+        self.config.max_speed.div_ceil(2)
     }
 
     fn run_transaction(
@@ -246,6 +254,7 @@ impl SpiBitbangInterface {
                     self.encoder.run(wbuf, false, first_transfer, &mut samples);
                 }
                 Transfer::Read(rbuf) => {
+                    log::info!("");
                     //log::info!("Doing a read of len {}", rbuf.len());
                     ensure!(
                         rbuf.len() <= self.config.max_transfer_sizes.read,
@@ -334,11 +343,92 @@ impl SpiBitbangInterface {
                 }
             }
         }
-
-        // TODO finish and remove this comment
-
         Ok(())
     }
+
+    /*fn run_eeprom_transactions(&self, mut transactions: &mut [eeprom::Transaction]) -> Result<()> {
+        if !self.pins.supports_quad_data_mode() {
+            // We don't have the D2/D3 pins to bitbang and so cannot support multi-lane
+            // extensions, so attempt to perform operations using basic 1-1-1 SPI 
+            // read/writes where possible.
+            return eeprom::default_run_eeprom_transactions(self, transactions);
+        }
+        //self.encoder.cs_active(true, &mut samples);
+        Ok(())
+        // TODO: need to implement from here onwards: comehere
+        let mut stream_state = StreamState::NoPending;
+        loop {
+            match transactions {
+                [eeprom::Transaction::Command(pre_cmd), eeprom::Transaction::Write(cmd, wbuf), eeprom::Transaction::WaitForBusyClear, rest @ ..] =>
+                {
+                    if pre_cmd.get_opcode().len() == 1 {
+                        stream_state = self.eeprom_transmit(
+                            Some(pre_cmd), /* write_enable */
+                            cmd,
+                            wbuf,
+                            &mut [],
+                            true, /* wait_for_busy_clear */
+                            stream_state,
+                        )?;
+                    } else {
+                        stream_state =
+                            self.eeprom_transmit(None, pre_cmd, &[], &mut [], false, stream_state)?;
+                        stream_state = self.eeprom_transmit(
+                            None, /* write_enable */
+                            cmd,
+                            wbuf,
+                            &mut [],
+                            true, /* wait_for_busy_clear */
+                            stream_state,
+                        )?;
+                    }
+                    transactions = rest;
+                }
+                [eeprom::Transaction::Command(cmd), rest @ ..] => {
+                    stream_state =
+                        self.eeprom_transmit(None, cmd, &[], &mut [], false, stream_state)?;
+                    transactions = rest;
+                }
+                [eeprom::Transaction::Read(cmd, rbuf), rest @ ..] => {
+                    stream_state =
+                        self.eeprom_transmit(None, cmd, &[], rbuf, false, stream_state)?;
+                    transactions = rest;
+                }
+                [eeprom::Transaction::Write(cmd, wbuf), eeprom::Transaction::WaitForBusyClear, rest @ ..] =>
+                {
+                    stream_state = self.eeprom_transmit(
+                        None, /* write_enable */
+                        cmd,
+                        wbuf,
+                        &mut [],
+                        true, /* wait_for_busy_clear */
+                        stream_state,
+                    )?;
+                    transactions = rest;
+                }
+                [eeprom::Transaction::Write(cmd, wbuf), rest @ ..] => {
+                    stream_state =
+                        self.eeprom_transmit(None, cmd, wbuf, &mut [], false, stream_state)?;
+                    transactions = rest;
+                }
+                [eeprom::Transaction::WaitForBusyClear, rest @ ..] => {
+                    self.get_last_streamed_data(stream_state)?;
+                    let mut status = eeprom::STATUS_WIP;
+                    while status & eeprom::STATUS_WIP != 0 {
+                        self.run_transaction(&mut [
+                            Transfer::Write(&[eeprom::READ_STATUS]),
+                            Transfer::Read(std::slice::from_mut(&mut status)),
+                        ])?;
+                    }
+                    stream_state = StreamState::NoPending;
+                    transactions = rest;
+                }
+                [] => {
+                    return self.get_last_streamed_data(stream_state);
+                }
+            }
+        }
+    }*/
 }
 
 /// A SPI implementation that wraps some underlying SPI `Target` and replaces
@@ -484,6 +574,10 @@ impl Target for BitbangWrapperSpi {
         )?;
         Ok(())
     }
+
+    //fn run_eeprom_transactions(&self, mut transactions: &mut [eeprom::Transaction]) -> Result<()> {
+    //    self.wrapper.borrow_mut().run_eeprom_transactions(transactions)
+    //}
 }
 
 impl TargetChipDeassert for BitbangWrapperSpi {
