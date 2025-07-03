@@ -146,6 +146,7 @@ impl InitializeTest {
 
         // Bootstrap an rv32 test program.
         Self::print_result("bootstrap", self.bootstrap.init(&transport))?;
+        transport.enable_gpio_bitbang_wrapper(true)?;
         Ok(transport)
     }
 }
