@@ -123,13 +123,13 @@ impl FromStr for TransferMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ClockPhase {
     SampleLeading,
     SampleTrailing,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ClockPolarity {
     IdleLow,
     IdleHigh,

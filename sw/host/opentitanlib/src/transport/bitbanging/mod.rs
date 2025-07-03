@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod spi;
 pub mod uart;
 
 use std::collections::HashMap;
@@ -9,6 +10,7 @@ use std::rc::{Rc, Weak};
 
 use anyhow::Result;
 
+use crate::io::spi::Target;
 use crate::io::uart::Uart;
 use crate::transport::{GpioPin, Transport};
 
@@ -18,6 +20,7 @@ pub struct BitbangWrapperBuilder {
     // one, and we need to ensure the interfaces have consistent properties and
     // do not repeat e.g. muxing and pin monitoring logic.
     uarts: HashMap<String, Weak<dyn Uart>>,
+    spis: HashMap<String, Weak<dyn Target>>,
 }
 
 impl Default for BitbangWrapperBuilder {
@@ -30,6 +33,7 @@ impl BitbangWrapperBuilder {
     pub fn new() -> Self {
         Self {
             uarts: HashMap::new(),
+            spis: HashMap::new(),
         }
     }
 
@@ -56,5 +60,28 @@ impl BitbangWrapperBuilder {
             .insert(name.to_string(), Rc::downgrade(&bitbang_uart));
 
         Ok(bitbang_uart)
+    }
+
+    pub fn spi(
+        &mut self,
+        name: &str,
+        pins: spi::SpiPins,
+        transport: Rc<dyn Transport>,
+    ) -> Result<Rc<dyn Target>> {
+        // If a BitbangWrapperSpi alraedy exists for this specific SPI
+        // instance and it is still in use, return a reference to it.
+        if let Some(instance) = self.spis.get(name) {
+            if let Some(bitbang_spi) = instance.upgrade() {
+                return Ok(bitbang_spi);
+            }
+        }
+
+        // Otherwise, construct a new BitbangWrapperSpi
+        let spi = transport.spi(name)?;
+        let bitbang_spi: Rc<dyn Target> = Rc::new(spi::BitbangWrapperSpi::new(spi, pins)?);
+        self.spis
+            .insert(name.to_string(), Rc::downgrade(&bitbang_spi));
+
+        Ok(bitbang_spi)
     }
 }

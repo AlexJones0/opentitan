@@ -835,12 +835,43 @@ impl TransportWrapper {
         self.transport.jtag(opts)
     }
 
+    fn get_spi_pins(&self, name: &str) -> Result<bitbanging::spi::SpiPins> {
+        let mut d2_3 = None;
+        if let Ok(d2) = self.gpio_pin((name.to_string() + "_D2").as_str()) {
+            if let Ok(d3) = self.gpio_pin((name.to_string() + "_D3").as_str()) {
+                d2_3 = Some([d2, d3]);
+            }
+        }
+        bitbanging::spi::SpiPins::new(
+            self.gpio_pin((name.to_string() + "_SCK").as_str())?,
+            self.gpio_pin((name.to_string() + "_MOSI").as_str())?,
+            self.gpio_pin((name.to_string() + "_MISO").as_str())?,
+            self.gpio_pin((name.to_string() + "_CS").as_str())?,
+            d2_3,
+            Rc::clone(&self.transport),
+        )
+    }
+
     /// Returns a SPI [`Target`] implementation.
     pub fn spi(&self, name: &str) -> Result<Rc<dyn Target>> {
-        if self.wrap_bitbangs.get() {
-            log::warn!("Bitbanging is not yet implemented for SPI - using default implementation.");
-        }
         let name = name.to_uppercase();
+        if self.wrap_bitbangs.get() {
+            // If we want to bitbang the SPI, pass the request through to the
+            // bitbang wrapper which has its own local cache of instances.
+            // Otherwise, we are unable to bitbang SPI devices that have been
+            // previously instantiated without bitbanging.
+            let spi_name = if let Some(spi_conf) = self.spi_conf_map.get(&name) {
+                spi_conf.underlying_instance.as_str()
+            } else {
+                name.as_str()
+            };
+            let pins = self.get_spi_pins(spi_name)?;
+            return self.bitbang_wrapper.borrow_mut().spi(
+                spi_name,
+                pins,
+                Rc::clone(&self.transport),
+            );
+        }
         let mut spi_logical_map = self.spi_logical_map.borrow_mut();
         if let Some(instance) = spi_logical_map.get(&name) {
             return Ok(Rc::clone(instance) as Rc<dyn Target>);
