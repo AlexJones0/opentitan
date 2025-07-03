@@ -97,7 +97,11 @@ fn main() -> Result<()> {
     let transport = opts.init.init_target()?;
     let uart = transport.uart("console")?;
     uart.set_flow_control(true)?;
-    let _ = UartConsole::wait_for(&*uart, r"Running [^\r\n]*", opts.timeout)?;
+    let _ = UartConsole::wait_for(
+        &*uart,
+        r"Starting test command_processor[^\r\n]*",
+        opts.timeout,
+    )?;
     let _ = uart.clear_rx_buffer();
 
     execute_test!(

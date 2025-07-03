@@ -33,6 +33,7 @@ status_t command_processor(ujson_t *uj) {
 }
 
 bool test_main(void) {
+  busy_spin_micros(50000);
   kEndTest = 0;
   kTestWord = 0xface1234u;
   for (size_t i = 0; i < 256; ++i) {

@@ -168,6 +168,8 @@ bool lowpower_prep(dif_pwrmgr_t *pwrmgr, dif_pinmux_t *pinmux, bool deepsleep) {
 bool test_main(void) {
   bool result = false;
 
+  busy_spin_micros(50000);
+
   // Enable global and external IRQ at Ibex.
   irq_global_ctrl(true);
   irq_external_ctrl(true);

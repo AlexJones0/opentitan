@@ -59,6 +59,7 @@ bool test_main(void) {
   for (size_t i = 0; i < 4; ++i) {
     CHECK_STATUS_OK(spi_config_test(&spi_host));
   }
+  busy_spin_micros(40000);
   return true;
 }
 
@@ -71,6 +72,7 @@ static status_t spi_config_test(dif_spi_host_t *spi) {
   backdoor_cpol = UINT8_MAX;
   backdoor_data = UINT32_MAX;
 
+  busy_spin_micros(40000);
   OTTF_WAIT_FOR(backdoor_cpha != UINT8_MAX, kDefaultTimeoutMicros);
   config.cpha = backdoor_cpha;
   OTTF_WAIT_FOR(backdoor_cpol != UINT8_MAX, kDefaultTimeoutMicros);

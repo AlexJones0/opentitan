@@ -93,10 +93,9 @@ fn main() -> Result<()> {
     opts.init.init_logging();
     let transport = opts.init.init_target()?;
     transport.pin_strapping("RESET")?.apply()?;
+    let uart = transport.uart("console")?;
     execute_test!(spi_sleep_test, &opts, &transport,);
     execute_test!(spi_wakeup_test, &opts, &transport,);
-
-    let uart = transport.uart("console")?;
     let mut console = UartConsole {
         timeout: Some(opts.timeout),
         exit_success: Some(Regex::new(r"PASS!\r\n")?),
