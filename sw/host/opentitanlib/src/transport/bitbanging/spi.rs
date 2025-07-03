@@ -62,10 +62,6 @@ impl SpiPins {
         })
     }
 
-    fn supports_quad_data_mode(&self) -> bool {
-        self.d2_3.is_some()
-    }
-
     fn update_pins(
         &mut self,
         sck: Option<&Rc<dyn GpioPin>>,
@@ -110,8 +106,6 @@ impl SpiPins {
                 )?;
                 self.copi.set_mode(PinMode::PushPull)?;
                 self.cipo.set_mode(PinMode::Input)?;
-                self.d2_3.as_ref().unwrap()[0].set_mode(PinMode::PushPull)?;
-                self.d2_3.as_ref().unwrap()[1].set_mode(PinMode::PushPull)?;
             }
             // TODO: add dual/quad data mode support
             SpiDataMode::Dual => bail!(TransportError::CommunicationError(
@@ -149,19 +143,22 @@ impl SpiPins {
             self.copi.borrow(),
             self.cipo.borrow(),
         ]);
-        /*if let Some(data_mode) = self.configured_data_mode {
-            // TODO: Using the HyperDebug backend, the `gpio bit-bang` command
-            // times out when these extra pins are given for no clear reason.
+        if let Some(data_mode) = self.configured_data_mode {
+            // TODO: This currently causes execution of the `gpio bit-bang` command to
+            // hang and timeout on the HyperDebug backend due to an issue with the
+            // Hyperdebug firmware command implementations.
+            //
+            // Likely due to USB<->USART buffer sizes and/or the lack of flow control
+            // on the EC console interface, the bitbang command becomes too lengthy
+            // and as such OpenTitanLib doesn't detect a valid echo response, since
+            // some ending bytes are missed. This does not occur if the command is
+            // smaller than 64 characters (e.g. bitbanging only 5 pins).
             if data_mode == SpiDataMode::Quad {
                 if let Some(data_pins) = &self.d2_3 {
                     gpio_pins.push(data_pins[0].borrow());
                     gpio_pins.push(data_pins[1].borrow());
                 }
             }
-        }*/
-        if let Some(data_pins) = &self.d2_3 {
-            gpio_pins.push(data_pins[0].borrow());
-            gpio_pins.push(data_pins[1].borrow());
         }
         self.gpio_bitbanging.run(&gpio_pins, period, waveform)?;
         Ok(())
@@ -177,10 +174,6 @@ struct SpiConfiguration {
     max_speed: u32,
     max_transfer_count: usize,
     max_transfer_sizes: MaxSizes,
-    // TODO: how can I tell if the underling SPI target supports setting voltage?
-    // Is there a way I can determine this through the GpioPin interface? Since
-    // I know I can set voltage there. And can this be used with the GpioBitbanging
-    // interface?
 }
 
 /// Stateful implementation of the bitbang SPI, separated for clearer
@@ -198,12 +191,12 @@ impl SpiBitbangInterface {
     fn do_assert_cs(&mut self, assert: bool) -> Result<()> {
         if assert {
             if self.cs_asserted_count == 0 {
-                self.pins.assert_cs(true);
+                self.pins.assert_cs(true)?;
             }
             self.cs_asserted_count += 1;
         } else {
             if self.cs_asserted_count == 1 {
-                self.pins.assert_cs(false);
+                self.pins.assert_cs(false)?;
             }
             self.cs_asserted_count -= 1;
         }
@@ -233,15 +226,14 @@ impl SpiBitbangInterface {
     }
 
     fn run_transaction(
-        &self,
+        &mut self,
         transaction: &mut [Transfer],
         supports_bidirectional: bool,
     ) -> Result<()> {
         let mut samples = vec![];
         let mut reads = vec![];
 
-        self.encoder.cs_active(true, &mut samples);
-        let mut first_transfer = true;
+        self.encoder.assert_cs(true, &mut samples)?;
         for transfer in transaction {
             match transfer {
                 Transfer::Write(wbuf) => {
@@ -251,10 +243,9 @@ impl SpiBitbangInterface {
                         SpiError::InvalidDataLength(wbuf.len())
                     );
                     //log::info!("Read params valid.");
-                    self.encoder.run(wbuf, false, first_transfer, &mut samples);
+                    self.encoder.encode_write(wbuf, &mut samples)?;
                 }
                 Transfer::Read(rbuf) => {
-                    log::info!("");
                     //log::info!("Doing a read of len {}", rbuf.len());
                     ensure!(
                         rbuf.len() <= self.config.max_transfer_sizes.read,
@@ -264,8 +255,7 @@ impl SpiBitbangInterface {
                     let read_start = samples.len();
                     let bytes_per_word = self.config.bits_per_word.div_ceil(8) as usize;
                     let words = rbuf.len().div_ceil(bytes_per_word);
-                    self.encoder
-                        .encode_read(words, false, first_transfer, &mut samples);
+                    self.encoder.encode_read(words, &mut samples)?;
                     let read_end = samples.len() - 1;
                     reads.push((rbuf, read_start, read_end));
                 }
@@ -292,16 +282,15 @@ impl SpiBitbangInterface {
                     );
                     //log::info!("Write/Read params valid.");
                     let read_start = samples.len();
-                    self.encoder.run(wbuf, false, first_transfer, &mut samples);
+                    self.encoder.encode_write(wbuf, &mut samples)?;
                     let read_end = samples.len() - 1;
                     reads.push((rbuf, read_start, read_end));
                 }
                 Transfer::TpmPoll => bail!(TransportError::UnsupportedOperation),
                 Transfer::GscReady => bail!(TransportError::UnsupportedOperation),
             }
-            first_transfer = false;
         }
-        self.encoder.cs_active(false, &mut samples);
+        self.encoder.assert_cs(false, &mut samples)?;
         //log::info!("Got encoded samples: {:?}", samples);
 
         let clock_rate = self.get_clock_rate();
@@ -345,90 +334,6 @@ impl SpiBitbangInterface {
         }
         Ok(())
     }
-
-    /*fn run_eeprom_transactions(&self, mut transactions: &mut [eeprom::Transaction]) -> Result<()> {
-        if !self.pins.supports_quad_data_mode() {
-            // We don't have the D2/D3 pins to bitbang and so cannot support multi-lane
-            // extensions, so attempt to perform operations using basic 1-1-1 SPI 
-            // read/writes where possible.
-            return eeprom::default_run_eeprom_transactions(self, transactions);
-        }
-        //self.encoder.cs_active(true, &mut samples);
-        Ok(())
-        // TODO: need to implement from here onwards: comehere
-        let mut stream_state = StreamState::NoPending;
-        loop {
-            match transactions {
-                [eeprom::Transaction::Command(pre_cmd), eeprom::Transaction::Write(cmd, wbuf), eeprom::Transaction::WaitForBusyClear, rest @ ..] =>
-                {
-                    if pre_cmd.get_opcode().len() == 1 {
-                        stream_state = self.eeprom_transmit(
-                            Some(pre_cmd), /* write_enable */
-                            cmd,
-                            wbuf,
-                            &mut [],
-                            true, /* wait_for_busy_clear */
-                            stream_state,
-                        )?;
-                    } else {
-                        stream_state =
-                            self.eeprom_transmit(None, pre_cmd, &[], &mut [], false, stream_state)?;
-                        stream_state = self.eeprom_transmit(
-                            None, /* write_enable */
-                            cmd,
-                            wbuf,
-                            &mut [],
-                            true, /* wait_for_busy_clear */
-                            stream_state,
-                        )?;
-                    }
-                    transactions = rest;
-                }
-                [eeprom::Transaction::Command(cmd), rest @ ..] => {
-                    stream_state =
-                        self.eeprom_transmit(None, cmd, &[], &mut [], false, stream_state)?;
-                    transactions = rest;
-                }
-                [eeprom::Transaction::Read(cmd, rbuf), rest @ ..] => {
-                    stream_state =
-                        self.eeprom_transmit(None, cmd, &[], rbuf, false, stream_state)?;
-                    transactions = rest;
-                }
-                [eeprom::Transaction::Write(cmd, wbuf), eeprom::Transaction::WaitForBusyClear, rest @ ..] =>
-                {
-                    stream_state = self.eeprom_transmit(
-                        None, /* write_enable */
-                        cmd,
-                        wbuf,
-                        &mut [],
-                        true, /* wait_for_busy_clear */
-                        stream_state,
-                    )?;
-                    transactions = rest;
-                }
-                [eeprom::Transaction::Write(cmd, wbuf), rest @ ..] => {
-                    stream_state =
-                        self.eeprom_transmit(None, cmd, wbuf, &mut [], false, stream_state)?;
-                    transactions = rest;
-                }
-                [eeprom::Transaction::WaitForBusyClear, rest @ ..] => {
-                    self.get_last_streamed_data(stream_state)?;
-                    let mut status = eeprom::STATUS_WIP;
-                    while status & eeprom::STATUS_WIP != 0 {
-                        self.run_transaction(&mut [
-                            Transfer::Write(&[eeprom::READ_STATUS]),
-                            Transfer::Read(std::slice::from_mut(&mut status)),
-                        ])?;
-                    }
-                    stream_state = StreamState::NoPending;
-                    transactions = rest;
-                }
-                [] => {
-                    return self.get_last_streamed_data(stream_state);
-                }
-            }
-        }
-    }*/
 }
 
 /// A SPI implementation that wraps some underlying SPI `Target` and replaces
@@ -545,7 +450,7 @@ impl Target for BitbangWrapperSpi {
     fn run_transaction(&self, transaction: &mut [Transfer]) -> Result<()> {
         let bidirectional_support = self.supports_bidirectional_transfer().unwrap_or(false);
         self.wrapper
-            .borrow()
+            .borrow_mut()
             .run_transaction(transaction, bidirectional_support)
     }
 
@@ -554,7 +459,6 @@ impl Target for BitbangWrapperSpi {
         Ok(AssertChipSelect::new(self))
     }
 
-    // TODO: can we do this?
     fn set_pins(
         &self,
         _serial_clock: Option<&Rc<dyn GpioPin>>,
@@ -571,13 +475,10 @@ impl Target for BitbangWrapperSpi {
             _host_out_device_in,
             _host_in_device_out,
             _chip_select,
-        )?;
-        Ok(())
+        )
     }
 
-    //fn run_eeprom_transactions(&self, mut transactions: &mut [eeprom::Transaction]) -> Result<()> {
-    //    self.wrapper.borrow_mut().run_eeprom_transactions(transactions)
-    //}
+    // TODO: add `run_eeprom_transaction` support with Dual/Quad SPI options.
 }
 
 impl TargetChipDeassert for BitbangWrapperSpi {
