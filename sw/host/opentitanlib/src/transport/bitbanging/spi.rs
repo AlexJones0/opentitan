@@ -25,10 +25,34 @@ use crate::transport::{Transport, TransportError};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum SpiBitbangError {
+    #[error("Cannot specify a direction when using single data mode")]
+    DirectionalSingleData,
+    #[error("Dual/Quad operations require a read/write direction for pin configuration")]
+    DirectionlessMultipleData,
+    #[error("Cannot use Quad SPI writes/reads without supply the extra D2 & D3 pins")]
+    QuadSpiPinsMissing,
     #[error("Cannot bitbang SPI pins before configuring them for the required data mode")]
     PinsNotConfigured,
     #[error("Mismatched SPI decoding length: {0} != {1}")]
     MismatchedDecodingLength(usize, usize),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SpiPinMode {
+    pub data_mode: SpiDataMode,
+    pub is_read: Option<bool>,
+}
+
+impl SpiPinMode {
+    fn new(data_mode: SpiDataMode, is_read: Option<bool>) -> Result<Self> {
+        match (data_mode, is_read) {
+            (SpiDataMode::Single, Some(_)) => bail!(SpiBitbangError::DirectionalSingleData),
+            (SpiDataMode::Dual | SpiDataMode::Quad, None) => {
+                bail!(SpiBitbangError::DirectionlessMultipleData)
+            }
+            (data_mode, is_read) => Ok(Self { data_mode, is_read }),
+        }
+    }
 }
 
 /// Information related to bitbanging/sampling SPI pins.
@@ -39,7 +63,7 @@ pub struct SpiPins {
     d2_3: Option<[Rc<dyn GpioPin>; 2]>, // Extra data lines for Quad SPI
     cs: Rc<dyn GpioPin>,
     gpio_bitbanging: Rc<dyn GpioBitbanging>,
-    configured_data_mode: Option<SpiDataMode>,
+    configured_pin_mode: Option<SpiPinMode>,
 }
 
 impl SpiPins {
@@ -58,7 +82,7 @@ impl SpiPins {
             cs,
             d2_3,
             gpio_bitbanging: transport.gpio_bitbanging()?,
-            configured_data_mode: None,
+            configured_pin_mode: None,
         })
     }
 
@@ -70,7 +94,7 @@ impl SpiPins {
         cs: Option<&Rc<dyn GpioPin>>,
     ) {
         if sck.is_some() || copi.is_some() || cipo.is_some() || cs.is_some() {
-            self.configured_data_mode = None;
+            self.configured_pin_mode = None;
         }
         if let Some(sck_pin) = sck {
             self.sck = Rc::clone(sck_pin);
@@ -88,34 +112,58 @@ impl SpiPins {
 
     // Configure pinmux to allow SPI bitbanging.
     // Only supports single data transfer mode for now (no dual/quad SPI).
-    fn setup(&mut self, data_mode: SpiDataMode, transfer_mode: TransferMode) -> Result<()> {
+    fn setup(
+        &mut self,
+        cs_active: bool,
+        pin_mode: SpiPinMode,
+        transfer_mode: TransferMode,
+    ) -> Result<()> {
         let clk_idle_level = transfer_mode.polarity() == ClockPolarity::IdleHigh;
-        match data_mode {
-            SpiDataMode::Single => {
-                self.sck.set(
-                    Some(PinMode::PushPull),
-                    Some(clk_idle_level), // Match CPOL configuration
-                    Some(PullMode::PullUp),
-                    None,
-                )?;
-                self.cs.set(
-                    Some(PinMode::PushPull),
-                    Some(true), // CS is active-low
-                    Some(PullMode::PullUp),
-                    None,
-                )?;
+        self.sck.set(
+            Some(PinMode::PushPull),
+            Some(clk_idle_level), // Match CPOL configuration
+            Some(PullMode::PullUp),
+            None,
+        )?;
+        self.cs.set(
+            Some(PinMode::PushPull),
+            Some(!cs_active), // CS is active-low
+            Some(PullMode::PullUp),
+            None,
+        )?;
+        match pin_mode {
+            SpiPinMode {
+                data_mode: SpiDataMode::Single,
+                is_read: _,
+            } => {
                 self.copi.set_mode(PinMode::PushPull)?;
                 self.cipo.set_mode(PinMode::Input)?;
             }
-            // TODO: add dual/quad data mode support
-            SpiDataMode::Dual => bail!(TransportError::CommunicationError(
-                "Bitbanged transport does not support Dual SPI".to_string()
-            )),
-            SpiDataMode::Quad => bail!(TransportError::CommunicationError(
-                "Bitbanged transport does not support Quad SPI".to_string()
-            )),
+            SpiPinMode {
+                data_mode: SpiDataMode::Dual,
+                is_read: Some(r),
+            } => {
+                let data_pin_mode = if r { PinMode::Input } else { PinMode::PushPull };
+                self.copi.set_mode(data_pin_mode)?;
+                self.cipo.set_mode(data_pin_mode)?;
+            }
+            SpiPinMode {
+                data_mode: SpiDataMode::Quad,
+                is_read: Some(r),
+            } => {
+                let data_pin_mode = if r { PinMode::Input } else { PinMode::PushPull };
+                self.copi.set_mode(data_pin_mode)?;
+                self.cipo.set_mode(data_pin_mode)?;
+                if let Some(data_pins) = &mut self.d2_3 {
+                    data_pins[0].set_mode(data_pin_mode)?;
+                    data_pins[1].set_mode(data_pin_mode)?;
+                } else {
+                    bail!(SpiBitbangError::QuadSpiPinsMissing);
+                };
+            }
+            _ => bail!(SpiBitbangError::DirectionlessMultipleData),
         }
-        self.configured_data_mode = Some(data_mode);
+        self.configured_pin_mode = Some(pin_mode);
         Ok(())
     }
 
@@ -128,7 +176,7 @@ impl SpiPins {
     /// on the `BitbangEntry` type provided.
     fn bitbang(&self, samples: BitbangEntry, clock_rate: u32) -> Result<()> {
         ensure!(
-            self.configured_data_mode.is_some(),
+            self.configured_pin_mode.is_some(),
             SpiBitbangError::PinsNotConfigured
         );
         // 2 samples per clock (falling & rising edge)
@@ -142,17 +190,8 @@ impl SpiPins {
             self.copi.borrow(),
             self.cipo.borrow(),
         ]);
-        if let Some(data_mode) = self.configured_data_mode {
-            // TODO: This currently causes execution of the `gpio bit-bang` command to
-            // hang and timeout on the Hyperdebug backend due to an issue with the
-            // Hyperdebug firmware command implementations.
-            //
-            // Likely due to USB<->USART buffer sizes and/or the lack of flow control
-            // on the EC console interface, the bitbang command becomes too long and so
-            // the host doesn't detect a valid echo response, since some ending bytes
-            // are missed. This does not occur if the command is smaller than 64
-            // characters (e.g. bitbanging only 5 pins).
-            if data_mode == SpiDataMode::Quad {
+        if let Some(pin_mode) = self.configured_pin_mode {
+            if pin_mode.data_mode == SpiDataMode::Quad {
                 if let Some(data_pins) = &self.d2_3 {
                     gpio_pins.push(data_pins[0].borrow());
                     gpio_pins.push(data_pins[1].borrow());
@@ -168,7 +207,7 @@ impl SpiPins {
 #[derive(Debug)]
 struct SpiConfiguration {
     transfer_mode: TransferMode,
-    data_mode: SpiDataMode,
+    pin_mode: SpiPinMode,
     bits_per_word: u32,
     max_speed: u32,
     max_transfer_count: usize,
@@ -210,8 +249,11 @@ impl SpiBitbangInterface {
         cs: Option<&Rc<dyn GpioPin>>,
     ) -> Result<()> {
         self.pins.update_pins(sck, copi, cipo, cs);
-        self.pins
-            .setup(self.config.data_mode, self.config.transfer_mode)?;
+        self.pins.setup(
+            self.cs_asserted_count > 0,
+            self.config.pin_mode,
+            self.config.transfer_mode,
+        )?;
         Ok(())
     }
 
@@ -320,7 +362,7 @@ impl BitbangWrapperSpi {
             transfer_mode: spi.get_transfer_mode().unwrap_or(TransferMode::Mode0),
             // There is no way of querying the data mode of the underyling SPI,
             // so for now assume we start in standard Single mode.
-            data_mode: SpiDataMode::Single,
+            pin_mode: SpiPinMode::new(SpiDataMode::Single, None)?,
             bits_per_word: spi.get_bits_per_word().unwrap_or(8),
             max_speed: spi.get_max_speed().unwrap_or(50_000),
             max_transfer_count: spi.get_max_transfer_count().unwrap_or(usize::MAX),
@@ -332,7 +374,7 @@ impl BitbangWrapperSpi {
         let encoding_config = SpiBitbangConfig {
             cpol: config.transfer_mode.polarity() == ClockPolarity::IdleHigh,
             cpha: config.transfer_mode.phase() == ClockPhase::SampleTrailing,
-            data_mode: config.data_mode,
+            data_mode: config.pin_mode.data_mode,
             bits_per_word: config.bits_per_word,
         };
         // TODO: there is currently no way to query the underlying SPI's delays
@@ -342,7 +384,7 @@ impl BitbangWrapperSpi {
             cs_hold_delay: 8,
             cs_release_delay: 8,
         };
-        pins.setup(encoding_config.data_mode, config.transfer_mode)?;
+        pins.setup(false, config.pin_mode, config.transfer_mode)?;
         let wrapper = SpiBitbangInterface {
             config,
             pins,
