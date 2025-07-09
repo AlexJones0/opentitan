@@ -353,5 +353,36 @@
       tests: ["chip_sw_flash_crash_alert"]
       bazel: ["//sw/device/tests:flash_ctrl_write_clear_test"]
     }
+    {
+      name: chip_sw_flash_endurance_prod
+      desc: '''Verify that the flash on PROD silicon can endure a minimum number of
+            program/erase cycles before it becomes unreliable.
+
+            Configure memory protected regions to override the default configuration
+            and disable ECC, scrambling and high endurance.
+
+            Select an unused page of flash and test the following sequence:
+            1. Erase the target page, and verify the erase.
+            2. Write a pre-defined pattern to the entire page and read it back to verify.
+            3. Repeat 1->2 for a configured number of cycles (e.g. 100,000 cycles).
+            4. Write a pre-defined pattern to the entire page.
+            5. Perform manual baking of the chip to simulate long-term retention.
+            6. Read the data back from the target page and check that it matches the
+            data that was written in step 4.
+
+            To stress-test potential bit-flip issues on neighbouring cells, one pattern that
+            should be tested should alternate between 0xA5A5A5A5 and 0x5A5A5A5A. Alternating
+            the pattern will avoid missing failures when reusing the same pattern.
+
+            Note: This test will wear down flash, and so should only be run manually on devices /
+            pages where it is okay to wear the flash. This is not intended to be run frequently
+            or automatically.
+            '''
+      stage: V3
+      si_stage: SV3
+      lc_states: ["PROD"]
+      tests: []
+      bazel: []
+    }
   ]
 }
