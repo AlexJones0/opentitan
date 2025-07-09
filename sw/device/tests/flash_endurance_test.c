@@ -69,6 +69,9 @@ typedef struct flash_endurance_test {
   const char *description;
   // The number of program/erase cycles we expect to endure without faults
   uint32_t target_cycles;
+  // Whether single ECC errors corrected by flash_ctrl should be allowed (true)
+  // or treated as errors (false). Only applies if ECC is enabled.
+  bool allow_ecc_corrections;
   // The properties to use when testing
   dif_flash_ctrl_region_properties_t properties;
 } flash_endurance_test_t;
@@ -78,6 +81,7 @@ static const flash_endurance_test_t kTestData[] = {
 
         .description = "ECC, scrambling & high-endurance disabled",
         .target_cycles = 100 * 1000,
+        .allow_ecc_corrections = false,
         .properties =
             {
                 .rd_en = kMultiBitBool4True,
@@ -91,6 +95,7 @@ static const flash_endurance_test_t kTestData[] = {
     {
         .description = "high-endurance enabled with ECC & scrambling disabled",
         .target_cycles = 200 * 1000,
+        .allow_ecc_corrections = false,
         .properties =
             {
                 .rd_en = kMultiBitBool4True,
@@ -98,6 +103,21 @@ static const flash_endurance_test_t kTestData[] = {
                 .erase_en = kMultiBitBool4True,
                 .scramble_en = kMultiBitBool4False,
                 .ecc_en = kMultiBitBool4False,
+                .high_endurance_en = kMultiBitBool4True,
+            },
+    },
+    {
+        .description =
+            "ECC enabled, with scrambling and high-endurance disabled",
+        .target_cycles = 150 * 1000,
+        .allow_ecc_corrections = true,
+        .properties =
+            {
+                .rd_en = kMultiBitBool4True,
+                .prog_en = kMultiBitBool4True,
+                .erase_en = kMultiBitBool4True,
+                .scramble_en = kMultiBitBool4False,
+                .ecc_en = kMultiBitBool4True,
                 .high_endurance_en = kMultiBitBool4True,
             },
     },
@@ -119,11 +139,47 @@ static void initialise_test_data(bool random_data) {
 }
 
 /**
+ * Retrieve the number of single ECC errors that have been counted so far.
+ */
+static status_t flash_ctrl_get_single_ecc_errors(
+    dif_flash_ctrl_state_t *flash_state, uint32_t *errors) {
+  dif_flash_ctrl_ecc_errors_t ecc_errors;
+  CHECK_DIF_OK(
+      dif_flash_ctrl_get_ecc_errors(flash_state, kFlashBank, &ecc_errors));
+  *errors = ecc_errors.single_bit_error_count;
+  return OK_STATUS();
+}
+
+/**
+ * Retrieve the number of single ECC errors that have occured, and compare this
+ * to a previous value, to determine whether a single error has occured or not.
+ */
+static status_t flash_ctrl_verify_ecc_error(dif_flash_ctrl_state_t *flash_state,
+                                            uint32_t initial_errors,
+                                            bool *error) {
+  uint32_t updated_errors = 0;
+  CHECK_STATUS_OK(
+      flash_ctrl_get_single_ecc_errors(flash_state, &updated_errors));
+  if (updated_errors > initial_errors) {
+    *error = true;
+  }
+  return OK_STATUS();
+}
+
+/**
  * Perform a page erase operation and verify that the entire erase happened
- * without any faults by reading the data back.
+ * without any faults by reading the data back. Optionally check for single
+ * ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_erase(dif_flash_ctrl_state_t *flash_state,
-                                        uint32_t address, bool *error) {
+                                        uint32_t address, bool check_ecc,
+                                        bool *error) {
+  // Check the original number of single ECC errors
+  uint32_t ecc_errors = 0;
+  if (check_ecc) {
+    CHECK_STATUS_OK(flash_ctrl_get_single_ecc_errors(flash_state, &ecc_errors));
+  }
+
   // Erase the page and read it back
   *error = false;
   CHECK_STATUS_OK(flash_ctrl_testutils_erase_page(
@@ -132,6 +188,15 @@ static status_t flash_ctrl_verify_erase(dif_flash_ctrl_state_t *flash_state,
   CHECK_STATUS_OK(flash_ctrl_testutils_read(
       flash_state, address, kPartitionId, readback_data,
       kDifFlashCtrlPartitionTypeData, ARRAYSIZE(readback_data), /*delay=*/1));
+
+  // Check that no single ECC errors were reported, if applicable
+  if (check_ecc) {
+    CHECK_STATUS_OK(
+        flash_ctrl_verify_ecc_error(flash_state, ecc_errors, error));
+    if (*error) {
+      return OK_STATUS();
+    }
+  }
 
   // Check that we read back all 0xFFFFFFFF after erasure
   for (int i = 0; i < ARRAYSIZE(readback_data); ++i) {
@@ -145,11 +210,18 @@ static status_t flash_ctrl_verify_erase(dif_flash_ctrl_state_t *flash_state,
 
 /**
  * Perform a word program (write) operation and verify that the write occurred
- * without any faults by reading the data back.
+ * without any faults by reading the data back. Optionally check for single
+ * ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_word_write(
     dif_flash_ctrl_state_t *flash_state, uint32_t address, const uint32_t *data,
-    bool *error) {
+    bool check_ecc, bool *error) {
+  // Check the original number of single ECC errors
+  uint32_t ecc_errors = 0;
+  if (check_ecc) {
+    CHECK_STATUS_OK(flash_ctrl_get_single_ecc_errors(flash_state, &ecc_errors));
+  }
+
   // Program the given flash word and read it back
   *error = false;
   uint32_t readback_data[kWordsPerFlashWord];
@@ -159,6 +231,15 @@ static status_t flash_ctrl_verify_word_write(
   CHECK_STATUS_OK(flash_ctrl_testutils_read(
       flash_state, address, kPartitionId, readback_data,
       kDifFlashCtrlPartitionTypeData, ARRAYSIZE(readback_data), /*delay=*/1));
+
+  // Check that no single ECC errors were reported, if applicable
+  if (check_ecc) {
+    CHECK_STATUS_OK(
+        flash_ctrl_verify_ecc_error(flash_state, ecc_errors, error));
+    if (*error) {
+      return OK_STATUS();
+    }
+  }
 
   // Check that the data we read back matches the test data we wrote
   for (int i = 0; i < ARRAYSIZE(readback_data); ++i) {
@@ -173,14 +254,15 @@ static status_t flash_ctrl_verify_word_write(
 /**
  * Perform program (write) operations for each flash word in a given page,
  * verifying that each write occurred without faults by reading the data back.
+ * Optionally check for ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_page_write(
     dif_flash_ctrl_state_t *flash_state, uint32_t address, const uint32_t *data,
-    bool *error) {
+    bool check_ecc, bool *error) {
   *error = false;
   for (int word = 0; word < kFlashWordsPerPage; ++word) {
-    CHECK_STATUS_OK(
-        flash_ctrl_verify_word_write(flash_state, address, data, error));
+    CHECK_STATUS_OK(flash_ctrl_verify_word_write(flash_state, address, data,
+                                                 check_ecc, error));
     if (*error) {
       break;
     }
@@ -193,16 +275,18 @@ static status_t flash_ctrl_verify_page_write(
 /**
  * Erase a page in flash and then write to the entire page, verifying after
  * each operation that the eerase/program occurred without faults by reading
- * the data back. Stops when any errors are detected.
+ * the data back. Stops when any errors are detected. Optionally check for
+ * ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_erase_program(
     dif_flash_ctrl_state_t *flash_state, uint32_t address, const uint32_t *data,
-    bool *error) {
+    bool check_ecc, bool *error) {
   *error = false;
-  CHECK_STATUS_OK(flash_ctrl_verify_erase(flash_state, address, error));
+  CHECK_STATUS_OK(
+      flash_ctrl_verify_erase(flash_state, address, check_ecc, error));
   if (!*error) {
-    CHECK_STATUS_OK(
-        flash_ctrl_verify_page_write(flash_state, address, test_data, error));
+    CHECK_STATUS_OK(flash_ctrl_verify_page_write(flash_state, address,
+                                                 test_data, check_ecc, error));
   }
   return OK_STATUS();
 }
@@ -232,13 +316,14 @@ static status_t get_last_writable_page(dif_flash_ctrl_state_t *flash_state,
         flash_state, page_num, kDataRegionIndex, /*region_size=*/1,
         region_properties, &page_address));
     bool error = false;
-    CHECK_STATUS_OK(flash_ctrl_verify_erase_program(flash_state, page_address,
-                                                    test_data, &error));
+    CHECK_STATUS_OK(flash_ctrl_verify_erase_program(
+        flash_state, page_address, test_data, /*check_ecc=*/false, &error));
     if (error) {
       continue;
     }
     CHECK_STATUS_OK(flash_ctrl_verify_erase_program(
-        flash_state, page_address, inverted_test_data, &error));
+        flash_state, page_address, inverted_test_data, /*check_ecc=*/false,
+        &error));
     if (!error) {
       *last_writable = page_num;
       return OK_STATUS();
@@ -279,6 +364,8 @@ static status_t flash_endurance_test(dif_flash_ctrl_state_t *flash_state,
 
   // We assume we already did 2 program/erase cycles to find this writable page
   uint32_t valid_cycles = 1;
+  bool check_ecc = (test.properties.ecc_en == kMultiBitBool4True) &&
+                   (!test.allow_ecc_corrections);
 
   // Repeatedly erase & program until an error is detected
   bool error = false;
@@ -289,7 +376,7 @@ static status_t flash_endurance_test(dif_flash_ctrl_state_t *flash_state,
     }
     const uint32_t *data = (valid_cycles % 2) ? inverted_test_data : test_data;
     CHECK_STATUS_OK(flash_ctrl_verify_erase_program(flash_state, page_address,
-                                                    data, &error));
+                                                    data, check_ecc, &error));
   }
 
   if (error) {
