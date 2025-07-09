@@ -381,7 +381,7 @@
       si_stage: SV3
       lc_states: ["PROD"]
       tests: []
-      bazel: []
+      bazel: ["//sw/device/tests:flash_endurance_test"]
     }
   ]
 }

@@ -2084,6 +2084,60 @@ opentitan_test(
 )
 
 opentitan_test(
+    name = "flash_endurance_test",
+    srcs = ["flash_endurance_test.c"],
+    # This test is only intended to be run on silicon, but can be run on other
+    # environments for testing purposes. In non-silicon environments, the test
+    # is limited to just 5 Program/Erase cycles.
+    #
+    # Warning: these tests will wear down physical flash on silicon, and so
+    # should only be run manually when we are sure we are okay with wearing
+    # down physical flash pages.
+    exec_env = dicts.add(
+        EARLGREY_TEST_ENVS,
+        EARLGREY_CW340_TEST_ENVS,
+        EARLGREY_SILICON_OWNER_ROM_EXT_ENVS,
+    ),
+    # To wear out flash, these tests will take a long time.
+    fpga = fpga_params(
+        timeout = "eternal",
+        tags = ["manual"],
+        test_cmd = """
+            --bootstrap="{firmware}"
+            "{firmware:elf}"
+        """,
+        test_harness = "//sw/host/tests/chip/flash_ctrl:flash_endurance",
+    ),
+    silicon = silicon_params(
+        timeout = "eternal",
+        tags = ["manual"],
+        test_cmd = """
+            --bootstrap="{firmware}"
+            "{firmware:elf}"
+        """,
+        test_harness = "//sw/host/tests/chip/flash_ctrl:flash_endurance",
+    ),
+    verilator = verilator_params(
+        timeout = "eternal",
+        tags = ["manual"],
+    ),
+    deps = [
+        "//hw/top:dt",
+        "//hw/top:flash_ctrl_c_regs",
+        "//sw/device/lib/base:macros",
+        "//sw/device/lib/base:status",
+        "//sw/device/lib/dif:flash_ctrl",
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/testing:flash_ctrl_testutils",
+        "//sw/device/lib/testing:rand_testutils",
+        "//sw/device/lib/testing/test_framework:check",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+        "//sw/device/lib/testing/test_framework:ottf_utils",
+        "//sw/device/silicon_creator/lib/base:chip",
+    ],
+)
+
+opentitan_test(
     name = "gpio_smoketest",
     srcs = ["gpio_smoketest.c"],
     exec_env = dicts.add(

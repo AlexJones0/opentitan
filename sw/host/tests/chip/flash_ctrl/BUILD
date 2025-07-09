@@ -20,3 +20,20 @@ rust_binary(
         "@crate_index//:serde_json",
     ],
 )
+
+rust_binary(
+    name = "flash_endurance",
+    srcs = [
+        "src/flash_endurance.rs",
+    ],
+    deps = [
+        "//sw/host/opentitanlib",
+        "@crate_index//:anyhow",
+        "@crate_index//:clap",
+        "@crate_index//:humantime",
+        "@crate_index//:log",
+        "@crate_index//:object",
+        "@crate_index//:once_cell",
+        "@crate_index//:serde_json",
+    ],
+)
