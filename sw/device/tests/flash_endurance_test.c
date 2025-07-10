@@ -151,58 +151,54 @@ static status_t flash_ctrl_get_single_ecc_errors(
 }
 
 /**
- * Retrieve the number of single ECC errors that have occured, and compare this
- * to a previous value, to determine whether a single error has occured or not.
- */
-static status_t flash_ctrl_verify_ecc_error(dif_flash_ctrl_state_t *flash_state,
-                                            uint32_t initial_errors,
-                                            bool *error) {
-  uint32_t updated_errors = 0;
-  CHECK_STATUS_OK(
-      flash_ctrl_get_single_ecc_errors(flash_state, &updated_errors));
-  if (updated_errors > initial_errors) {
-    *error = true;
-  }
-  return OK_STATUS();
-}
-
-/**
  * Perform a page erase operation and verify that the entire erase happened
- * without any faults by reading the data back. Optionally check for single
- * ECC errors if `check_ecc=true`.
+ * without any faults by reading the data back. Reports errors on flash-word
+ * granularity, only checking words that have not yet errored. Optionally check
+ * for single ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_erase(dif_flash_ctrl_state_t *flash_state,
                                         uint32_t address, bool check_ecc,
-                                        bool *error) {
+                                        bool *errors) {
   // Check the original number of single ECC errors
   uint32_t ecc_errors = 0;
   if (check_ecc) {
     CHECK_STATUS_OK(flash_ctrl_get_single_ecc_errors(flash_state, &ecc_errors));
   }
 
-  // Erase the page and read it back
-  *error = false;
+  // Erase the page
   CHECK_STATUS_OK(flash_ctrl_testutils_erase_page(
       flash_state, address, kPartitionId, kDifFlashCtrlPartitionTypeData));
-  uint32_t readback_data[kWordsPerFlashPage];
-  CHECK_STATUS_OK(flash_ctrl_testutils_read(
-      flash_state, address, kPartitionId, readback_data,
-      kDifFlashCtrlPartitionTypeData, ARRAYSIZE(readback_data), /*delay=*/1));
 
-  // Check that no single ECC errors were reported, if applicable
-  if (check_ecc) {
-    CHECK_STATUS_OK(
-        flash_ctrl_verify_ecc_error(flash_state, ecc_errors, error));
-    if (*error) {
-      return OK_STATUS();
+  // Read the page back, a word at a time, to find errors at word-level.
+  uint32_t readback_data[kWordsPerFlashWord];
+  for (uint32_t i = 0; i < kFlashWordsPerPage; ++i) {
+    // Don't check flash words that have already errored
+    if (errors[i]) {
+      address += kBytesPerFlashWord;
+      continue;
     }
-  }
 
-  // Check that we read back all 0xFFFFFFFF after erasure
-  for (int i = 0; i < ARRAYSIZE(readback_data); ++i) {
-    if (~readback_data[i] != 0) {
-      *error = true;
-      break;
+    // Check that we read back all 0xFFFFFFFF after erasure
+    CHECK_STATUS_OK(flash_ctrl_testutils_read(
+        flash_state, address, kPartitionId, readback_data,
+        kDifFlashCtrlPartitionTypeData, ARRAYSIZE(readback_data), /*delay=*/1));
+    address += kBytesPerFlashWord;
+    for (int j = 0; j < ARRAYSIZE(readback_data); ++j) {
+      if (~readback_data[j] != 0) {
+        errors[i] = true;
+        break;
+      }
+    }
+
+    // Check that no single ECC errors were reported, if applicable
+    if (check_ecc) {
+      uint32_t updated_errors = 0;
+      CHECK_STATUS_OK(
+          flash_ctrl_get_single_ecc_errors(flash_state, &updated_errors));
+      if (updated_errors > ecc_errors) {
+        errors[i] = true;
+        ecc_errors = updated_errors;
+      }
     }
   }
   return OK_STATUS();
@@ -223,7 +219,6 @@ static status_t flash_ctrl_verify_word_write(
   }
 
   // Program the given flash word and read it back
-  *error = false;
   uint32_t readback_data[kWordsPerFlashWord];
   CHECK_STATUS_OK(flash_ctrl_testutils_write(
       flash_state, address, kPartitionId, data, kDifFlashCtrlPartitionTypeData,
@@ -234,9 +229,11 @@ static status_t flash_ctrl_verify_word_write(
 
   // Check that no single ECC errors were reported, if applicable
   if (check_ecc) {
+    uint32_t updated_errors = 0;
     CHECK_STATUS_OK(
-        flash_ctrl_verify_ecc_error(flash_state, ecc_errors, error));
-    if (*error) {
+        flash_ctrl_get_single_ecc_errors(flash_state, &updated_errors));
+    if (updated_errors > ecc_errors) {
+      *error = true;
       return OK_STATUS();
     }
   }
@@ -254,17 +251,16 @@ static status_t flash_ctrl_verify_word_write(
 /**
  * Perform program (write) operations for each flash word in a given page,
  * verifying that each write occurred without faults by reading the data back.
+ * Errors are reported at a flash-word granularity.
  * Optionally check for ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_page_write(
     dif_flash_ctrl_state_t *flash_state, uint32_t address, const uint32_t *data,
-    bool check_ecc, bool *error) {
-  *error = false;
+    bool check_ecc, bool *errors) {
   for (int word = 0; word < kFlashWordsPerPage; ++word) {
-    CHECK_STATUS_OK(flash_ctrl_verify_word_write(flash_state, address, data,
-                                                 check_ecc, error));
-    if (*error) {
-      break;
+    if (!errors[word]) {
+      CHECK_STATUS_OK(flash_ctrl_verify_word_write(flash_state, address, data,
+                                                   check_ecc, &errors[word]));
     }
     address += kBytesPerFlashWord;
     data += kWordsPerFlashWord;
@@ -275,20 +271,25 @@ static status_t flash_ctrl_verify_page_write(
 /**
  * Erase a page in flash and then write to the entire page, verifying after
  * each operation that the eerase/program occurred without faults by reading
- * the data back. Stops when any errors are detected. Optionally check for
- * ECC errors if `check_ecc=true`.
+ * the data back. Errors are reported at a flash-word granularity. Optionally
+ * check for ECC errors if `check_ecc=true`.
  */
 static status_t flash_ctrl_verify_erase_program(
     dif_flash_ctrl_state_t *flash_state, uint32_t address, const uint32_t *data,
-    bool check_ecc, bool *error) {
-  *error = false;
+    bool check_ecc, bool *errors) {
   CHECK_STATUS_OK(
-      flash_ctrl_verify_erase(flash_state, address, check_ecc, error));
-  if (!*error) {
-    CHECK_STATUS_OK(flash_ctrl_verify_page_write(flash_state, address,
-                                                 test_data, check_ecc, error));
-  }
+      flash_ctrl_verify_erase(flash_state, address, check_ecc, errors));
+  CHECK_STATUS_OK(flash_ctrl_verify_page_write(flash_state, address, test_data,
+                                               check_ecc, errors));
   return OK_STATUS();
+}
+
+static uint32_t error_count(bool *errors, uint32_t words) {
+  uint32_t error_count = 0;
+  for (uint32_t i = 0; i < words; ++i) {
+    error_count += (uint32_t)errors[i];
+  }
+  return error_count;
 }
 
 /**
@@ -315,16 +316,17 @@ static status_t get_last_writable_page(dif_flash_ctrl_state_t *flash_state,
     CHECK_STATUS_OK(flash_ctrl_testutils_data_region_setup_properties(
         flash_state, page_num, kDataRegionIndex, /*region_size=*/1,
         region_properties, &page_address));
-    bool error = false;
+
+    bool errors[kFlashWordsPerPage] = {false};
     CHECK_STATUS_OK(flash_ctrl_verify_erase_program(
-        flash_state, page_address, test_data, /*check_ecc=*/false, &error));
-    if (error) {
+        flash_state, page_address, test_data, /*check_ecc=*/false, errors));
+    if (error_count(errors, kFlashWordsPerPage) > 0) {
       continue;
     }
     CHECK_STATUS_OK(flash_ctrl_verify_erase_program(
         flash_state, page_address, inverted_test_data, /*check_ecc=*/false,
-        &error));
-    if (!error) {
+        errors));
+    if (error_count(errors, kFlashWordsPerPage) == 0) {
       *last_writable = page_num;
       return OK_STATUS();
     }
@@ -363,31 +365,83 @@ static status_t flash_endurance_test(dif_flash_ctrl_state_t *flash_state,
       test.properties, &page_address));
 
   // We assume we already did 2 program/erase cycles to find this writable page
-  uint32_t valid_cycles = 1;
+  uint32_t cycles = 1;
+  uint32_t word_cycles[kFlashWordsPerPage];
+  for (int i = 0; i < kFlashWordsPerPage; ++i) {
+    word_cycles[i] = cycles;
+  }
   bool check_ecc = (test.properties.ecc_en == kMultiBitBool4True) &&
                    (!test.allow_ecc_corrections);
 
-  // Repeatedly erase & program until an error is detected
-  bool error = false;
-  while (!error && valid_cycles < max_cycles) {
-    valid_cycles += 1;
-    if (valid_cycles % kLogCycleGranularity == 0) {
-      LOG_INFO("Succeeded %d program/erase cycles", valid_cycles);
+  // Repeatedly erase & program until an error is detected in 50% of flash words
+  bool errors[kFlashWordsPerPage] = {false};
+  uint32_t threshold = kFlashWordsPerPage / 2 + kFlashWordsPerPage % 2;
+  while (error_count(errors, kFlashWordsPerPage) < threshold &&
+         cycles < max_cycles) {
+    // Increment cycle counters for all words that did not report errors.
+    cycles += 1;
+    for (uint32_t i = 0; i < kFlashWordsPerPage; ++i) {
+      word_cycles[i] += errors[i] ? 0 : 1;
     }
-    const uint32_t *data = (valid_cycles % 2) ? inverted_test_data : test_data;
+
+    if (cycles % kLogCycleGranularity == 0) {
+      LOG_INFO("Processed %d program/erase cycles (%d/%d word faults)", cycles,
+               error_count(errors, kFlashWordsPerPage), kFlashWordsPerPage);
+    }
+
+    // Run a Program/Erase operation on the entire page
+    const uint32_t *data = (cycles % 2) ? inverted_test_data : test_data;
     CHECK_STATUS_OK(flash_ctrl_verify_erase_program(flash_state, page_address,
-                                                    data, check_ecc, &error));
+                                                    data, check_ecc, errors));
   }
 
-  if (error) {
+  // Calculate useful info/statistics
+  uint32_t num_errors = error_count(errors, kFlashWordsPerPage);
+  uint32_t minimum_cycles = word_cycles[0];
+  uint32_t total_cycles = 0;
+  for (uint32_t i = 0; i < kFlashWordsPerPage; ++i) {
+    if (word_cycles[i] < minimum_cycles) {
+      minimum_cycles = word_cycles[i];
+    }
+    if (errors[i]) {
+      total_cycles += word_cycles[i];
+    }
+  }
+  uint32_t mean_cycles = total_cycles / num_errors;
+
+  uint32_t variance_cycles = 0;
+  for (uint32_t i = 0; i < kFlashWordsPerPage; ++i) {
+    if (!errors[i]) {
+      continue;
+    }
+    uint32_t mean_diff = (mean_cycles >= word_cycles[i])
+                             ? mean_cycles - word_cycles[i]
+                             : word_cycles[i] - mean_cycles;
+    variance_cycles += mean_diff * mean_diff / num_errors;
+  }
+
+  // Report useful info/stats and check the minimum failed cycles
+  if (num_errors > 0) {
     LOG_INFO(
-        "Flash failed after %d program/erase cycles (expected >= %d cycles)",
-        valid_cycles, target_cycles);
+        "First flash word failure occured after %d cycles (expected >= %d)",
+        minimum_cycles, target_cycles);
   } else {
-    LOG_INFO("Exceeded max program/erase cycles without failing (%d cycles)",
+    LOG_INFO("Exceeded max (%d) program/erase cycles without failing",
              max_cycles);
   }
-  CHECK(valid_cycles >= target_cycles,
+  if (num_errors >= threshold) {
+    LOG_INFO("Half (%d/%d) of flash words failed after %d cycles", num_errors,
+             kFlashWordsPerPage, cycles);
+  } else {
+    LOG_INFO("After the max (%d) cycles, %d out of %d flash words failed",
+             max_cycles, num_errors, kFlashWordsPerPage);
+  }
+  if (num_errors > 0) {
+    LOG_INFO("For the failing words:");
+    LOG_INFO("\t- It took an average of %d cycles for failure", mean_cycles);
+    LOG_INFO("\t- With a variance of (approx) %d cycles", variance_cycles);
+  }
+  CHECK(minimum_cycles >= target_cycles,
         "Flash did not endure for the target number of cycles");
 
   return OK_STATUS();
