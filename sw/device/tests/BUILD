@@ -733,6 +733,44 @@ opentitan_test(
 )
 
 opentitan_test(
+    name = "bitbanged_uart_test",
+    srcs = ["bitbanged_uart_test.c"],
+    exec_env = dicts.add(
+        EARLGREY_TEST_ENVS,
+        EARLGREY_SILICON_OWNER_ROM_EXT_ENVS,
+    ),
+    fpga = fpga_params(
+        test_cmd = " ".join([
+            "--bootstrap=\"{firmware}\"",
+            "--firmware-elf=\"{firmware:elf}\"",
+        ]),
+        test_harness = "//sw/host/tests/chip/uart:bitbanged_uart",
+    ),
+    silicon = silicon_params(
+        test_cmd = " ".join([
+            "--bootstrap=\"{firmware}\"",
+            "--firmware-elf=\"{firmware:elf}\"",
+        ]),
+        test_harness = "//sw/host/tests/chip/uart:bitbanged_uart",
+    ),
+    # This test can take > 40 minutes, so mark it manual as it shouldn't run
+    # in CI/nightlies.
+    verilator = verilator_params(tags = ["manual"]),
+    deps = [
+        "//hw/top_earlgrey/sw/autogen:top_earlgrey",
+        "//sw/device/lib/arch:device",
+        "//sw/device/lib/base:mmio",
+        "//sw/device/lib/dif:pinmux",
+        "//sw/device/lib/dif:uart",
+        "//sw/device/lib/runtime:hart",
+        "//sw/device/lib/testing:uart_testutils",
+        "//sw/device/lib/testing/test_framework:ottf_console",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+        "//sw/device/lib/testing/test_framework:ottf_utils",
+    ],
+)
+
+opentitan_test(
     name = "chip_power_idle_load_test",
     srcs = ["chip_power_idle_load_test.c"],
     exec_env = dicts.add(

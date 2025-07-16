@@ -7,6 +7,22 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 package(default_visibility = ["//visibility:public"])
 
 rust_binary(
+    name = "bitbanged_uart",
+    srcs = [
+        "src/bitbanged_uart.rs",
+    ],
+    deps = [
+        "//sw/host/opentitanlib",
+        "@crate_index//:anyhow",
+        "@crate_index//:clap",
+        "@crate_index//:humantime",
+        "@crate_index//:log",
+        "@crate_index//:object",
+        "@crate_index//:serialport",
+    ],
+)
+
+rust_binary(
     name = "uart_tx_rx",
     srcs = [
         "src/uart_tx_rx.rs",

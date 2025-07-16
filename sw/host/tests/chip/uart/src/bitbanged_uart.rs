@@ -1,0 +1,161 @@
+// Copyright lowRISC contributors (OpenTitan project).
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
+use std::fs;
+use std::io::{BufReader, Read};
+use std::path::PathBuf;
+use std::time::Duration;
+
+use anyhow::{Context, Result};
+use clap::Parser;
+
+use opentitanlib::app::TransportWrapper;
+use opentitanlib::console::spi::SpiConsoleDevice;
+use opentitanlib::execute_test;
+use opentitanlib::io::console::ConsoleDevice;
+use opentitanlib::test_utils;
+use opentitanlib::test_utils::init::InitializeTest;
+use opentitanlib::test_utils::mem::MemWriteReq;
+use opentitanlib::uart::console::UartConsole;
+
+/// This test is based on the `uart_baud_rate` test, but differs in that it:
+///  1. Enables a bitbang wrapper to use GPIO bitbanging instead of HW UARTs.
+///  2. It uses a SPI device console to avoid issues with bitbanging at the
+///     default baud rate when using a UART OTTF console.
+
+#[derive(Debug, Parser)]
+struct Opts {
+    #[command(flatten)]
+    init: InitializeTest,
+
+    /// Console receive timeout.
+    #[arg(long, value_parser = humantime::parse_duration, default_value = "600s")]
+    timeout: Duration,
+
+    /// Name of the SPI interface to connect to the OTTF console.
+    #[arg(long, default_value = "BOOTSTRAP")]
+    console_spi: String,
+
+    /// Path to the ELF file being tested on the device.
+    #[arg(long)]
+    firmware_elf: PathBuf,
+}
+
+struct TestData {
+    expected_data: Vec<u8>,
+    baud_rate: u32,
+    test_phase_addr: u32,
+}
+
+#[repr(u8)]
+enum TestPhase {
+    _Init,
+    _Cfg,
+    Send,
+    Recv,
+    _Done,
+}
+
+fn main() -> Result<()> {
+    let opts = Opts::parse();
+    opts.init.init_logging();
+
+    let elf_file = fs::read(&opts.firmware_elf).context("failed to read ELF")?;
+    let object = object::File::parse(elf_file.as_ref()).context("failed to parse ELF")?;
+
+    let expected_data = test_utils::object::symbol_data(&object, "kSendData")?;
+    let test_phase_addr = test_utils::object::symbol_addr(&object, "test_phase")?;
+
+    // Create a SPI OTTF console to use in the test, so that we can test only
+    // bitbanging the UARTs and use a normal hardware SPI device.
+    let transport = opts.init.init_target()?;
+    let spi = transport.spi(&opts.console_spi)?;
+    let spi_console_device = SpiConsoleDevice::new(&*spi)?;
+
+    // Enable bitbang wrapper for the subsequently created devices (UARTs)
+    transport.enable_gpio_bitbang_wrapper(true)?;
+
+    transport.reset_target(Duration::from_millis(500), true)?;
+    let test_data = TestData {
+        expected_data: expected_data.clone(),
+        baud_rate: 57600,
+        test_phase_addr,
+    };
+
+    execute_test!(
+        uart_bitbang,
+        &opts,
+        &transport,
+        &spi_console_device,
+        &test_data
+    );
+
+    // Reset baud rate to the default to avoid affecting future tests.
+    let uart = transport.uart("dut")?;
+    uart.set_baudrate(115200)?;
+    uart.clear_rx_buffer()?;
+
+    Ok(())
+}
+
+/// Send and receive data with a device's UART.
+fn uart_bitbang<T>(
+    opts: &Opts,
+    transport: &TransportWrapper,
+    console: &T,
+    test_data: &TestData,
+) -> Result<()>
+where
+    T: ConsoleDevice + ?Sized,
+{
+    let TestData {
+        expected_data,
+        baud_rate,
+        test_phase_addr,
+    } = test_data;
+
+    let uart = transport.uart("dut")?;
+    uart.set_baudrate(*baud_rate)?;
+    uart.clear_rx_buffer()?;
+
+    // Keep repeating the test for various Bauds until the device tells us it's
+    // `PASS`ed.
+    loop {
+        let msg = UartConsole::wait_for(
+            console,
+            r"PASS![^\r\n]*|Starting test[^\n]*\n",
+            opts.timeout,
+        )?;
+
+        if msg[0].as_str().contains("PASS") {
+            break;
+        }
+
+        // Read the configured baud rate and configure our side of the UART.
+        UartConsole::wait_for(console, r"waiting for commands", opts.timeout)?;
+        uart.clear_rx_buffer()?;
+
+        // Ask the device to send us some data.
+        MemWriteReq::execute(console, *test_phase_addr, &[TestPhase::Send as u8])?;
+        UartConsole::wait_for(console, r"Data sent[^\n]*\n", opts.timeout)?;
+
+        log::info!("Reading data...");
+
+        let mut data = vec![0u8; expected_data.len()];
+        let mut buf_reader = BufReader::new(&*uart);
+        buf_reader
+            .read_exact(&mut data)
+            .context("failed to read data")?;
+
+        assert_eq!(data, *expected_data);
+
+        // Ask the device to receive the data we send.
+        MemWriteReq::execute(console, *test_phase_addr, &[TestPhase::Recv as u8])?;
+
+        log::info!("Sending data...");
+        uart.write(expected_data).context("failed to send data")?;
+    }
+
+    Ok(())
+}
