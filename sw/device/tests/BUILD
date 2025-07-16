@@ -771,6 +771,32 @@ opentitan_test(
 )
 
 opentitan_test(
+    name = "bitbanged_spi_test",
+    srcs = ["spi_device_ottf_console_test.c"],
+    exec_env = dicts.add(
+        {
+            "//hw/top_earlgrey:fpga_cw310_sival_rom_ext": None,
+            "//hw/top_earlgrey:fpga_cw310_rom_with_fake_keys": None,
+        },
+        EARLGREY_CW340_TEST_ENVS,
+    ),
+    fpga = fpga_params(
+        test_cmd = """
+            --bootstrap="{firmware}"
+            "{firmware:elf}"
+        """,
+        test_harness = "//sw/host/tests/chip/spi_device_ottf_console:bitbanged_spi",
+    ),
+    deps = [
+        "//hw/top_earlgrey/sw/autogen:top_earlgrey",
+        "//sw/device/lib/dif:spi_device",
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/testing:spi_flash_testutils",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+    ],
+)
+
+opentitan_test(
     name = "chip_power_idle_load_test",
     srcs = ["chip_power_idle_load_test.c"],
     exec_env = dicts.add(
