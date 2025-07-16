@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+#include "sw/device/lib/base/abs_mmio.h"
 #include "sw/device/lib/base/macros.h"
 #include "sw/device/lib/base/mmio.h"
 #include "sw/device/lib/crypto/drivers/entropy.h"
@@ -11,6 +12,9 @@
 #include "sw/device/lib/testing/test_framework/check.h"
 #include "sw/device/lib/testing/test_framework/ottf_main.h"
 
+#include "csrng_regs.h"        // Generated
+#include "edn_regs.h"          // Generated
+#include "entropy_src_regs.h"  // Generated
 #include "hw/top_earlgrey/sw/autogen/top_earlgrey.h"
 #include "kmac_regs.h"  // Generated.
 
@@ -27,6 +31,11 @@ OTTF_DEFINE_TEST_CONFIG();
 enum {
   // Maxiumum digest size in bytes
   kKmacDigestLenMax = 100,
+
+  kBaseCsrng = TOP_EARLGREY_CSRNG_BASE_ADDR,
+  kBaseEntropySrc = TOP_EARLGREY_ENTROPY_SRC_BASE_ADDR,
+  kBaseEdn0 = TOP_EARLGREY_EDN0_BASE_ADDR,
+  kBaseEdn1 = TOP_EARLGREY_EDN1_BASE_ADDR,
 };
 
 /**
@@ -126,6 +135,42 @@ status_t do_kmac_operation(const dif_kmac_t *kmac, uint32_t *hash_ctr) {
   return OK_STATUS();
 }
 
+static void edn_stop(uint32_t edn_address) {
+  // FIFO clear is only honored if edn is enabled. This is needed to avoid
+  // synchronization issues with the upstream CSRNG instance.
+  uint32_t reg = abs_mmio_read32(edn_address + EDN_CTRL_REG_OFFSET);
+  abs_mmio_write32(edn_address + EDN_CTRL_REG_OFFSET,
+                   bitfield_field32_write(reg, EDN_CTRL_CMD_FIFO_RST_FIELD,
+                                          kMultiBitBool4True));
+
+  // Disable EDN and restore the FIFO clear at the same time so that no rogue
+  // command can get in after the clear above.
+  abs_mmio_write32(edn_address + EDN_CTRL_REG_OFFSET, EDN_CTRL_REG_RESVAL);
+}
+
+static void entropy_src_stop(void) {
+  abs_mmio_write32(kBaseEntropySrc + ENTROPY_SRC_MODULE_ENABLE_REG_OFFSET,
+                   ENTROPY_SRC_MODULE_ENABLE_REG_RESVAL);
+
+  // Set default values for other critical registers to avoid synchronization
+  // issues.
+  abs_mmio_write32(kBaseEntropySrc + ENTROPY_SRC_ENTROPY_CONTROL_REG_OFFSET,
+                   ENTROPY_SRC_ENTROPY_CONTROL_REG_RESVAL);
+  abs_mmio_write32(kBaseEntropySrc + ENTROPY_SRC_CONF_REG_OFFSET,
+                   ENTROPY_SRC_CONF_REG_RESVAL);
+  abs_mmio_write32(kBaseEntropySrc + ENTROPY_SRC_HEALTH_TEST_WINDOWS_REG_OFFSET,
+                   ENTROPY_SRC_HEALTH_TEST_WINDOWS_REG_RESVAL);
+  abs_mmio_write32(kBaseEntropySrc + ENTROPY_SRC_ALERT_THRESHOLD_REG_OFFSET,
+                   ENTROPY_SRC_ALERT_THRESHOLD_REG_RESVAL);
+}
+
+static void entropy_complex_stop_all(void) {
+  edn_stop(kBaseEdn0);
+  edn_stop(kBaseEdn1);
+  abs_mmio_write32(kBaseCsrng + CSRNG_CTRL_REG_OFFSET, CSRNG_CTRL_REG_RESVAL);
+  entropy_src_stop();
+}
+
 status_t test_kmac_manual_prng_reseed(void) {
   LOG_INFO("Testing kmac_mode_change test");
 
@@ -177,7 +222,7 @@ status_t test_kmac_manual_prng_reseed(void) {
     TRY(do_kmac_operation(&kmac, &hash_cnt));
     CHECK(hash_cnt == i, "Hash count did not increment as expected");
   }
-  
+
   // Now follow manual reseeding guidance
   // 1. Check the entropy complex is running
   CHECK_STATUS_OK(entropy_complex_check(),
@@ -202,7 +247,8 @@ status_t test_kmac_manual_prng_reseed(void) {
       bitfield_bit32_write(cfg_reg, KMAC_CFG_SHADOWED_MSG_MASK_BIT, false);
   cfg_reg = bitfield_bit32_write(
       cfg_reg, KMAC_CFG_SHADOWED_ENTROPY_FAST_PROCESS_BIT, false);
-  mmio_region_write32_shadowed(kmac.base_addr, KMAC_CFG_SHADOWED_REG_OFFSET, cfg_reg);
+  mmio_region_write32_shadowed(kmac.base_addr, KMAC_CFG_SHADOWED_REG_OFFSET,
+                               cfg_reg);
   // 6. Send the `start` command to the CMD register.
   uint32_t cmd_reg =
       bitfield_field32_write(0, KMAC_CMD_CMD_FIELD, KMAC_CMD_CMD_VALUE_START);
@@ -225,6 +271,57 @@ status_t test_kmac_manual_prng_reseed(void) {
   // Retrieve the new hash count
   CHECK_DIF_OK(dif_kmac_get_hash_counter(&kmac, &hash_cnt));
   CHECK(hash_cnt == 0, "Entropy hash threshold not reset to 0 as expected");
+
+  // Additional testing
+
+  // Do 30 KMAC operations so that the next message sent will not reseed,
+  // but the message after that will.
+  for (int i = 1; i < (config.entropy_hash_threshold - 1); ++i) {
+    TRY(do_kmac_operation(&kmac, &hash_cnt));
+    CHECK(hash_cnt == i, "Hash count did not increment as expected");
+  }
+
+  // Start following the manual re-seeding guidance again, but with the entropy
+  // complex down instead
+  entropy_complex_stop_all();
+  // 2. Check the KMAC is idle
+  CHECK(is_kmac_state_idle(&kmac),
+        "Expected KMAC to be idle after finishing operation");
+  // 3. Trigger a manual reseed operation.
+  // We expect the hash counter to reset to 0, rather than increment to 31.
+  kmac_trigger_manual_reseed(&kmac);
+  CHECK_DIF_OK(dif_kmac_get_hash_counter(&kmac, &hash_cnt));
+  CHECK(hash_cnt == 0, "Hash count should have reset");
+  // 4. Configure KMAC to process a message in cSHAKE mode without enabling KMAC
+  // mode
+  // 5. Set entropy_fast_process to 0 to block any hashing.
+  cfg_reg = mmio_region_read32(kmac.base_addr, KMAC_CFG_SHADOWED_REG_OFFSET);
+  cfg_reg = bitfield_field32_write(cfg_reg, KMAC_CFG_SHADOWED_MODE_FIELD,
+                                   KMAC_CFG_SHADOWED_MODE_VALUE_CSHAKE);
+  cfg_reg = bitfield_bit32_write(cfg_reg, KMAC_CFG_SHADOWED_KMAC_EN_BIT, false);
+  cfg_reg =
+      bitfield_bit32_write(cfg_reg, KMAC_CFG_SHADOWED_MSG_MASK_BIT, false);
+  cfg_reg = bitfield_bit32_write(
+      cfg_reg, KMAC_CFG_SHADOWED_ENTROPY_FAST_PROCESS_BIT, false);
+  mmio_region_write32_shadowed(kmac.base_addr, KMAC_CFG_SHADOWED_REG_OFFSET,
+                               cfg_reg);
+  // 6. Send the `start` command to the CMD register.
+  cmd_reg =
+      bitfield_field32_write(0, KMAC_CMD_CMD_FIELD, KMAC_CMD_CMD_VALUE_START);
+  mmio_region_write32(kmac.base_addr, KMAC_CMD_REG_OFFSET, cmd_reg);
+  CHECK_DIF_OK(dif_kmac_poll_status(&kmac, KMAC_STATUS_SHA3_ABSORB_BIT));
+  // 7. Send the `process` command to the CMD register
+  cmd_reg =
+      bitfield_field32_write(0, KMAC_CMD_CMD_FIELD, KMAC_CMD_CMD_VALUE_PROCESS);
+  mmio_region_write32(kmac.base_addr, KMAC_CMD_REG_OFFSET, cmd_reg);
+  // Key difference: we expect STATUS.sha3_idle to be unset, but
+  // STATUS.sha3_absorb to be set here, since we don't even expect hashing of
+  // the function name or customization string to finish.
+  TRY(dif_kmac_poll_status(&kmac, KMAC_STATUS_SHA3_ABSORB_BIT));
+  CHECK(!is_kmac_state_idle(&kmac), "KMAC should not be reporting idle");
+  CHECK(dif_kmac_poll_status(&kmac, KMAC_STATUS_SHA3_SQUEEZE_BIT) == kDifError,
+        "Did not expect to reach STATUS.sha3_squeeze!");
+  // Don't bother cleaning up after this point
 
   return OK_STATUS();
 }
