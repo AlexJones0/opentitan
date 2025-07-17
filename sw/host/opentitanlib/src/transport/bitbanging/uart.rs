@@ -504,8 +504,8 @@ impl BitbangWrapperUart {
             flow_control: uart.get_flow_control().unwrap_or(FlowControl::None),
             break_condition: false,
         };
-        // TODO: no way to query stop bits yet, so assume 2 are used.
-        let encoding_config = UartBitbangConfig::new(8, UartStopBits::Stop2, 2, config.parity)?;
+        // TODO: no way to query stop bits yet, so assume 1 is used
+        let encoding_config = UartBitbangConfig::new(8, UartStopBits::Stop1, 2, config.parity)?;
         let mut pins = UartPins::new(rx, tx, transport)?;
         pins.setup()?;
         let wrapper = UartBitbangInterface {
