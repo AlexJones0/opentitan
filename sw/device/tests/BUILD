@@ -744,14 +744,14 @@ opentitan_test(
             "--bootstrap=\"{firmware}\"",
             "--firmware-elf=\"{firmware:elf}\"",
         ]),
-        test_harness = "//sw/host/tests/chip/uart:uart_baud_rate",
+        test_harness = "//sw/host/tests/chip/uart:bitbanged_uart",
     ),
     silicon = silicon_params(
         test_cmd = " ".join([
             "--bootstrap=\"{firmware}\"",
             "--firmware-elf=\"{firmware:elf}\"",
         ]),
-        test_harness = "//sw/host/tests/chip/uart:uart_baud_rate",
+        test_harness = "//sw/host/tests/chip/uart:bitbanged_uart",
     ),
     # This test can take > 40 minutes, so mark it manual as it shouldn't run
     # in CI/nightlies.

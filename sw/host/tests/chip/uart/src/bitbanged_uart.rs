@@ -16,17 +16,13 @@ use opentitanlib::execute_test;
 use opentitanlib::io::console::ConsoleDevice;
 use opentitanlib::test_utils;
 use opentitanlib::test_utils::init::InitializeTest;
-use opentitanlib::test_utils::mem::{MemRead32Req, MemWriteReq};
+use opentitanlib::test_utils::mem::MemWriteReq;
 use opentitanlib::uart::console::UartConsole;
 
 /// This test is based on the `uart_baud_rate` test, but differs in that it:
 ///  1. Enables a bitbang wrapper to use GPIO bitbanging instead of HW UARTs.
 ///  2. It uses a SPI device console to avoid issues with bitbanging at the
 ///     default baud rate when using a UART OTTF console.
-
-/// This test is a duplicate of the `uart_baud_rate` test, but enables a bitbang
-/// wrapper and limits to lower baud rates so as to allow the testing of a
-/// transport's bitbang wrapping utilities.
 
 #[derive(Debug, Parser)]
 struct Opts {
@@ -48,9 +44,7 @@ struct Opts {
 
 struct TestData {
     expected_data: Vec<u8>,
-    uart_idx: u8,
-    uart_idx_addr: u32,
-    baud_rate_addr: u32,
+    baud_rate: u32,
     test_phase_addr: u32,
 }
 
@@ -70,10 +64,7 @@ fn main() -> Result<()> {
     let elf_file = fs::read(&opts.firmware_elf).context("failed to read ELF")?;
     let object = object::File::parse(elf_file.as_ref()).context("failed to parse ELF")?;
 
-    let expected_data = test_utils::object::symbol_data(&object, "kTest1KbDataStr")?;
-
-    let uart_idx_addr = test_utils::object::symbol_addr(&object, "uart_idx")?;
-    let baud_rate_addr = test_utils::object::symbol_addr(&object, "baud_rate")?;
+    let expected_data = test_utils::object::symbol_data(&object, "kSendData")?;
     let test_phase_addr = test_utils::object::symbol_addr(&object, "test_phase")?;
 
     // Create a SPI OTTF console to use in the test, so that we can test only
@@ -85,25 +76,20 @@ fn main() -> Result<()> {
     // Enable bitbang wrapper for the subsequently created devices (UARTs)
     transport.enable_gpio_bitbang_wrapper(true)?;
 
-    for uart_idx in 0..4 {
-        transport.reset_target(Duration::from_millis(500), true)?;
+    transport.reset_target(Duration::from_millis(500), true)?;
+    let test_data = TestData {
+        expected_data: expected_data.clone(),
+        baud_rate: 57600,
+        test_phase_addr,
+    };
 
-        let test_data = TestData {
-            expected_data: expected_data.clone(),
-            uart_idx,
-            uart_idx_addr,
-            baud_rate_addr,
-            test_phase_addr,
-        };
-
-        execute_test!(
-            uart_bitbang,
-            &opts,
-            &transport,
-            &spi_console_device,
-            &test_data
-        );
-    }
+    execute_test!(
+        uart_bitbang,
+        &opts,
+        &transport,
+        &spi_console_device,
+        &test_data
+    );
 
     // Reset baud rate to the default.
     // HyperDebug doesn't seem to clear this properly between tests.
@@ -126,16 +112,13 @@ where
 {
     let TestData {
         expected_data,
-        uart_idx,
-        uart_idx_addr,
-        baud_rate_addr,
+        baud_rate,
         test_phase_addr,
     } = test_data;
 
     let uart = transport.uart("dut")?;
-
-    UartConsole::wait_for(console, r"waiting for commands", opts.timeout)?;
-    MemWriteReq::execute(console, *uart_idx_addr, &[*uart_idx])?;
+    uart.set_baudrate(*baud_rate)?;
+    uart.clear_rx_buffer()?;
 
     // Keep repeating the test for various Bauds until the device tells us it's
     // `PASS`ed.
@@ -152,8 +135,6 @@ where
 
         // Read the configured baud rate and configure our side of the UART.
         UartConsole::wait_for(console, r"waiting for commands", opts.timeout)?;
-        let baud_rate = MemRead32Req::execute(console, *baud_rate_addr)?;
-        uart.set_baudrate(baud_rate)?;
         uart.clear_rx_buffer()?;
 
         // Ask the device to send us some data.
