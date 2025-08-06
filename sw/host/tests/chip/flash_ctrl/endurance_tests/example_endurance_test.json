@@ -1,0 +1,40 @@
+{
+    "page_num": null,
+    "boot_slot": "SlotB",
+    "high_endurance_en": false,
+    "scramble_en": false,
+    "ecc_en": false,
+    "commands": [
+        {
+            "ProgramErase": {
+                "num_cycles": 25,
+                "log_granularity": 5,
+                "readback_delay_us": 100,
+                "allow_ecc_errors": true,
+                "test_data": "0xa5a5a5a5",
+                "invert_each_cycle": false
+            }
+        },
+        {
+          "ResetTarget": {
+                "repetitions": 2
+          }
+        },
+        {
+            "WritePage": {
+                "readback_delay_us": 2000,
+                "data": "01234567 89ABCDEF FACECAFE DEADBEEF 5A5AA5A5"
+            }
+        },
+        {
+            "Wait": {
+                "duration": "1s"
+            }
+        },
+        {
+            "ReadPage": {
+                "expected_data": "01234567 89ABCDEF FACECAFE DEADBEEF 5A5AA5A5"
+            }
+        }
+    ]
+}
