@@ -1,0 +1,14 @@
+{
+    "page_num": 500,
+    "boot_slot": "SlotA",
+    "high_endurance_en": false,
+    "scramble_en": false,
+    "ecc_en": false,
+    "commands": [
+        {
+            "ReadPage": {
+                "expected_data": "01234567 89ABCDEF FACECAFE DEADBEEF 5A5AA5A5"
+            }
+        }
+    ]
+}

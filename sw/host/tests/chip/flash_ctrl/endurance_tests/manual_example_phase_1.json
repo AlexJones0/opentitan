@@ -1,0 +1,25 @@
+{
+    "page_num": 500,
+    "boot_slot": "SlotA",
+    "high_endurance_en": false,
+    "scramble_en": false,
+    "ecc_en": false,
+    "commands": [
+        {
+            "ProgramErase": {
+                "num_cycles": 100000,
+                "log_granularity": 500,
+                "readback_delay_us": 2500,
+                "allow_ecc_errors": true,
+                "test_data": "0xa5a5a5a5",
+                "invert_each_cycle": true
+            }
+        },
+        {
+            "WritePage": {
+                "readback_delay_us": 10000,
+                "data": "01234567 89ABCDEF FACECAFE DEADBEEF 5A5AA5A5"
+            }
+        }
+    ]
+}
