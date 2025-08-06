@@ -20,6 +20,12 @@ ujson_rust(
 )
 
 ujson_rust(
+    name = "flash",
+    srcs = ["//sw/device/lib/testing/json:flash"],
+    defines = ["opentitanlib=crate"],
+)
+
+ujson_rust(
     name = "i2c_target",
     srcs = ["//sw/device/lib/testing/json:i2c_target"],
     defines = ["opentitanlib=crate"],
@@ -157,6 +163,7 @@ rust_library(
         "src/test_utils/crashdump.rs",
         "src/test_utils/e2e_command.rs",
         "src/test_utils/epmp.rs",
+        "src/test_utils/flash.rs",
         "src/test_utils/gpio.rs",
         "src/test_utils/gpio_monitor.rs",
         "src/test_utils/i2c_target.rs",
@@ -262,6 +269,7 @@ rust_library(
     }),
     compile_data = [
         ":config",
+        ":flash",
         ":gpio",
         ":i2c_target",
         ":mem",
@@ -286,6 +294,7 @@ rust_library(
     ],
     rustc_env = {
         "e2e_command": "$(location :e2e_command)",
+        "flash": "$(location :flash)",
         "gpio": "$(location :gpio)",
         "i2c_target": "$(location :i2c_target)",
         "mem": "$(location :mem)",

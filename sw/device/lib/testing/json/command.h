@@ -16,6 +16,10 @@ extern "C" {
     value(_, GpioGet) \
     value(_, EnterNormalSleep) \
     value(_, EnterDeepSleep) \
+    value(_, FlashProgramEraseTest) \
+    value(_, FlashReadAndCheckPage) \
+    value(_, FlashWritePage) \
+    value(_, FlashTestConfig) \
     value(_, I2cTargetAddress) \
     value(_, I2cStartTransferWrite) \
     value(_, I2cStartTransferWriteSlow) \
