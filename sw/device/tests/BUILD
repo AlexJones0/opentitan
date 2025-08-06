@@ -2046,6 +2046,70 @@ opentitan_test(
 )
 
 opentitan_test(
+    name = "flash_endurance_test",
+    srcs = ["flash_endurance_test.c"],
+    data = [
+        "//sw/host/tests/chip/flash_ctrl:endurance_tests/example_endurance_test.json",
+    ],
+    # This test is only intended to be run on silicon, but can be run on other
+    # environments for testing purposes.
+    #
+    # Warning: these tests will wear down physical flash on silicon, and so
+    # should only be run manually when we are sure we are okay with wearing
+    # down the physical flash.
+    #
+    # See sw/host/tests/chip/flash_ctrl/endurance_tests/README.md for more info
+    exec_env = dicts.add(
+        EARLGREY_SILICON_OWNER_ROM_EXT_ENVS,
+        {
+            "//hw/top_earlgrey:fpga_cw310_sival_rom_ext": None,
+            "//hw/top_earlgrey:fpga_cw340_sival_rom_ext": None,
+        },
+    ),
+    fpga = fpga_params(
+        timeout = "eternal",
+        assemble = "{rom_ext}@0 {firmware}@0x10000 {rom_ext}@0x80000 {firmware}@0x90000",
+        tags = ["manual"],
+        test_cmd = """
+            --bootstrap="{firmware}"
+            --command-file=\"$(rootpath //sw/host/tests/chip/flash_ctrl:endurance_tests/example_endurance_test.json)\"
+        """,
+        test_harness = "//sw/host/tests/chip/flash_ctrl:flash_endurance",
+    ),
+    linker_script = "//sw/device/lib/testing/test_framework:ottf_ld_silicon_owner_slot_virtual",
+    silicon = silicon_params(
+        timeout = "eternal",
+        assemble = "{rom_ext}@0 {firmware}@0x10000 {rom_ext}@0x80000 {firmware}@0x90000",
+        tags = ["manual"],
+        test_cmd = """
+            --bootstrap="{firmware}"
+            --command-file=\"$(rootpath //sw/host/tests/chip/flash_ctrl:endurance_tests/example_endurance_test.json)\"
+        """,
+        test_harness = "//sw/host/tests/chip/flash_ctrl:flash_endurance",
+    ),
+    deps = [
+        "//hw/top_earlgrey/ip_autogen/flash_ctrl:flash_ctrl_c_regs",
+        "//hw/top_earlgrey/sw/autogen:top_earlgrey",
+        "//sw/device/lib/base:macros",
+        "//sw/device/lib/base:status",
+        "//sw/device/lib/dif:alert_handler",
+        "//sw/device/lib/dif:flash_ctrl",
+        "//sw/device/lib/runtime:log",
+        "//sw/device/lib/testing:flash_ctrl_testutils",
+        "//sw/device/lib/testing/json:command",
+        "//sw/device/lib/testing/json:flash",
+        "//sw/device/lib/testing/test_framework:check",
+        "//sw/device/lib/testing/test_framework:ottf_main",
+        "//sw/device/lib/testing/test_framework:ujson_ottf",
+        "//sw/device/lib/testing/test_framework:ujson_ottf_commands",
+        "//sw/device/silicon_creator/lib:boot_data",
+        "//sw/device/silicon_creator/lib:boot_log",
+        "//sw/device/silicon_creator/lib/base:chip",
+        "//sw/device/silicon_creator/lib/drivers:retention_sram",
+    ],
+)
+
+opentitan_test(
     name = "gpio_smoketest",
     srcs = ["gpio_smoketest.c"],
     exec_env = dicts.add(
