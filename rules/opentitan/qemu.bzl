@@ -175,24 +175,46 @@ def gen_flash(ctx, **kwargs):
     firmware_bin = get_override(ctx, "file.firmware_bin", kwargs)
     firmware_elf = get_override(ctx, "file.firmware_elf", kwargs)
 
+    bl0_bin = get_override(ctx, "file.bl0_bin", kwargs)
+    bl0_elf = get_override(ctx, "file.bl0_elf", kwargs)
+
     flashgen = get_override(ctx, "executable.flashgen", kwargs)
 
+    # Add the exec binary (ROM_EXT, or test for non-ROM-EXT envs)
+    flashgen_inputs = [firmware_bin, firmware_elf]
+    flashgen_args = [
+        "-x",
+        firmware_bin.path,
+        "-X",
+        firmware_elf.path,
+    ]
+
+    # Add the bl0 binary (after ROM_EXT envs, nothing if no ROM_EXT)
+    if bl0_bin:
+        flashgen_inputs += [bl0_bin]
+        flashgen_args += ["-b", bl0_bin.path]
+        if bl0_elf:
+            flashgen_inputs += [bl0_elf]
+            flashgen_args += ["-B", bl0_elf.path]
+
+    # For now, discard ELF sanity checks as the ROM_EXT signed binary does
+    # not match the ELF (as it is missing the immutable ROM_EXT section's ELF)
+    if bl0_bin:
+        flashgen_args += ["-U"]
+
+    # Skip `flashgen`'s ELF/binary mtime checks - it will fail if the
+    # binary is older than the ELF which usually suggests that the
+    # binary has not been regenerated, however Bazel often messes with
+    # mtimes causing false negatives.
+    flashgen_args += ["--ignore-time"]
+
+    flashgen_args += [out.path]
+
     ctx.actions.run(
-        inputs = [firmware_bin, firmware_elf],
+        inputs = flashgen_inputs,
         outputs = [out],
         executable = flashgen[DefaultInfo].files_to_run,
-        arguments = [
-            "-x",
-            firmware_bin.path,
-            "-X",
-            firmware_elf.path,
-            # Skip `flashgen`'s ELF/binary mtime checks - it will fail if the
-            # binary is older than the ELF which usually suggests that the
-            # binary has not been regenerated, however Bazel often messes with
-            # mtimes causing false negatives.
-            "--ignore-time",
-            out.path,
-        ],
+        arguments = flashgen_args,
         mnemonic = "FlashGen",
     )
     return out
@@ -207,6 +229,14 @@ qemu_flash = rule(
         "firmware_elf": attr.label(
             allow_single_file = True,
             doc = "ELF version of the `firmware_bin` attribute for symbol tracking",
+        ),
+        "bl0_bin": attr.label(
+            allow_single_file = True,
+            doc = "Binary firmware of the BL0 file to be run after `firmware_bin` when using a ROM_EXT as `firmware_bin`",
+        ),
+        "bl0_elf": attr.label(
+            allow_single_file = True,
+            doc = "ELF version of the `bl0_bin` attribute for symbol tracking",
         ),
         "flashgen": attr.label(
             executable = True,
@@ -278,13 +308,30 @@ def _transform(ctx, exec_env, name, elf, binary, signed_bin, disassembly, mapfil
         default = elf
         rom = None
     elif ctx.attr.kind == "flash":
-        default = gen_flash(
-            ctx,
-            flashgen = exec_env.flashgen,
-            firmware_bin = signed_bin or binary,
-            firmware_elf = elf,
-        )
-        rom = exec_env.rom[SimQemuBinaryInfo].rom
+        if exec_env.rom_ext:
+            default = gen_flash(
+                ctx,
+                flashgen = exec_env.flashgen,
+                firmware_bin = exec_env.rom_ext[SimQemuBinaryInfo].signed_bin or
+                               exec_env.rom_ext[SimQemuBinaryInfo].default,
+                firmware_elf = exec_env.rom_ext[SimQemuBinaryInfo].elf,
+                bl0_bin = signed_bin or binary,
+                bl0_elf = elf,
+            )
+            rom = exec_env.rom[SimQemuBinaryInfo].rom
+        elif exec_env.rom:
+            default = gen_flash(
+                ctx,
+                flashgen = exec_env.flashgen,
+                firmware_bin = signed_bin or binary,
+                firmware_elf = elf,
+                bl0_bin = None,
+                bl0_elf = None,
+            )
+            rom = exec_env.rom[SimQemuBinaryInfo].rom
+        else:
+            default = elf
+            rom = None
     else:
         fail("Not implemented: kind == ", ctx.attr.kind)
 
