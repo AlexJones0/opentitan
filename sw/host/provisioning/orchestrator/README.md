@@ -20,7 +20,7 @@ bazel run \
     --sku-config=$(pwd)/sw/host/provisioning/orchestrator/configs/skus/emulation.hjson \
     --test-unlock-token="0x11111111_11111111_11111111_11111111" \
     --test-exit-token="0x22222222_22222222_22222222_22222222" \
-    --fpga=${FPGA_TARGET} \
+    --exec-target=${FPGA_TARGET} \
     --non-interactive \
     --ast-cfg-version=0 \
     --db-path=$(pwd)/provisioning.sqlite
@@ -69,7 +69,7 @@ python3 ${ORCHESTRATOR_ZIP} \
   --sku-config=sw/host/provisioning/orchestrator/configs/skus/emulation.hjson \
   --test-unlock-token="0x11111111_11111111_11111111_11111111" \
   --test-exit-token="0x22222222_22222222_22222222_22222222" \
-  --fpga=${FPGA_TARGET} \
+  --exec-target=${FPGA_TARGET} \
   --non-interactive \
   --db-path=provisioning.sqlite
 ```

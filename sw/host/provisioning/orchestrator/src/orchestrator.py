@@ -14,7 +14,7 @@ import hjson
 
 import db
 from device_id import DeviceId, DeviceIdentificationNumber
-from ot_dut import OtDut, FPGA_TARGETS
+from ot_dut import OtDut, ALL_TARGETS
 from sku_config import SkuConfig
 from util import confirm, parse_hexstring_to_int, resolve_runfile
 
@@ -37,7 +37,7 @@ SKU:      {sku_config.name}
 LC State: {sku_config.target_lc_state}
 
 [OTHER]
-fpga:          {args.fpga}
+exec_target:   {args.exec_target}
 > commit hash: {commit_hash}
 
 [DICE CA]
@@ -101,9 +101,9 @@ def main(args_in):
         help="Raw test exit token to inject into OTP SECRET0 partition.",
     )
     parser.add_argument(
-        "--fpga",
-        choices=FPGA_TARGETS,
-        help="Run flow on FPGA (instead of silicon).",
+        "--exec-target",
+        choices=ALL_TARGETS,
+        help="Run flow on FPGA / in emulation (instead of silicon).",
     )
     parser.add_argument(
         "--fpga-dont-clear-bitstream",
@@ -183,7 +183,7 @@ def main(args_in):
                 device_id=device_id,
                 test_unlock_token=args.test_unlock_token,
                 test_exit_token=args.test_exit_token,
-                fpga=args.fpga,
+                exec_target=args.exec_target,
                 ate_mode=args.use_ate_individ_bin,
                 fpga_dont_clear_bitstream=args.fpga_dont_clear_bitstream,
                 log_ujson_payloads=args.log_ujson_payloads,
