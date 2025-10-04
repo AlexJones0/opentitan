@@ -10,6 +10,7 @@ import shutil
 import sys
 import tempfile
 from dataclasses import dataclass
+from enum import Enum
 
 import hjson
 
@@ -40,6 +41,15 @@ _FT_FW_BUNDLE_BIN       = "{base_dir}/ft_fw_bundle_{sku}_{target}.img"  # noqa: 
 _CP_HOST_BIN = "sw/host/provisioning/cp/cp"
 _FT_HOST_BIN = "sw/host/provisioning/ft/ft_{sku}"
 # yapf: enable
+
+
+class FpgaTarget(Enum):
+    """Class enumerating possible FPGA targets for provisioning."""
+    HYPERDEBUG_CW310 = "hyper310"
+    CW340 = "cw340"
+
+
+FPGA_TARGETS = [t.value for t in FpgaTarget]
 
 
 @dataclass
@@ -107,7 +117,12 @@ class OtDut():
         openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
         if self.fpga:
             # Set host flags and device binary for FPGA DUT.
-            interface = self.fpga if self.fpga == "hyper310" else "hyper340"
+            if self.fpga == FpgaTarget.HYPERDEBUG_CW310.value:
+                interface = self.fpga
+            else:
+                # TODO: is this correct?
+                # Target the hyper_340 interface rather than the cw340
+                interface = "hyper340"
             host_flags = host_flags.format(target=interface,
                                            openocd_bin=openocd_bin,
                                            openocd_cfg=openocd_cfg)
@@ -206,7 +221,12 @@ class OtDut():
             # Set host flags and device binaries for FPGA DUT.
             # No need to load another bitstream, we will take over where CP
             # stage above left off.
-            interface = self.fpga if self.fpga == "hyper310" else "hyper340"
+            if self.fpga == FpgaTarget.HYPERDEBUG_CW310.value:
+                interface = self.fpga
+            else:
+                # TODO: is this correct?
+                # Target the hyper_340 interface rather than the cw340
+                interface = "hyper340"
             host_flags = host_flags.format(target=interface,
                                            openocd_bin=openocd_bin,
                                            openocd_cfg=openocd_cfg)
