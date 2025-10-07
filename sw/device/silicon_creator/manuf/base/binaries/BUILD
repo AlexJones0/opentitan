@@ -28,11 +28,14 @@ exec_env_filegroup(
         "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": "cw310",
         "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": "cw340",
         "//hw/top_earlgrey:silicon_creator": "silicon",
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "sim_qemu",
     },
     files = {
         "ft_personalize_sival_fpga_hyper310_rom_with_fake_keys.signed.bin": "cw310",
         "ft_personalize_sival_fpga_cw340_rom_with_fake_keys.signed.bin": "cw340",
         "ft_personalize_sival_silicon_creator.signed.bin": "silicon",
+        # TODO: should be QEMU
+        "ft_personalize_sival_silicon_creator.copy.signed.bin": "sim_qemu",
     },
 )
 

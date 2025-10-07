@@ -32,6 +32,7 @@ def qemu_params(
         rom_ext = None,
         otp = None,
         bitstream = None,
+        needs_jtag = False,
         test_cmd = "",
         data = [],
         defines = [],
@@ -63,7 +64,10 @@ def qemu_params(
         rom_ext = rom_ext,
         otp = otp,
         bitstream = bitstream,
-        test_cmd = test_cmd,
+        needs_jtag = needs_jtag,
+        test_cmd = ("""
+            {jtag_test_cmd}
+        """ if needs_jtag else "") + test_cmd,
         data = data,
         param = kwargs | extra_params,
         defines = defines,

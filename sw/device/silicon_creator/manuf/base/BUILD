@@ -13,6 +13,7 @@ load(
     "fpga_params",
     "opentitan_binary",
     "opentitan_test",
+    "qemu_params",
 )
 load(
     "//sw/device/silicon_creator/manuf/base:provisioning_inputs.bzl",
@@ -54,6 +55,7 @@ opentitan_binary(
         "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": None,
         "//hw/top_earlgrey:silicon_creator": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     kind = "ram",
     linker_script = "//sw/device/silicon_creator/manuf/lib:sram_program_linker_script",
@@ -92,6 +94,7 @@ opentitan_binary(
         "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": None,
         "//hw/top_earlgrey:silicon_creator": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     kind = "ram",
     linker_script = "//sw/device/silicon_creator/manuf/lib:sram_program_linker_script",
@@ -129,6 +132,7 @@ opentitan_test(
     exec_env = {
         "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": None,
         "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": None,
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
     },
     fpga = fpga_params(
         timeout = "long",
@@ -137,6 +141,21 @@ opentitan_test(
             ":sram_cp_provision_functest": "sram_cp_provision_functest",
         },
         changes_otp = True,
+        needs_jtag = True,
+        otp = "//hw/ip/otp_ctrl/data:img_raw",
+        tags = ["manuf"],
+        test_cmd = """
+            --provisioning-sram-elf={sram_cp_provision}
+            --test-sram-elf={sram_cp_provision_functest}
+        """,
+        test_harness = "//sw/host/tests/manuf/cp_provision_functest",
+    ),
+    qemu = qemu_params(
+        timeout = "long",
+        binaries = {
+            ":sram_cp_provision": "sram_cp_provision",
+            ":sram_cp_provision_functest": "sram_cp_provision_functest",
+        },
         needs_jtag = True,
         otp = "//hw/ip/otp_ctrl/data:img_raw",
         tags = ["manuf"],
@@ -169,6 +188,7 @@ opentitan_test(
             "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": None,
             "//hw/top_earlgrey:silicon_creator": None,
             "//hw/top_earlgrey:sim_dv": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         },
         kind = "ram",
         linker_script = "//sw/device/silicon_creator/manuf/lib:sram_program_linker_script",
@@ -307,6 +327,7 @@ manifest(d = {
             "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": None,
             "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": None,
             "//hw/top_earlgrey:silicon_creator": None,
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": None,
         },
         linker_script = "//sw/device/lib/testing/test_framework:ottf_ld_silicon_creator_slot_a",
         manifest = ":manifest_perso",
@@ -378,6 +399,7 @@ manifest(d = {
             "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys",
             "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys",
             "//hw/top_earlgrey:silicon_creator",
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys",
         ],
     )
     for sku, config in EARLGREY_SKUS.items()

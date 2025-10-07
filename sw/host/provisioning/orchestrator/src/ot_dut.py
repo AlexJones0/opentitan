@@ -148,6 +148,8 @@ class OtDut():
             # Target the "hyper340" interface rather than the cw340
             return "hyper340"
         elif self._is_sim_target:
+            if self.exec_target == SimTarget.QEMU.value:
+                return "qemu"
             return self.exec_target
         else:  # Silicon
             return "teacup"
@@ -186,6 +188,9 @@ class OtDut():
                 host_flags += f" --bitstream={bitstream}"
         elif target_kind == ExecTargetKind.SILICON:
             host_flags += " --disable-dft-on-reset"
+        elif self.exec_target == SimTarget.QEMU.value:
+            host_flags += " --qemu-monitor-tty=qemu-monitor"
+            host_flags += " --qemu-quit"
 
         device_elf = device_elf.format(base_dir=self._base_dev_dir(),
                                        target=self._device_exec_env)

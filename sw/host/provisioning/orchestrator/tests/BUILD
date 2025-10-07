@@ -11,6 +11,12 @@ load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
     "orchestrator_cw340_test_settings_transition",
     "orchestrator_hyper310_test_settings_transition",
+    "orchestrator_sim_qemu_test_settings_transition",
+)
+load(
+    "//sw/host/provisioning/orchestrator/src:defs.bzl",
+    "ALL_TARGETS",
+    "FPGA_TARGETS",
 )
 load("@ot_python_deps//:requirements.bzl", "requirement")
 
@@ -65,6 +71,17 @@ orchestrator_hyper310_test_settings_transition(
 
 orchestrator_cw340_test_settings_transition(
     name = "orchestrator_cw340_zip",
+    testonly = True,
+    target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
+)
+
+orchestrator_sim_qemu_test_settings_transition(
+    # TODO - we don't need all of this stuff for QEMU
+    # (//hw/bitstream/universal:splice etc.)
+    # Can we use transitions to remove these on QEMU?
+    # Or does orchestrator.py still need them because it
+    # depends on them?
+    name = "orchestrator_sim_qemu_zip",
     testonly = True,
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
@@ -131,32 +148,30 @@ sh_test(
 
 [
     sh_test(
-        name = "e2e_{}_{}_test".format(sku, fpga),
+        name = "e2e_{}_{}_test".format(sku, exec_target),
         timeout = "moderate",
         srcs = ["e2e.sh"],
         data = [
-            ":orchestrator_{}_zip".format(fpga),
+            ":orchestrator_{}_zip".format(exec_target),
             "@python3",
             cfg["orchestrator_cfg"],
         ],
         env = {
             "PYTHON": "$(location @python3//:python3)",
             "SKU_CONFIG_PATH": "$(location {})".format(cfg["orchestrator_cfg"]),
-            "FPGA": "{}".format(fpga),
+            "EXEC_TARGET": "{}".format(exec_target),
         },
         tags = [
-            "changes_otp",
             "exclusive",
             "manuf",
-        ] + [fpga] + ([
+        ] + [tag] + ([
+            "changes_otp",
+        ] if exec_target in FPGA_TARGETS.keys() else []) + ([
             "manual",
         ] if cfg.get("offline", False) else []),
     )
     for sku, cfg in EARLGREY_SKUS.items()
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target, tag in ALL_TARGETS.items()
 ]
 
 [

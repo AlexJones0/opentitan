@@ -5,7 +5,7 @@
 load("//rules:const.bzl", "CONST", "hex")
 load("//rules:linker.bzl", "ld_library")
 load("//rules:manifest.bzl", "manifest")
-load("//rules/opentitan:defs.bzl", "fpga_params", "opentitan_binary", "opentitan_test")
+load("//rules/opentitan:defs.bzl", "fpga_params", "opentitan_binary", "opentitan_test", "qemu_params")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -68,6 +68,9 @@ opentitan_binary(
     srcs = ["bare_metal_start.S"],
     exec_env = [
         "//hw/top_earlgrey:fpga_cw310_rom_ext",
+        "//hw/top_earlgrey:fpga_cw340_rom_ext",
+        "//hw/top_earlgrey:silicon_owner_sival_rom_ext",
+        "//hw/top_earlgrey:sim_qemu_rom_ext",
     ],
     linker_script = ":ld_slot_a",
     manifest = ":manifest",
@@ -86,6 +89,7 @@ opentitan_binary(
         "//hw/top_earlgrey:fpga_cw310_rom_ext",
         "//hw/top_earlgrey:fpga_cw340_rom_ext",
         "//hw/top_earlgrey:silicon_owner_sival_rom_ext",
+        "//hw/top_earlgrey:sim_qemu_rom_ext",
     ],
     linker_script = ":ld_slot_b",
     manifest = ":manifest",
@@ -104,6 +108,7 @@ opentitan_binary(
         "//hw/top_earlgrey:fpga_cw310_rom_ext",
         "//hw/top_earlgrey:fpga_cw340_rom_ext",
         "//hw/top_earlgrey:silicon_owner_sival_rom_ext",
+        "//hw/top_earlgrey:sim_qemu_rom_ext",
     ],
     linker_script = ":ld_slot_virtual",
     manifest = ":manifest",
@@ -126,8 +131,15 @@ opentitan_test(
     name = "rom_ext_virtual_bare_metal_virtual_boot_test",
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_ext": None,
+        "//hw/top_earlgrey:sim_qemu_rom_ext": None,
     },
     fpga = fpga_params(
+        binaries = {
+            ":bare_metal_slot_virtual": "firmware",
+        },
+        exit_success = BOOT_SUCCESS_MSG,
+    ),
+    qemu = qemu_params(
         binaries = {
             ":bare_metal_slot_virtual": "firmware",
         },
@@ -145,6 +157,7 @@ opentitan_test(
     srcs = ["empty_test.c"],
     exec_env = {
         "//hw/top_earlgrey:fpga_cw310_rom_ext": None,
+        "//hw/top_earlgrey:sim_qemu_rom_ext": None,
     },
     linker_script = "//sw/device/lib/testing/test_framework:ottf_ld_silicon_owner_slot_virtual",
     manifest = ":manifest",
