@@ -11,6 +11,8 @@ pub mod uart;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::str::FromStr;
+use std::thread;
+use std::time::Duration;
 
 use anyhow::{Context, bail};
 
@@ -143,6 +145,10 @@ impl Qemu {
         // Resetting is done over the monitor, but we model it like a pin to enable strapping it.
         let reset = QemuReset::new(Rc::clone(&monitor));
         let reset = Rc::new(reset);
+
+        // QEMU polls once per second to see if chardevs have been connected to. We must wait that
+        // full second to be sure that QEMU is watching all of them.
+        thread::sleep(Duration::from_secs(1));
 
         Ok(Qemu {
             monitor,
