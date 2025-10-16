@@ -87,7 +87,7 @@ pub struct BootstrapOptions {
     #[arg(long)]
     pub clear_uart: Option<bool>,
     /// Duration of the reset pulse.
-    #[arg(long, value_parser = parse_duration, default_value = "100ms")]
+    #[arg(long, value_parser = parse_duration, default_value = "1000ms")]
     pub reset_delay: Duration,
     /// If set, keep the bootstrap strapping applied and do not perform the post-bootstrap reset
     /// sequence.
