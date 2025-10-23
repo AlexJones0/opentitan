@@ -176,6 +176,20 @@ sim_qemu(
 )
 
 sim_qemu(
+    name = "sim_qemu_sival",
+    testonly = True,
+    base = ":sim_qemu_rom_with_fake_keys",
+
+    # PROD keys are allowed to run across all life cycle stages. This prod key
+    # is used to enable execution across life cycle stages with a single
+    # binary.
+    ecdsa_key = {"//sw/device/silicon_creator/rom/keys/fake/ecdsa:ecdsa_keyset": "prod_key_0"},
+    exec_env = "sim_qemu_sival",
+    otp = "//hw/ip/otp_ctrl/data/earlgrey_skus/emulation:otp_img_prod_manuf_personalized",
+    spx_key = {"//sw/device/silicon_creator/rom/keys/fake/spx:spx_keyset": "prod_key_0"},
+)
+
+sim_qemu(
     name = "sim_qemu_rom_ext",
     testonly = True,
     base = ":sim_qemu_base",
