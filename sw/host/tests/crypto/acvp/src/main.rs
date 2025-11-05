@@ -96,9 +96,7 @@ fn run<R: std::io::Read, W: std::io::Write>(
     if let Some(r) = expected {
         let expected_results: Vec<AcvpResults> = serde_json::from_reader(r)?;
         if acvp_results != expected_results {
-            return Err(
-                std::io::Error::new(std::io::ErrorKind::Other, "ACVP result mismatch").into(),
-            );
+            return Err(std::io::Error::other("ACVP result mismatch").into());
         }
     }
     Ok(())
@@ -124,13 +122,12 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let f =
-        std::fs::File::open(&input_path).inspect_err(|e| log::error!("open input file: {e}"))?;
+    let f = std::fs::File::open(input_path).inspect_err(|e| log::error!("open input file: {e}"))?;
     let input = std::io::BufReader::new(f);
 
     let expected = match &opts.expected {
         Some(expected_path) => {
-            let f = std::fs::File::open(&expected_path)
+            let f = std::fs::File::open(expected_path)
                 .inspect_err(|e| log::error!("open expected file: {e}"))?;
             Some(std::io::BufReader::new(f))
         }
@@ -138,7 +135,7 @@ fn main() -> Result<()> {
     };
     let output = match &opts.output {
         Some(output_path) => {
-            let f = std::fs::File::create(&output_path)
+            let f = std::fs::File::create(output_path)
                 .inspect_err(|e| log::error!("open output file: {e}"))?;
             Some(std::io::BufWriter::new(f))
         }

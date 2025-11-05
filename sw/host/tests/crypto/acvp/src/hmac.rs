@@ -84,8 +84,8 @@ fn run_hmac_case(
     tc: &HmacTestCase,
 ) -> Result<HmacResultCase> {
     log::info!("tc_id: {}", tc.tc_id);
-    let key = Vec::<u8>::from_hex(&tc.key.as_bytes())?;
-    let msg = Vec::<u8>::from_hex(&tc.msg.as_bytes())?;
+    let key = Vec::<u8>::from_hex(tc.key.as_bytes())?;
+    let msg = Vec::<u8>::from_hex(tc.msg.as_bytes())?;
 
     CryptotestCommand::Hmac.send(spi_console)?;
     algorithm.send(spi_console)?;
