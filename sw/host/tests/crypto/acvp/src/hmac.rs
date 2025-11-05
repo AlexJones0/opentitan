@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
-
+use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -81,8 +81,8 @@ fn run_hmac_case(
     tc: &HmacTestCase,
 ) -> Result<HmacResultCase> {
     log::info!("tc_id: {}", tc.tc_id);
-    let key = crate::util::to_hex_bytes(tc.key.as_bytes())?;
-    let msg = crate::util::to_hex_bytes(tc.msg.as_bytes())?;
+    let key = Vec::<u8>::from_hex(&tc.key)?;
+    let msg = Vec::<u8>::from_hex(&tc.msg)?;
 
     CryptotestCommand::Hmac.send(spi_console)?;
     algorithm.send(spi_console)?;

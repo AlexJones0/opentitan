@@ -13,7 +13,6 @@ use opentitanlib::test_utils::init::InitializeTest;
 use opentitanlib::uart::console::UartConsole;
 
 mod hmac;
-mod util;
 
 #[derive(Debug, Parser)]
 struct Opts {

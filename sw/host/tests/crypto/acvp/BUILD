@@ -12,7 +12,6 @@ rust_binary(
     srcs = [
         "src/hmac.rs",
         "src/main.rs",
-        "src/util.rs",
     ],
     deps = [
         "//sw/host/cryptotest/ujson_lib:cryptotest_commands",
@@ -20,6 +19,7 @@ rust_binary(
         "@crate_index//:anyhow",
         "@crate_index//:arrayvec",
         "@crate_index//:clap",
+        "@crate_index//:hex",
         "@crate_index//:humantime",
         "@crate_index//:log",
         "@crate_index//:rand",
