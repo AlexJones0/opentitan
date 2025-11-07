@@ -16,6 +16,7 @@
 #include "hw/top_earlgrey/sw/autogen/top_earlgrey.h"
 #include "otp_ctrl_regs.h"
 #include "rv_core_ibex_regs.h"
+#include "sw/device/silicon_creator/lib/dbg_print.h"
 
 enum {
   kBaseEntropySrc = TOP_EARLGREY_ENTROPY_SRC_BASE_ADDR,
@@ -118,7 +119,14 @@ uint32_t rnd_uint32(void) {
   }
   uint32_t mcycle;
   CSR_READ(CSR_REG_MCYCLE, &mcycle);
-  return mcycle + abs_mmio_read32(kBaseIbex + RV_CORE_IBEX_RND_DATA_REG_OFFSET);
+  uint32_t rnd_data;
+  uint32_t iters = 0;
+  do {
+    iters++;
+    rnd_data = abs_mmio_read32(kBaseIbex + RV_CORE_IBEX_RND_DATA_REG_OFFSET);
+    dbg_printf("generated rnd_data: 0x%x\r\n", rnd_data);
+  } while (rnd_data && iters < 5);
+  return mcycle + rnd_data;
 }
 
 // Provides the source of randomness for `hardened_memshred` (see

@@ -613,6 +613,7 @@ dual_cc_library(
             "//sw/device/lib/base:csr",
             "//sw/device/lib/base:abs_mmio",
             "//sw/device/lib/base:hardened",
+            "//sw/device/silicon_creator/lib:dbg_print",
             "//hw/ip/entropy_src/data:entropy_src_c_regs",
             "//hw/ip/otp_ctrl/data:otp_ctrl_c_regs",
             "//hw/ip/rv_core_ibex/data:rv_core_ibex_c_regs",
