@@ -11,6 +11,7 @@ load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
     "orchestrator_cw340_test_settings_transition",
     "orchestrator_hyper310_test_settings_transition",
+    "orchestrator_qemu_test_settings_transition",
 )
 load("@ot_python_deps//:requirements.bzl", "requirement")
 
@@ -65,6 +66,13 @@ orchestrator_hyper310_test_settings_transition(
 
 orchestrator_cw340_test_settings_transition(
     name = "orchestrator_cw340_zip",
+    testonly = True,
+    target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
+)
+
+# TODO: stubbed, currently does nothing. May need to take in e.g. QEMU binaries
+orchestrator_qemu_test_settings_transition(
+    name = "orchestrator_qemu_zip",
     testonly = True,
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
