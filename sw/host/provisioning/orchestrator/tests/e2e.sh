@@ -26,7 +26,7 @@ $PYTHON ${ORCHESTRATOR_PATH} \
   --sku-config=${SKU_CONFIG_PATH} \
   --test-unlock-token="0x11111111_11111111_11111111_11111111" \
   --test-exit-token="0x22222222_22222222_22222222_22222222" \
-  --fpga=${FPGA} \
+  --exec-target=${FPGA} \
   --non-interactive \
   "$@" \
   --db-path=$TEST_TMPDIR/registry.sqlite

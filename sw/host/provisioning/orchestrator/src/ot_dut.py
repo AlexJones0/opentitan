@@ -43,13 +43,24 @@ _FT_HOST_BIN = "sw/host/provisioning/ft/ft_{sku}"
 # yapf: enable
 
 
+class ExecTargetKind(Enum):
+    """Enum for the kind of targets for provisioning."""
+    SILICON = 0
+    FPGA = 1
+    SIM = 2
+
 class FpgaTarget(Enum):
     """Enum for supported FPGA targets for Orchestrated provisioning."""
     HYPERDEBUG_CW310 = "hyper310"
     CW340 = "cw340"
 
-FPGA_TARGETS = [t.value for t in FpgaTarget]
+class SimTarget(Enum):
+    """Enum for supported simulation/emulation targets for provisioning."""
+    QEMU = "qemu"
 
+FPGA_TARGETS = [t.value for t in FpgaTarget]
+SIM_TARGETS = [t.value for t in SimTarget]
+ALL_TARGETS = ["silicon"] + FPGA_TARGETS + SIM_TARGETS
 
 @dataclass
 class OtDut():
@@ -59,7 +70,7 @@ class OtDut():
     device_id: DeviceId
     test_unlock_token: str
     test_exit_token: str
-    fpga: str
+    exec_target: str
     ate_mode: bool
     fpga_dont_clear_bitstream: bool
     log_ujson_payloads: bool
@@ -103,6 +114,49 @@ class OtDut():
     def _base_dev_dir(self) -> str:
         return _BASE_DEV_DIR
 
+    @property
+    def _is_fpga_target(self) -> bool:
+        """Whether the defined execution target is an FPGA target."""
+        return self.exec_target in FPGA_TARGETS
+
+    @property
+    def _is_sim_target(self) -> bool:
+        """Whether the defined execution target is a sim/emulation target."""
+        return self.exec_target in SIM_TARGETS
+
+    @property
+    def _target_kind(self) -> ExecTargetKind:
+        """Which kind of execution target the defined target is."""
+        if self._is_fpga_target:
+            return ExecTargetKind.FPGA
+        elif self._is_sim_target:
+            return ExecTargetKind.SIM
+        else:
+            return ExecTargetKind.SILICON
+
+    @property
+    def _host_interface(self) -> str:
+        """The interface for the exec target to be passed to opentitantool."""
+        if self._is_fpga_target:
+            if self.exec_target != FpgaTarget.CW340.value:
+                return self.exec_target
+            # Target the "hyper340" interface rather than cw340.
+            return "hyper340"
+        elif self._is_sim_target:
+            return self.exec_target
+        else:  # Silicon
+            return "teacup"
+
+    @property
+    def _device_exec_env(self) -> str:
+        """The Bazel execution environment for the defined target."""
+        if self._is_fpga_target:
+            return f"fpga_{self.exec_target}_rom_with_fake_keys"
+        elif self._is_sim_target:
+            return f"sim_{self.exec_target}_rom_with_fake_keys"
+        else:
+            return "silicon_creator"
+
     def run_cp(self) -> None:
         """Runs the CP provisioning flow on the target DUT."""
         logging.info("Running CP provisioning ...")
@@ -112,33 +166,24 @@ class OtDut():
         device_elf = _CP_DEVICE_ELF
         print(f"device_elf: {device_elf}")
 
+        # Set host flags and device binary for the configured execution target
         openocd_bin = resolve_runfile(_OPENOCD_BIN)
         openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
-        if self.fpga:
-            # Set host flags and device binary for FPGA DUT.
-            if self.fpga == FpgaTarget.HYPERDEBUG_CW310.value:
-                interface = self.fpga
-            else:
-                # Target the hyper340 interface rather than the cw340
-                interface = "hyper340"
-            host_flags = host_flags.format(target=interface,
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
+        host_flags = host_flags.format(target=self._host_interface,
+                                       openocd_bin=openocd_bin,
+                                       openocd_cfg=openocd_cfg)
+        target_kind = self._target_kind
+        # Target-specific host flags
+        if target_kind == ExecTargetKind.FPGA:
             if not self.fpga_dont_clear_bitstream:
                 host_flags += " --clear-bitstream"
                 bitstream = resolve_runfile(_FPGA_UNIVERSAL_SPLICE_BITSTREAM)
                 host_flags += f" --bitstream={bitstream}"
-            device_elf = device_elf.format(
-                base_dir=self._base_dev_dir(),
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
-        else:
-            # Set host flags and device binary for Silicon DUT.
-            host_flags = host_flags.format(target="teacup",
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
+        elif target_kind == ExecTargetKind.SILICON:
             host_flags += " --disable-dft-on-reset"
-            device_elf = device_elf.format(base_dir=self._base_dev_dir(),
-                                           target="silicon_creator")
+
+        device_elf = device_elf.format(base_dir=self._base_dev_dir(),
+                                       target=self._device_exec_env)
         device_elf = resolve_runfile(device_elf)
 
         # Assemble CP command.
@@ -215,50 +260,35 @@ class OtDut():
         # have different file naming patterns than production SKUs.
         perso_bin = self.sku_config.perso_bin
         fw_bundle_bin = _FT_FW_BUNDLE_BIN
-        if self.fpga:
-            # Set host flags and device binaries for FPGA DUT.
-            # No need to load another bitstream, we will take over where CP
-            # stage above left off.
-            if self.fpga == FpgaTarget.HYPERDEBUG_CW310.value:
-                interface = self.fpga
-            else:
-                # Target the hyper340 interface rather than the cw340
-                interface = "hyper340"
-            host_flags = host_flags.format(target=interface,
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
-            individ_elf = individ_elf.format(
-                base_dir=self._base_dev_dir(),
-                sku=self.sku_config.name,
-                ate_suffix=ate_suffix,
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
-            perso_bin = perso_bin.format(
-                base_dir=self._base_dev_dir(),
-                sku=self.sku_config.name,
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
-            fw_bundle_bin = fw_bundle_bin.format(
-                base_dir=self._base_dev_dir(),
-                sku=self.sku_config.name,
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
-        else:
-            # Set host flags and device binaries for Silicon DUT.
-            host_flags = host_flags.format(target="teacup",
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
-            host_flags += " --disable-dft-on-reset"
-            individ_elf = individ_elf.format(base_dir=self._base_dev_dir(),
-                                             sku=self.sku_config.name,
-                                             ate_suffix=ate_suffix,
-                                             target="silicon_creator")
-            perso_bin = perso_bin.format(base_dir=self._base_dev_dir(),
-                                         sku=self.sku_config.name,
-                                         target="silicon_creator")
-            fw_bundle_bin = fw_bundle_bin.format(base_dir=self._base_dev_dir(),
-                                                 sku=self.sku_config.name,
-                                                 target="silicon_creator")
 
+        # Set host flags and device binary for the configured execution target
+        host_flags = host_flags.format(target=self._host_interface,
+                                       openocd_bin=openocd_bin,
+                                       openocd_cfg=openocd_cfg)
+        # Target-specific host flags
+        if self._target_kind == ExecTargetKind.SILICON:
+            host_flags += " --disable-dft-on-reset"
+        # No need to load another bitstream on FPGA, as we take over where the
+        # CP stage left off.
+
+        exec_env = self._device_exec_env
+        individ_elf = individ_elf.format(
+            base_dir=self._base_dev_dir(),
+            sku=self.sku_config.name,
+            ate_suffix=ate_suffix,
+            target=exec_env)
         individ_elf = resolve_runfile(individ_elf)
+
+        perso_bin = perso_bin.format(
+            base_dir=self._base_dev_dir(),
+            sku=self.sku_config.name,
+            target=exec_env)
         perso_bin = resolve_runfile(perso_bin)
+
+        fw_bundle_bin = fw_bundle_bin.format(
+            base_dir=self._base_dev_dir(),
+            sku=self.sku_config.name,
+            target=exec_env)
         fw_bundle_bin = resolve_runfile(fw_bundle_bin)
 
         # Write CA configs to a JSON tmpfile.
