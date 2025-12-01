@@ -25,11 +25,14 @@ exec_env_filegroup(
         "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": "cw310",
         "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": "cw340",
         "//hw/top_earlgrey:silicon_creator": "silicon",
+        # TODO: just use duplicated silicon binaries for now, QEMU specific?
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "qemu",
     },
     files = {
         "rom_ext_dice_x509_prod_slot_virtual_fpga_cw310.signed.bin": "cw310",
         "rom_ext_dice_x509_prod_slot_virtual_fpga_cw340.signed.bin": "cw340",
         "rom_ext_dice_x509_prod_slot_virtual_silicon_creator.signed.bin": "silicon",
+        "rom_ext_dice_x509_prod_slot_virtual_sim_qemu.signed.bin": "qemu",
     },
 )
 
