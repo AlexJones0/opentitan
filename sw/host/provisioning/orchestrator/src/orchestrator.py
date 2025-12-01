@@ -14,7 +14,7 @@ import hjson
 
 import db
 from device_id import DeviceId, DeviceIdentificationNumber
-from ot_dut import OtDut
+from ot_dut import FPGA_TARGETS, OtDut
 from sku_config import SkuConfig
 from util import confirm, parse_hexstring_to_int, resolve_runfile
 
@@ -102,7 +102,7 @@ def main(args_in):
     )
     parser.add_argument(
         "--fpga",
-        choices=["hyper310", "cw340"],
+        choices=FPGA_TARGETS,
         help="Run flow on FPGA (instead of silicon).",
     )
     parser.add_argument(
