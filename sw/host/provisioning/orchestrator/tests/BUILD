@@ -8,6 +8,11 @@ load(
     "EARLGREY_SKUS",
 )
 load(
+    "//sw/host/provisioning/orchestrator/src:defs.bzl",
+    "ALL_TARGETS",
+    "FPGA_TARGETS",
+)
+load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
     "orchestrator_cw340_test_settings_transition",
     "orchestrator_hyper310_test_settings_transition",
@@ -139,61 +144,54 @@ sh_test(
 
 [
     sh_test(
-        name = "e2e_{}_{}_test".format(sku, fpga),
+        name = "e2e_{}_{}_test".format(sku, exec_target),
         timeout = "moderate",
         srcs = ["e2e.sh"],
         data = [
-            ":orchestrator_{}_zip".format(fpga),
+            ":orchestrator_{}_zip".format(exec_target),
             "@python3",
             cfg["orchestrator_cfg"],
         ],
         env = {
             "PYTHON": "$(location @python3//:python3)",
             "SKU_CONFIG_PATH": "$(location {})".format(cfg["orchestrator_cfg"]),
-            "FPGA": "{}".format(fpga),
+            "EXEC_TARGET": "{}".format(exec_target),
         },
         tags = [
+            exec_target,
+        ] + ([
             "changes_otp",
             "exclusive",
             "manuf",
-        ] + [fpga] + ([
+        ] if exec_target in FPGA_TARGETS else []) + ([
             "manual",
         ] if cfg.get("offline", False) else []),
     )
     for sku, cfg in EARLGREY_SKUS.items()
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target in ALL_TARGETS
 ]
 
 [
     test_suite(
-        name = "e2e_{}".format(fpga),
+        name = "e2e_{}".format(exec_target),
         tags = ["manual"],
         tests = [
-            ":e2e_{}_{}_test".format(sku, fpga)
+            ":e2e_{}_{}_test".format(sku, exec_target)
             for sku, config in EARLGREY_SKUS.items()
             if not config.get("offline", False)
         ],
     )
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target in ALL_TARGETS
 ]
 
 [
     test_suite(
-        name = "e2e_including_offline_{}".format(fpga),
+        name = "e2e_including_offline_{}".format(exec_target),
         tags = ["manual"],
         tests = [
-            ":e2e_{}_{}_test".format(sku, fpga)
+            ":e2e_{}_{}_test".format(sku, exec_target)
             for sku in EARLGREY_SKUS.keys()
         ],
     )
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target in ALL_TARGETS
 ]
