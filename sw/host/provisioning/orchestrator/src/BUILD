@@ -2,8 +2,10 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@ot_python_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("//rules/opentitan:qemu.bzl", "qemu_cfg", "qemu_otp")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -105,11 +107,52 @@ filegroup(
     ],
 )
 
+# Generated QEMU configurations and OTP files for the orchestrator zip to be able to run QEMU
+qemu_cfg(
+    name = "qemu_base_cfg",
+    lc_sv = "//hw/ip/lc_ctrl:rtl/lc_ctrl_state_pkg.sv",
+    otp_sv = "//hw/ip/otp_ctrl:rtl/otp_ctrl_part_pkg.sv",
+    top_hjson = "//hw/top_earlgrey/data:autogen/top_earlgrey.gen.hjson",
+    top_name = "earlgrey",
+)
+
+qemu_otp(
+    name = "qemu_base_otp",
+    vmem = "//hw/ip/otp_ctrl/data/earlgrey_skus/emulation:otp_img_test_unlocked0_manuf_empty",
+)
+
+filegroup(
+    name = "qemu_data_dependencies",
+    testonly = True,
+    srcs = [
+        ":data_dependencies",
+        ":qemu_base_cfg",
+        ":qemu_base_otp",
+        "//hw/top_earlgrey/util:qemu_start",
+        "//third_party/qemu:qemu-system-riscv32",
+    ],
+)
+
+bool_flag(
+    name = "include_qemu_dependencies",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "with_qemu_dependencies",
+    flag_values = {
+        ":include_qemu_dependencies": "True",
+    },
+)
+
 py_binary(
     name = "orchestrator",
     testonly = True,
     srcs = ["orchestrator.py"],
-    data = [":data_dependencies"],
+    data = select({
+        ":with_qemu_dependencies": [":qemu_data_dependencies"],
+        "//conditions:default": [":data_dependencies"],
+    }),
     imports = ["."],
     deps = [
         ":db",
