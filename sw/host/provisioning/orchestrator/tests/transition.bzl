@@ -33,12 +33,14 @@ _orchestrator_cw340_settings = transition(
 )
 
 def _orchestrator_qemu_settings_impl(settings, attr):
-    return {}
+    return {
+        "//sw/host/provisioning/orchestrator/src:include_qemu_dependencies": True,
+    }
 
 _orchestrator_qemu_settings = transition(
     implementation = _orchestrator_qemu_settings_impl,
     inputs = [],
-    outputs = [],
+    outputs = ["//sw/host/provisioning/orchestrator/src:include_qemu_dependencies"],
 )
 
 def _orchestrator_test_settings_transition_impl(ctx):
