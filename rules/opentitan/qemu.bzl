@@ -89,7 +89,7 @@ def gen_cfg(ctx, **kwargs):
     ctx.actions.run(
         inputs = [otp_sv, lc_sv, top_hjson],
         outputs = [out],
-        executable = cfggen[DefaultInfo].files_to_run,
+        executable = cfggen,
         arguments = [
             "--out",
             out.path,
@@ -134,7 +134,7 @@ def gen_otp(ctx, **kwargs):
     ctx.actions.run(
         inputs = [vmem],
         outputs = [out],
-        executable = otptool[DefaultInfo].files_to_run,
+        executable = otptool,
         arguments = [
             "-m",
             vmem.path,
@@ -203,7 +203,7 @@ def gen_flash(ctx, **kwargs):
     ctx.actions.run(
         inputs = flashgen_inputs,
         outputs = [out],
-        executable = flashgen[DefaultInfo].files_to_run,
+        executable = flashgen,
         arguments = flashgen_args,
         mnemonic = "FlashGen",
     )
@@ -379,7 +379,7 @@ def _test_dispatch(ctx, exec_env, firmware):
     # Generate the OpenTitan machine config for QEMU emulation
     qemu_cfg = gen_cfg(
         ctx,
-        cfggen = exec_env.cfggen,
+        cfggen = exec_env.cfggen[DefaultInfo].files_to_run,
         otp_sv = exec_env.otp_sv,
         lc_sv = exec_env.lc_sv,
         top_hjson = exec_env.top_hjson,
@@ -390,7 +390,7 @@ def _test_dispatch(ctx, exec_env, firmware):
     # Generate the OTP backend image for QEMU emulation
     otp_image = gen_otp(
         ctx,
-        otptool = exec_env.otptool,
+        otptool = exec_env.otptool[DefaultInfo].files_to_run,
         vmem = get_fallback(ctx, "file.otp", exec_env),
     )
     data_files += [otp_image]
@@ -412,7 +412,7 @@ def _test_dispatch(ctx, exec_env, firmware):
         # Generate the flash backend image for QEMU emulation
         flash_image = gen_flash(
             ctx,
-            flashgen = exec_env.flashgen,
+            flashgen = exec_env.flashgen[DefaultInfo].files_to_run,
             firmware_bin = image,
             # TODO: no support for convenience debug symbols from ELFs for now
             firmware_elf = None,
