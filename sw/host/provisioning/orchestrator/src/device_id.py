@@ -230,6 +230,7 @@ class DeviceId():
     def from_hexstr(hexstr: str) -> "DeviceId":
         """Creates a DeviceId object from a hex string."""
         device_id_int = util.parse_hexstring_to_int(hexstr)
+        print(hexstr, device_id_int)
         return DeviceId.from_int(device_id_int)
 
     @staticmethod
@@ -253,6 +254,7 @@ class DeviceId():
 
         # Unpack OTP name.
         try:
+            print("otp_id is", otp_id, "(before attempting unpacking)")
             otp = (struct.pack('>H', otp_id).decode('ascii') +
                    f"{otp_version:02x}")
         except UnicodeDecodeError:

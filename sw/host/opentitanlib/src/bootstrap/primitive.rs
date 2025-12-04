@@ -132,7 +132,6 @@ impl UpdateProtocol for Primitive {
         progress: &dyn ProgressIndicator,
     ) -> Result<()> {
         let spi = container.spi_params.create(transport, "BOOTSTRAP")?;
-
         let frames = Frame::from_payload(payload);
 
         progress.new_stage("", payload.len());

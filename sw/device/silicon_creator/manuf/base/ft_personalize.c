@@ -1024,10 +1024,8 @@ static status_t personalize_endorse_certificates(ujson_t *uj) {
 }
 
 static status_t send_final_hash(ujson_t *uj, serdes_sha256_hash_t *hash) {
-  TRY(dif_gpio_write(&gpio, kGpioPinSpiConsoleTxReady, true));
   TRY(RESP_OK_PADDED_NO_CRC(ujson_serialize_with_padding_serdes_sha256_hash_t,
                             uj, hash, kSerdesSha256HashSerializedMaxSize));
-  TRY(dif_gpio_write(&gpio, kGpioPinSpiConsoleTxReady, false));
   return OK_STATUS();
 }
 

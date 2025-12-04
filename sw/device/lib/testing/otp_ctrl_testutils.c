@@ -162,8 +162,12 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
   for (uint32_t addr = start_address, i = 0; addr < stop_address;
        addr += sizeof(uint32_t), ++i) {
     uint32_t read_data;
+    volatile uint32_t *logwrite = (volatile uint32_t*)0x4003002cu;
+    *logwrite = addr | ((check_before_write ? 1u : 0u) << 31u);
+    *logwrite = buffer[i];
     if (check_before_write) {
       TRY(otp_ctrl_testutils_dai_read32(otp, partition, addr, &read_data));
+      *logwrite = read_data;
       if (read_data == buffer[i]) {
         continue;
       }
@@ -172,6 +176,8 @@ status_t otp_ctrl_testutils_dai_write32(const dif_otp_ctrl_t *otp,
                   partition, addr, read_data, buffer[i]);
         return INTERNAL();
       }
+    } else {
+      *logwrite = 0xfacecafe;
     }
 
     TRY(otp_ctrl_testutils_wait_for_dai(otp));

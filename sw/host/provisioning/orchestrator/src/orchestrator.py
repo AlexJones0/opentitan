@@ -157,7 +157,10 @@ def main(args_in):
     sku_config_args = {}
     with open(sku_config_path, "r") as fp:
         sku_config_args = hjson.load(fp)
+    print("sku_config_args:", sku_config_args)
     sku_config = SkuConfig(**sku_config_args)
+    print("sku_config:", sku_config)
+    print("otp:", sku_config.otp)
 
     # Override package ID if requested.
     if args.package:
@@ -189,7 +192,7 @@ def main(args_in):
                 fpga_dont_clear_bitstream=args.fpga_dont_clear_bitstream,
                 log_ujson_payloads=args.log_ujson_payloads,
                 require_confirmation=not args.non_interactive)
-    dut.run_cp()
+    dut.run_cp(args.cp_only)
     if args.cp_only:
         logging.info("FT skipped since --cp-only was provided")
         return

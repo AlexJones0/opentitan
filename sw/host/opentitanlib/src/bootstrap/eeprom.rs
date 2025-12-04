@@ -44,6 +44,7 @@ impl UpdateProtocol for Eeprom {
         payload: &[u8],
         progress: &dyn ProgressIndicator,
     ) -> Result<()> {
+        println!("Bootstrapping EEPROM with payload of len {}", payload.len());
         let spi = container.spi_params.create(transport, "BOOTSTRAP")?;
         let flash = SpiFlash::from_spi(&*spi)?;
         flash.chip_erase(&*spi)?;

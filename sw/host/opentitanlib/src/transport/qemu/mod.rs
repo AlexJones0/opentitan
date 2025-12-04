@@ -221,7 +221,12 @@ impl Qemu {
 
         // Debug module JTAG tap:
         let jtag_rv_dm_sock = match find_chardev(&chardevs, "taprbb") {
-            Some(ChardevKind::Socket { path }) => Some(path.clone()),
+            Some(ChardevKind::Socket { path }) =>
+                if let Some(alt_path) = options.qemu_rv_dm_jtag_sock {
+                    Some(alt_path)    
+                } else {
+                    Some(path.clone())
+                },
             _ => {
                 log::info!("could not find socket chardev with id=taprbb, skipping RV_DM JTAG");
                 None
@@ -230,7 +235,12 @@ impl Qemu {
 
         // Lifecycle controller JTAG tap:
         let jtag_lc_ctrl_sock = match find_chardev(&chardevs, "taprbb-lc-ctrl") {
-            Some(ChardevKind::Socket { path }) => Some(path.clone()),
+            Some(ChardevKind::Socket { path }) =>
+                if let Some(alt_path) = options.qemu_lc_ctrl_jtag_sock {
+                    Some(alt_path)    
+                } else {
+                    Some(path.clone())
+                }, 
             _ => {
                 log::info!(
                     "could not find socket chardev with id=taprbb-lc-ctrl, skipping LC JTAG"

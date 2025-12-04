@@ -128,7 +128,7 @@ pub fn run_sram_ft_individualize(
     }
 
     // Wait for provisioning operations to complete.
-    jtag.wait_halt(timeout)?;
+    jtag.wait_halt(timeout * 50)?;
     jtag.halt()?;
     let sp = jtag.read_riscv_reg(&RiscvReg::Gpr(RiscvGpr::SP))?;
     log::info!("after timeout, sp = {:x}", sp);
@@ -549,10 +549,11 @@ fn provision_certificates(
     // SHA256 over all certificates computed on the host and device sides.
     let device_computed_certs_hash = SerdesSha256Hash::recv(
         spi_console,
-        timeout,
+        timeout * 100,
         /*quiet=*/ false,
         /*skip_crc=*/ true,
     )?;
+    println!("Host claims to have received the hash of the certificates.");
 
     if !device_computed_certs_hash
         .data
@@ -623,21 +624,25 @@ pub fn run_ft_personalize(
     response: &mut PersonalizeResponse,
 ) -> Result<()> {
     // Bootstrap only personalization binary into ROM_EXT slot A in flash.
+    println!("start of personalization");
     spi_console.reset_frame_counter();
     let t0 = Instant::now();
     init.bootstrap.init(transport)?;
     spi_console.reset_frame_counter();
     response.stats.log_elapsed_time("first-bootstrap", t0);
+    println!("bootstrapped perso binary");
 
     // Bootstrap personalization + ROM_EXT + Owner FW binaries into flash, since
     // flash scrambling seeds were provisioned in the previous step.
     let t0 = Instant::now();
     let _ = UartConsole::wait_for(spi_console, r"Bootstrap requested.", timeout)?;
+    println!("second bootstrap rquested, bootstrapping full binaries");
     response.stats.log_elapsed_time("first-bootstrap-done", t0);
     let t0 = Instant::now();
     init.bootstrap.load(transport, &second_bootstrap)?;
     spi_console.reset_frame_counter();
     response.stats.log_elapsed_time("second-bootstrap", t0);
+    println!("Done with all perso bootstraps");
 
     // Send RMA unlock token digest to device.
     let second_t0 = Instant::now();
@@ -699,9 +704,9 @@ pub fn check_slot_b_boot_up(
     // These values were tested on fpga cw340 and could be potentially fine-tuned.
     let slot_b_startup_timeout: Duration =
         Duration::from_millis(if owner_fw_success_string.is_none() {
-            800
+            800 * 50
         } else {
-            2000
+            2000 * 50
         });
 
     response.stats.log_elapsed_time("rom_ext-done", t0);
