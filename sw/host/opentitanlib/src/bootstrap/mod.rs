@@ -144,6 +144,7 @@ impl<'a> Bootstrap<'a> {
             transport.proxy_ops()?.bootstrap(options, payload)?;
             return Ok(());
         }
+        println!("Bootstrap protocol: {:?}", options.protocol);
         let updater: Box<dyn UpdateProtocol> = match options.protocol {
             BootstrapProtocol::Primitive => Box::new(primitive::Primitive::new(options)),
             BootstrapProtocol::Legacy => Box::new(legacy::Legacy::new(options)),
@@ -187,6 +188,7 @@ impl<'a> Bootstrap<'a> {
             transport.reset(uart_rx)?;
             log::info!("Performing bootstrap...");
         }
+        println!("Bootstrapping with payload of len {}", payload.len());
         let result = updater.update(self, transport, payload, progress);
 
         if !self.leave_in_bootstrap && perform_bootstrap_reset {

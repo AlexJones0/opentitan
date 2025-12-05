@@ -42,6 +42,8 @@ OT_WARN_UNUSED_RESULT
 static status_t otp_img_write(const dif_otp_ctrl_t *otp,
                               dif_otp_ctrl_partition_t partition,
                               const otp_kv_t *kv, size_t len) {
+  volatile uint32_t *logwrite = (volatile uint32_t*)0x40030030u;
+  *logwrite = 0x00000000;
   for (size_t i = 0; i < len; ++i) {
     // We purposely skip the provisioning of the flash data region default
     // configuration as it must be enabled only after the OTP SECRET1
@@ -79,12 +81,19 @@ static status_t otp_img_write(const dif_otp_ctrl_t *otp,
         kv[i].offset == OTP_CTRL_PARAM_CREATOR_SW_CFG_IMMUTABLE_ROM_EXT_EN_OFFSET ||
         kv[i].offset == OTP_CTRL_PARAM_OWNER_SW_CFG_ROM_BOOTSTRAP_DIS_OFFSET ||
         (kv[i].offset >= kValidAstCfgOtpAddrLow && kv[i].offset < kInvalidAstCfgOtpAddrHigh)) {
+      *logwrite = 0x11111111;
       continue;
+    } else {
+      *logwrite = 0x22222222;
     }
     // clang-format on
     uint32_t offset;
     TRY(dif_otp_ctrl_relative_address(partition, kv[i].offset, &offset));
     switch (kv[i].type) {
+      if (kv[i].offset == OTP_CTRL_PARAM_CREATOR_SW_CFG_ROM_EXEC_EN_OFFSET) {
+        volatile uint32_t *logwrite = (volatile uint32_t*)0x40030030u;
+        *logwrite = 0xfacecafe;
+      }
       case kOptValTypeUint32Buff:
         TRY(otp_ctrl_testutils_dai_write32(otp, partition, offset,
                                            kv[i].value32, kv[i].num_values));

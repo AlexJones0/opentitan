@@ -78,47 +78,71 @@ status_t manuf_individualize_device_hw_cfg(
     const uint32_t *ft_device_id) {
   bool is_locked;
 
+  volatile uint32_t *logwrite = (volatile uint32_t*)0x40030030u;
+  *logwrite = 0x00000012;
+
   // Provision HW_CFG0 if it is not locked.
   TRY(dif_otp_ctrl_is_digest_computed(otp_ctrl, kDifOtpCtrlPartitionHwCfg0,
                                       &is_locked));
+  *logwrite = 0x00000022;
   if (!is_locked) {
     // Configure flash info page permissions in case we started from a cold
     // boot. Note: cp_device_id and manuf_state are on the same flash info page.
+    *logwrite = 0x00000032;
     TRY(flash_ctrl_testutils_info_region_setup_properties(
         flash_state, kFlashInfoFieldCpDeviceId.page,
         kFlashInfoFieldCpDeviceId.bank, kFlashInfoFieldCpDeviceId.partition,
         flash_info_page_0_permissions,
         /*offset=*/NULL));
+    *logwrite = 0x00000042;
 
     // Read CpDeviceId & AST configuration version from flash info page 0.
     uint32_t cp_device_id[kFlashInfoFieldCpDeviceIdSizeIn32BitWords];
     TRY(manuf_flash_info_field_read(flash_state, kFlashInfoFieldCpDeviceId,
                                     cp_device_id,
                                     kFlashInfoFieldCpDeviceIdSizeIn32BitWords));
+    *logwrite = 0x00000052;
     uint32_t ast_cfg_version;
     TRY(manuf_flash_info_field_read(
         flash_state, kFlashInfoFieldAstCfgVersion, &ast_cfg_version,
         kFlashInfoFieldAstCfgVersionSizeIn32BitWords));
-
+    *logwrite = 0x00000062;
+    *logwrite = 0xcafeface;
+    *logwrite = ast_cfg_version;
+    *logwrite = 0xfacecafe;
     // Check if AST configuration version is an 8-bit value.
     if (ast_cfg_version > UINT8_MAX) {
-      return OUT_OF_RANGE();
+      if (kDeviceType == kDeviceSilicon || kDeviceType == kDeviceSimDV) {
+        return OUT_OF_RANGE();
+      } else {
+        // TODO: workaround for QEMU, figure out proper solution
+        ast_cfg_version = 0;
+      }
     }
-
+    *logwrite = 0x00000072;
     // Check if CP device ID from flash is empty.
     bool flash_cp_device_id_empty = true;
     for (size_t i = 0; i < kFlashInfoFieldCpDeviceIdSizeIn32BitWords; ++i) {
+      *logwrite = 0xffffcafe;
+      *logwrite = cp_device_id[i];
+      *logwrite = 0xcafeffff;
       if (cp_device_id[i] != 0) {
         flash_cp_device_id_empty = false;
-        break;
       }
     }
+
+    // TODO: this might need to be set for QEMU as well (because we don't)
+    // except the CP device ID to be in flash, but it reads all 1s.
+    // Unclear if the base ID from the CP stage is enough or this is needed also.
+    // TODO: I think we probably do want to do this for QEMU anyway based on
+    // the below comments.
 
     // On non-silicon targets, we expect the CP device ID from flash to be
     // empty. In this case we set the HW origin and DIN portions of the CP
     // device ID to all 1s to indicate this is an FPGA/Sim generated device ID.
     // Otherwise, we expect the CP device ID to be present and non-zero.
     if (flash_cp_device_id_empty) {
+      *logwrite = 0x00000082;
       if (kDeviceType != kDeviceSilicon && kDeviceType != kDeviceSimDV) {
         memset(&cp_device_id, 0, sizeof(cp_device_id));
         cp_device_id[0] = UINT32_MAX;
@@ -128,6 +152,7 @@ status_t manuf_individualize_device_hw_cfg(
         return NOT_FOUND();
       }
     }
+    *logwrite = 0x00000092;
 
     // Construct the complete device ID.
     uint32_t device_id[kHwCfgDeviceIdSizeIn32BitWords];
@@ -148,26 +173,33 @@ status_t manuf_individualize_device_hw_cfg(
     TRY(otp_ctrl_testutils_dai_write32(otp_ctrl, kDifOtpCtrlPartitionHwCfg0,
                                        kHwCfgDeviceIdOffset, device_id,
                                        kHwCfgDeviceIdSizeIn32BitWords));
-
+    *logwrite = 0x000000a2;
     // Configure ManufState as all 0s. It is unused.
     uint32_t manuf_state[kHwCfgManufStateSizeIn32BitWords] = {0};
     TRY(otp_ctrl_testutils_dai_write32(otp_ctrl, kDifOtpCtrlPartitionHwCfg0,
                                        kHwCfgManufStateOffset, manuf_state,
                                        kHwCfgManufStateSizeIn32BitWords));
+    *logwrite = 0x000000b2;
     TRY(otp_ctrl_testutils_lock_partition(otp_ctrl, kDifOtpCtrlPartitionHwCfg0,
                                           /*digest=*/0));
+    *logwrite = 0x000000c2;
   }
+  *logwrite = 0x000000d2;
 
   // Provision HW_CFG1 if it is not locked.
   TRY(dif_otp_ctrl_is_digest_computed(otp_ctrl, kDifOtpCtrlPartitionHwCfg1,
                                       &is_locked));
+  *logwrite = 0x000000e2;
   if (!is_locked) {
+    *logwrite = 0x000000f2;
     // Configure byte-sized hardware enable knobs.
     TRY(hw_cfg1_enable_knobs_set(otp_ctrl));
+    *logwrite = 0x00000102;
 
     TRY(otp_ctrl_testutils_lock_partition(otp_ctrl, kDifOtpCtrlPartitionHwCfg1,
                                           /*digest=*/0));
   }
+  *logwrite = 0x00000112;
   return OK_STATUS();
 }
 

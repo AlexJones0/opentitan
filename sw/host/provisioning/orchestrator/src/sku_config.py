@@ -133,7 +133,7 @@ class SkuConfig:
             raise ValueError("AST config version should be in range [0, 256).")
         # Validate OTP string.
         if len(self.otp) != 4:
-            raise ValueError("OTP must be a non-empty 4 character string.")
+            raise ValueError(f"OTP must be a non-empty 4 character string. (is: {self.otp})")
         # Validate OTP ID string.
         if not self.otp[0].isalpha() or not self.otp[1].isalpha():
             raise ValueError(

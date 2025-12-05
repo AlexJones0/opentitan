@@ -5,7 +5,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@ot_python_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
-load("//rules/opentitan:qemu.bzl", "qemu_cfg", "qemu_otp")
+load("//rules/opentitan:qemu.bzl", "qemu_cfg", "qemu_flash", "qemu_otp")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -116,6 +116,8 @@ qemu_cfg(
     top_name = "earlgrey",
 )
 
+qemu_flash(name = "qemu_empty_flash")
+
 qemu_otp(
     name = "qemu_base_otp",
     vmem = "//hw/ip/otp_ctrl/data/earlgrey_skus/emulation:otp_img_test_unlocked0_manuf_empty",
@@ -127,8 +129,13 @@ filegroup(
     srcs = [
         ":data_dependencies",
         ":qemu_base_cfg",
+        ":qemu_empty_flash",
         ":qemu_base_otp",
         "//hw/top_earlgrey/util:qemu_start",
+        # TODO: can we select only QEMU's mask ROM? Transition?
+        # TODO: but it looks like for all the binaries we already have all envs anyway? (FPGA, silicon, QEMU)?
+        # So maybe not a problem here
+        "//sw/device/silicon_creator/rom:mask_rom",
         "//third_party/qemu:qemu-system-riscv32",
     ],
 )

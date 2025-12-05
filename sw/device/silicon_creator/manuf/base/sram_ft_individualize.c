@@ -152,23 +152,31 @@ static status_t provision(ujson_t *uj) {
   TRY(patch_ast_config_value());
 
   // Perform OTP writes.
+  volatile uint32_t *logwrite = (volatile uint32_t*)0x40030030u;
 #ifndef ATE
   // Get host data.
   base_printf("Waiting for FT SRAM provisioning data ...");
+  *logwrite = 0x00000001;
   TRY(dif_gpio_write(&gpio, kGpioPinSpiConsoleRxReady, true));
   TRY(ujson_deserialize_manuf_ft_individualize_data_t(uj, &in_data));
   TRY(dif_gpio_write(&gpio, kGpioPinSpiConsoleRxReady, false));
+  *logwrite = 0x00000002;
   TRY(manuf_individualize_device_hw_cfg(&flash_ctrl_state, &otp_ctrl,
                                         kFlashInfoPage0Permissions,
                                         in_data.ft_device_id));
+  *logwrite = 0x00000003;
 #else
   TRY(manuf_individualize_device_hw_cfg(
       &flash_ctrl_state, &otp_ctrl, kFlashInfoPage0Permissions, kFtDeviceId));
 #endif
   TRY(manuf_individualize_device_rot_creator_auth_codesign(&otp_ctrl));
+  *logwrite = 0x00000004;
   TRY(manuf_individualize_device_rot_creator_auth_state(&otp_ctrl));
+  *logwrite = 0x00000005;
   TRY(manuf_individualize_device_owner_sw_cfg(&otp_ctrl));
+  *logwrite = 0x00000006;
   TRY(manuf_individualize_device_creator_sw_cfg(&otp_ctrl, &flash_ctrl_state));
+  *logwrite = 0x00000007;
 
   return OK_STATUS();
 }

@@ -171,10 +171,27 @@ static status_t flash_info_page_0_read_and_validate(
   console_out->cp_device_id[3] = 0;
 
   // Write CP device ID.
+  uint32_t cp_device_id[kFlashInfoFieldCpDeviceIdSizeIn32BitWords] = {0};
+  TRY(manuf_flash_info_field_read(
+      &flash_ctrl_state, kFlashInfoFieldCpDeviceId, cp_device_id,
+      kFlashInfoFieldCpDeviceIdSizeIn32BitWords));
+  for (uint32_t i = 0; i < kFlashInfoFieldCpDeviceIdSizeIn32BitWords; ++i) {
+      TRY_CHECK(cp_device_id[i] == UINT32_MAX,
+        "Uninit flash on QEMU should be all 1s");
+  }
+
   TRY(manuf_flash_info_field_write(&flash_ctrl_state, kFlashInfoFieldCpDeviceId,
                                    console_out->cp_device_id,
                                    kFlashInfoFieldCpDeviceIdSizeIn32BitWords,
                                    /*erase_page_before_write=*/false));
+
+  TRY(manuf_flash_info_field_read(
+      &flash_ctrl_state, kFlashInfoFieldCpDeviceId, cp_device_id,
+      kFlashInfoFieldCpDeviceIdSizeIn32BitWords));
+  for (uint32_t i = 0; i < kFlashInfoFieldCpDeviceIdSizeIn32BitWords; ++i) {
+      TRY_CHECK(cp_device_id[i] == console_out->cp_device_id[i],
+        "Readback of provisioned CP Device ID does not match");
+  }
 
   return OK_STATUS();
 }

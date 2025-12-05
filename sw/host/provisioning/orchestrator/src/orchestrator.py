@@ -157,7 +157,10 @@ def main(args_in):
     sku_config_args = {}
     with open(sku_config_path, "r") as fp:
         sku_config_args = hjson.load(fp)
+    print("sku_config_args:", sku_config_args)
     sku_config = SkuConfig(**sku_config_args)
+    print("sku_config:", sku_config)
+    print("otp:", sku_config.otp)
 
     # Override package ID if requested.
     if args.package:

@@ -38,6 +38,7 @@ impl Bootstrap {
         if options.clear_uart.is_none() {
             options.clear_uart = Some(true);
         }
+        println!("starting bootstrap?");
         bootstrap::Bootstrap::update_with_progress(transport, &options, &payload, &progress)?;
         Ok(())
     }

@@ -11,6 +11,7 @@ load(
     "//sw/host/provisioning/orchestrator/src:defs.bzl",
     "ALL_TARGETS",
     "FPGA_TARGETS",
+    "SIM_TARGETS",
 )
 load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
@@ -82,65 +83,89 @@ orchestrator_qemu_test_settings_transition(
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
 
-sh_test(
-    name = "e2e_option_flags_test",
-    timeout = "moderate",
-    srcs = ["e2e_option_flags.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-        "PACKAGE": "npcr12",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
+# TODO: can probably refactor lots of repetition here (env, tags) into
+# per exec-target dicts. Plus maybe a lot of these can support the CW340
 
-sh_test(
-    name = "e2e_multistage_test",
-    srcs = ["e2e_multistage.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
+[
+    sh_test(
+        name = "e2e_{}_option_flags_test".format(exec_target),
+        timeout = "moderate",
+        srcs = ["e2e_option_flags.sh"],
+        data = [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
+            "@python3",
+        ],
+        env = {
+            "PYTHON": "$(location @python3//:python3)",
+            "EXEC_TARGET": "{}".format(exec_target),
+            "PACKAGE": "npcr12",
+        },
+        # TODO: refactor repetition (e.g. tags?)
+        tags = [
+            exec_target,
+        ] + ([
+            "changes_otp",
+            "exclusive",
+            "manuf",
+        ] if exec_target in FPGA_TARGETS else [])
+    )
+    # TODO can be all targets (inc cw340)?
+    for exec_target in ["hyper310"] + SIM_TARGETS
+]
 
-sh_test(
-    name = "e2e_ate_individ_test",
-    timeout = "moderate",
-    srcs = ["e2e_ate_individ.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-        "PACKAGE": "npcr12",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
+[
+    sh_test(
+        name = "e2e_{}_multistage_test".format(exec_target),
+        srcs = ["e2e_multistage.sh"],
+        data = [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@python3",
+        ],
+        env = {
+            "PYTHON": "$(location @python3//:python3)",
+            "EXEC_TARGET": "{}".format(exec_target),
+        },
+        # TODO: refactor repetition (e.g. tags?)
+        tags = [
+            exec_target,
+        ] + ([
+            "changes_otp",
+            "exclusive",
+            "manuf",
+        ] if exec_target in FPGA_TARGETS else [])
+    )
+    # TODO can be all targets (inc cw340)?
+    for exec_target in ["hyper310"] + SIM_TARGETS
+]
+
+[
+    sh_test(
+        name = "e2e_{}_ate_individ_test".format(exec_target),
+        timeout = "moderate",
+        srcs = ["e2e_ate_individ.sh"],
+        data = [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
+            "@python3",
+        ],
+        env = {
+            "PYTHON": "$(location @python3//:python3)",
+            "PACKAGE": "npcr12",
+            "EXEC_TARGET": "{}".format(exec_target),
+        },
+        # TODO: refactor repetition (e.g. tags?)
+        tags = [
+            exec_target,
+        ] + ([
+            "changes_otp",
+            "exclusive",
+            "manuf",
+        ] if exec_target in FPGA_TARGETS else [])
+    )
+    # TODO can be all targets (inc cw340)?
+    for exec_target in ["hyper310"] + SIM_TARGETS
+]
 
 [
     sh_test(

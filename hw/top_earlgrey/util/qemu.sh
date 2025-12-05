@@ -160,6 +160,14 @@ qemu_args+=(
   "-device" "ot-i2c_host_proxy,bus=ot-i2c2,chardev=i2c2"
 
   # Connect GPIO interface to a PTY.
+  # TODO: change all PTYs to sockets to allow multiple connection.
+  # TODO: need to figure out a nicer way to handle passing in paths
+  # to QEMU, maybe I do just need to enumerate each one?
+  # Or a way of referring by name/ID e.g. "gpio=my/path, i2c0=another/path"
+  # TODO: I should just try it the less-nice way first and then refactor
+  # to be able to do this (maybe just splitting a string?) if that
+  # is needed
+  #"-chardev" "socket,id=gpio,path=qemu-gpio,server=on,wait=off"
   "-chardev" "pty,id=gpio"
   "-global" "ot-gpio-eg.chardev=gpio"
 
@@ -170,6 +178,14 @@ qemu_args+=(
   # Connect JTAG remote bit-bang for RV_DM & LC_CTRL TAPs to sockets.
   "-chardev" "socket,id=taprbb,path=${QEMU_RV_DM_JTAG_SOCK},server=on,wait=off"
   "-chardev" "socket,id=taprbb-lc-ctrl,path=${QEMU_LC_JTAG_SOCK},server=on,wait=off"
+
+  #"--trace" "ot_otp*"
+  "--trace" "ot_uart_io_write*" 
+
+  # We don't really care about emulating the OTP write/read delay in QEMU,
+  # so shorten them to be almost instant to speed up testing.
+  "--global" "ot-otp_ot_be.write_ns=10"
+  "--global" "ot-otp_ot_be.read_ns=2"
 )
 
 # Spawn QEMU
