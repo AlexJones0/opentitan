@@ -78,11 +78,12 @@ if [ "$EXEC_TARGET" == "qemu" ]; then
     # memory region for a very substantial speedup.
     "--global" "ot-sram_ctrl.noinit=true"
 
-    # We don't really care about emulating the OTP write/read delay in QEMU,
-    # so shorten them to be almost instant to speed up each test by an extra
-    # few seconds.
+    # We aren't too interested in accurately emulating an OTP write/read delay
+    # in QEMU compared to benefit of faster testing by removing this delay, so
+    # shorten OTP backend cell writes and reads to be near-instant. This helps
+    # make test timing a bit more reliable.
     "--global" "ot-otp_ot_be.write_ns=10"
-    "--global" "ot-otp_ot_be.read_ns=2"
+    "--global" "ot-otp_ot_be.read_ns=10"
   )
 
   echo "Starting QEMU for the Orchestrator..."
