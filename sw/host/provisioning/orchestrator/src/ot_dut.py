@@ -26,8 +26,7 @@ _OPENOCD_BIN = "third_party/openocd/build_openocd/bin/openocd"
 _OPENOCD_ADAPTER_CONFIG = "external/openocd/tcl/interface/cmsis-dap.cfg"
 _BASE_PROVISIONING_FLAGS = """
     --interface={target} \
-    --openocd={openocd_bin} \
-    --openocd-adapter-config={openocd_cfg} \
+    --openocd={openocd_bin}
 """
 _ZERO_256BIT_HEXSTR = "0x" + "_".join(["00000000"] * 8)
 
@@ -157,6 +156,7 @@ class OtDut():
         else:
             return "silicon_creator"
 
+    # TODO: doc comment cp_only
     def run_cp(self) -> None:
         """Runs the CP provisioning flow on the target DUT."""
         logging.info("Running CP provisioning ...")
@@ -168,10 +168,11 @@ class OtDut():
 
         # Set host flags and device binary for the configured execution target
         openocd_bin = resolve_runfile(_OPENOCD_BIN)
-        openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
+        if self.exec_target != SimTarget.QEMU.value:
+            openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
+            host_flags += f" --openocd-adapter-config={openocd_cfg}"
         host_flags = host_flags.format(target=self._host_interface,
-                                       openocd_bin=openocd_bin,
-                                       openocd_cfg=openocd_cfg)
+                                       openocd_bin=openocd_bin)
         target_kind = self._target_kind
         # Target-specific host flags
         if target_kind == ExecTargetKind.FPGA:
@@ -181,6 +182,34 @@ class OtDut():
                 host_flags += f" --bitstream={bitstream}"
         elif target_kind == ExecTargetKind.SILICON:
             host_flags += " --disable-dft-on-reset"
+        elif self.exec_target == SimTarget.QEMU.value:
+            monitor_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-monitor"))
+            if not os.path.exists(monitor_path):
+                logging.error("Could not find QEMU Monitor PTY")
+                confirm()
+            # TEMP MAYBE SYMLINK OR SPAWN QEMU IN PYTHON:
+            # USE VERY SHORT NAMES TO WORK AROUND 108 CHAR SOCKET PATH LIMIT
+            jtag_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-jtag.sock"))
+            if not os.path.exists(jtag_path):
+                logging.error("Could not find QEMU RV_DM JTAG socket")
+                confirm()
+            if os.path.islink("qemu-jtag.sock") or os.path.exists("qemu-jtag.sock"):
+                os.unlink("qemu-jtag.sock")
+            os.symlink(jtag_path, "qemu-jtag.sock")
+            jtag_path = "qemu-jtag.sock"
+            lc_jtag_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-jtag-lc-ctrl.sock"))
+            if not os.path.exists(lc_jtag_path):
+                logging.error("Could not find QEMU LC_CTRL JTAG socket")
+                confirm()
+            if os.path.islink("qemu-jtag-lc-ctrl.sock") or os.path.exists("qemu-jtag-lc-ctrl.sock"):
+                os.unlink("qemu-jtag-lc-ctrl.sock")
+            os.symlink(lc_jtag_path, "qemu-jtag-lc-ctrl.sock")
+            lc_jtag_path = "qemu-jtag-lc-ctrl.sock"
+            host_flags += f" --qemu-monitor-tty={monitor_path}"
+            host_flags += f" --qemu-rv-dm-jtag-sock={jtag_path}"
+            host_flags += f" --qemu-lc-ctrl-jtag-sock={lc_jtag_path}"
+            # Workaround for QEMU's lack of Pinmux/Padring connections
+            host_flags += " --console-tx-indicator-pin=3"
 
         device_elf = device_elf.format(base_dir=self._base_dev_dir(),
                                        target=self._device_exec_env)
@@ -252,7 +281,6 @@ class OtDut():
         host_bin = _FT_HOST_BIN.format(sku=self.sku_config.name)
         host_bin = resolve_runfile(host_bin)
         openocd_bin = resolve_runfile(_OPENOCD_BIN)
-        openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
         host_flags = _BASE_PROVISIONING_FLAGS
         individ_elf = _FT_INDIVID_DEVICE_ELF
         ate_suffix = "_ate" if self.ate_mode else ""
@@ -263,11 +291,41 @@ class OtDut():
 
         # Set host flags and device binary for the configured execution target
         host_flags = host_flags.format(target=self._host_interface,
-                                       openocd_bin=openocd_bin,
-                                       openocd_cfg=openocd_cfg)
+                                       openocd_bin=openocd_bin)
+        if self.exec_target != SimTarget.QEMU.value:
+            openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
+            host_flags += f" --openocd-adapter-config={openocd_cfg}"
         # Target-specific host flags
         if self._target_kind == ExecTargetKind.SILICON:
             host_flags += " --disable-dft-on-reset"
+        elif self.exec_target == SimTarget.QEMU.value:
+            monitor_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-monitor"))
+            if not os.path.exists(monitor_path):
+                logging.error("Could not find QEMU Monitor PTY")
+                confirm()
+            # TEMP MAYBE SYMLINK OR SPAWN QEMU IN PYTHON:
+            # USE VERY SHORT NAMES TO WORK AROUND 108 CHAR SOCKET PATH LIMIT
+            jtag_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-jtag.sock"))
+            if not os.path.exists(jtag_path):
+                logging.error("Could not find QEMU RV_DM JTAG socket")
+                confirm()
+            if os.path.islink("qemu-jtag.sock") or os.path.exists("qemu-jtag.sock"):
+                os.unlink("qemu-jtag.sock")
+            os.symlink(jtag_path, "qemu-jtag.sock")
+            jtag_path = "qemu-jtag.sock"
+            lc_jtag_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-jtag-lc-ctrl.sock"))
+            if not os.path.exists(lc_jtag_path):
+                logging.error("Could not find QEMU LC_CTRL JTAG socket")
+                confirm()
+            if os.path.islink("qemu-jtag-lc-ctrl.sock") or os.path.exists("qemu-jtag-lc-ctrl.sock"):
+                os.unlink("qemu-jtag-lc-ctrl.sock")
+            os.symlink(lc_jtag_path, "qemu-jtag-lc-ctrl.sock")
+            lc_jtag_path = "qemu-jtag-lc-ctrl.sock"
+            host_flags += f" --qemu-monitor-tty={monitor_path}"
+            host_flags += f" --qemu-rv-dm-jtag-sock={jtag_path}"
+            host_flags += f" --qemu-lc-ctrl-jtag-sock={lc_jtag_path}"
+            # Workaround for QEMU's lack of Pinmux/Padring connections
+            host_flags += " --console-tx-indicator-pin=3"
         # No need to load another bitstream on FPGA, as we take over where the
         # CP stage left off.
 

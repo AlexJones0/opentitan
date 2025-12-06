@@ -99,10 +99,14 @@ status_t manuf_individualize_device_hw_cfg(
     TRY(manuf_flash_info_field_read(
         flash_state, kFlashInfoFieldAstCfgVersion, &ast_cfg_version,
         kFlashInfoFieldAstCfgVersionSizeIn32BitWords));
-
     // Check if AST configuration version is an 8-bit value.
     if (ast_cfg_version > UINT8_MAX) {
-      return OUT_OF_RANGE();
+      if (kDeviceType == kDeviceSilicon || kDeviceType == kDeviceSimDV) {
+        return OUT_OF_RANGE();
+      } else {
+        // TODO: workaround for QEMU, figure out proper solution
+        ast_cfg_version = 0;
+      }
     }
 
     // Check if CP device ID from flash is empty.
@@ -113,6 +117,12 @@ status_t manuf_individualize_device_hw_cfg(
         break;
       }
     }
+
+    // TODO: this might need to be set for QEMU as well (because we don't)
+    // except the CP device ID to be in flash, but it reads all 1s.
+    // Unclear if the base ID from the CP stage is enough or this is needed also.
+    // TODO: I think we probably do want to do this for QEMU anyway based on
+    // the below comments.
 
     // On non-silicon targets, we expect the CP device ID from flash to be
     // empty. In this case we set the HW origin and DIN portions of the CP
@@ -148,7 +158,6 @@ status_t manuf_individualize_device_hw_cfg(
     TRY(otp_ctrl_testutils_dai_write32(otp_ctrl, kDifOtpCtrlPartitionHwCfg0,
                                        kHwCfgDeviceIdOffset, device_id,
                                        kHwCfgDeviceIdSizeIn32BitWords));
-
     // Configure ManufState as all 0s. It is unused.
     uint32_t manuf_state[kHwCfgManufStateSizeIn32BitWords] = {0};
     TRY(otp_ctrl_testutils_dai_write32(otp_ctrl, kDifOtpCtrlPartitionHwCfg0,

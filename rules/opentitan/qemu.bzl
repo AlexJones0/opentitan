@@ -173,7 +173,7 @@ def gen_flash(ctx, **kwargs):
     firmware_bin = get_override(ctx, "file.firmware_bin", kwargs)
     firmware_elf = get_override(ctx, "file.firmware_elf", kwargs)
 
-    check_elfs = get_override(ctx, "file.check_elfs", kwargs)
+    check_elfs = get_override(ctx, "attr.check_elfs", kwargs)
 
     flashgen = get_override(ctx, "executable.flashgen", kwargs)
 

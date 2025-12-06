@@ -11,6 +11,7 @@ load(
     "//sw/host/provisioning/orchestrator/src:defs.bzl",
     "ALL_TARGETS",
     "FPGA_TARGETS",
+    "SIM_TARGETS",
 )
 load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
@@ -18,6 +19,7 @@ load(
     "orchestrator_hyper310_test_settings_transition",
     "orchestrator_qemu_test_settings_transition",
 )
+load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("@ot_python_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
@@ -75,100 +77,114 @@ orchestrator_cw340_test_settings_transition(
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
 
-# TODO: stubbed, currently does nothing. May need to take in e.g. QEMU binaries
+# These transitions
+# This transition has the same effect as supplying the following flags to bazel test:
+#  --//sw/host/provisioning/orchestrator/src:include_qemu_dependencies=True
+# which will include the dependencies for testing with QEMU in the orchestrator zip
 orchestrator_qemu_test_settings_transition(
     name = "orchestrator_qemu_zip",
     testonly = True,
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
 
-sh_test(
-    name = "e2e_option_flags_test",
-    timeout = "moderate",
-    srcs = ["e2e_option_flags.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-        "PACKAGE": "npcr12",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
+sh_library(
+    name = "e2e_test_lib",
+    srcs = [
+        "common_e2e_cleanup.sh",
+        "common_e2e_setup.sh",
     ],
 )
 
-sh_test(
-    name = "e2e_multistage_test",
-    srcs = ["e2e_multistage.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
+E2E_TEST_DATA = {
+    exec_target: {
+        # TODO: QEMU OTP is currently slow, making these take a very long time
+        "timeout": "eternal" if exec_target == "qemu" else "moderate",
+        "data": [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@python3",
+        ],
+        "env": {
+            "PYTHON": "$(location @python3//:python3)",
+            "EXEC_TARGET": "{}".format(exec_target),
+        },
+        "tags": [
+            exec_target,
+            "manuf",
+        ] + ([
+            "changes_otp",
+            "exclusive",
+        ] if exec_target in FPGA_TARGETS else []),
+        "deps": [":e2e_test_lib"],
+    }
+    for exec_target in ALL_TARGETS
+}
 
-sh_test(
-    name = "e2e_ate_individ_test",
-    timeout = "moderate",
-    srcs = ["e2e_ate_individ.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-        "PACKAGE": "npcr12",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
+[
+    sh_test(
+        name = "e2e_{}_option_flags_test".format(exec_target),
+        timeout = test_data["timeout"],
+        srcs = ["e2e_option_flags.sh"],
+        data = test_data["data"] + [
+            "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
+        ],
+        env = dicts.add(
+            test_data["env"],
+            {"PACKAGE": "npcr12"},
+        ),
+        tags = test_data["tags"],
+        deps = test_data["deps"],
+    )
+    for exec_target, test_data in E2E_TEST_DATA.items()
+]
+
+[
+    sh_test(
+        name = "e2e_{}_multistage_test".format(exec_target),
+        timeout = test_data["timeout"],
+        srcs = ["e2e_multistage.sh"],
+        data = test_data["data"],
+        env = test_data["env"],
+        tags = test_data["tags"],
+        deps = test_data["deps"],
+    )
+    for exec_target, test_data in E2E_TEST_DATA.items()
+]
+
+[
+    sh_test(
+        name = "e2e_{}_ate_individ_test".format(exec_target),
+        timeout = test_data["timeout"],
+        srcs = ["e2e_ate_individ.sh"],
+        data = test_data["data"] + [
+            "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
+        ],
+        env = dicts.add(
+            test_data["env"],
+            {"PACKAGE": "npcr12"},
+        ),
+        tags = test_data["tags"],
+        deps = test_data["deps"],
+    )
+    for exec_target, test_data in E2E_TEST_DATA.items()
+]
 
 [
     sh_test(
         name = "e2e_{}_{}_test".format(sku, exec_target),
-        timeout = "moderate",
+        timeout = test_data["timeout"],
         srcs = ["e2e.sh"],
-        data = [
-            ":orchestrator_{}_zip".format(exec_target),
-            "@python3",
-            cfg["orchestrator_cfg"],
-        ],
-        env = {
-            "PYTHON": "$(location @python3//:python3)",
-            "SKU_CONFIG_PATH": "$(location {})".format(cfg["orchestrator_cfg"]),
-            "EXEC_TARGET": "{}".format(exec_target),
-        },
-        tags = [
-            exec_target,
-        ] + ([
-            "changes_otp",
-            "exclusive",
-            "manuf",
-        ] if exec_target in FPGA_TARGETS else []) + ([
+        data = test_data["data"] + [cfg["orchestrator_cfg"]],
+        env = dicts.add(
+            test_data["env"],
+            {"SKU_CONFIG_PATH": "$(location {})".format(cfg["orchestrator_cfg"])},
+        ),
+        tags = test_data["tags"] + ([
             "manual",
         ] if cfg.get("offline", False) else []),
+        deps = test_data["deps"],
     )
     for sku, cfg in EARLGREY_SKUS.items()
-    for exec_target in ALL_TARGETS
+    for exec_target, test_data in E2E_TEST_DATA.items()
 ]
 
 [

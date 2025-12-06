@@ -9,7 +9,7 @@ use std::path::Path;
 use std::rc::Rc;
 
 use anyhow::{Context, bail};
-use serialport::TTYPort;
+use serialport::{SerialPort, TTYPort};
 
 use crate::io::gpio::{GpioPin, PinMode, PullMode};
 
@@ -68,9 +68,13 @@ pub struct QemuGpio {
 
 impl QemuGpio {
     pub fn new<P: AsRef<Path>>(gpio_pty: P) -> anyhow::Result<Self> {
-        let pty = serialport::new(gpio_pty.as_ref().to_str().unwrap(), 0)
+        let mut pty = serialport::new(gpio_pty.as_ref().to_str().unwrap(), 0)
             .open_native()
             .context("failed to open QEMU GPIO PTY")?;
+        // We mark the PTY non-exclusive to allow re-connection, as dropping
+        // the serialport::TTYPort with data left to receive will not close
+        // the PTY fd. We do try and receive all data on drop however.
+        pty.set_exclusive(false)?;
         let pty = BufReader::new(pty);
 
         let qemu_gpio = QemuGpio {
@@ -168,6 +172,19 @@ impl QemuGpio {
     }
 }
 
+impl Drop for QemuGpio {
+    fn drop(&mut self) {
+        let pty: &mut dyn SerialPort = self.pty.get_mut();
+        let _ = pty.flush();
+        while let Some(bytes) = pty.bytes_to_read().ok() {
+            // Discard any remaining bytes
+            let mut rx = Vec::with_capacity(bytes.try_into().unwrap());
+            let _ = pty.read_exact(&mut rx);
+            // Wait a little in case QEMU has more data to send
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+    }
+}
 pub struct QemuGpioPin {
     qemu_gpio: Rc<RefCell<QemuGpio>>,
     idx: u8,

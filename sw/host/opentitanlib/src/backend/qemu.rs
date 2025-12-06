@@ -18,6 +18,24 @@ pub struct QemuOpts {
     #[arg(long, required_if_eq("interface", "qemu"))]
     pub qemu_monitor_tty: Option<PathBuf>,
 
+    /// Path to the socket connected to the RV_DM JTAG TAP Ctrl.
+    /// Allows OpenOCD to communicate via the Remote-Bitbang protocol.
+    ///
+    /// By default this is retrieved from the monitor, but if QEMU was
+    /// given an absolute path and the working directory has changed
+    /// then this will be wrong, so this option provides an override
+    #[arg(long)]
+    pub qemu_rv_dm_jtag_sock: Option<PathBuf>,
+
+    /// Path to the socket connected to the LC_CTRL JTAG TAP Ctrl.
+    /// Allows OpenOCD to communicate via the Remote-Bitbang protocol.
+    ///
+    /// By default this is retrieved from the monitor, but if QEMU was
+    /// given an absolute path and the working directory has changed
+    /// then this will be wrong, so this option provides an override
+    #[arg(long)]
+    pub qemu_lc_ctrl_jtag_sock: Option<PathBuf>,
+
     /// Quit QEMU when finished.
     #[arg(long, default_value_t = false)]
     pub qemu_quit: bool,

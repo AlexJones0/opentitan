@@ -406,6 +406,7 @@ manifest(d = {
             "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys",
             "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys",
             "//hw/top_earlgrey:silicon_creator",
+            "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys",
         ],
     )
     for sku, config in EARLGREY_SKUS.items()
