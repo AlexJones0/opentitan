@@ -43,6 +43,7 @@ if [ "$EXEC_TARGET" == "qemu" ]; then
   export QEMU_FLASH="qemu_empty_flash.qemu_bin"
   export QEMU_OTP="qemu_base_otp.raw"
   export QEMU_MONITOR="qemu-monitor"
+  export QEMU_GPIO_SOCK="qemu-gpio.sock"
   export QEMU_RV_DM_JTAG_SOCK="qemu-jtag.sock"
   export QEMU_LC_JTAG_SOCK="qemu-jtag-lc-ctrl.sock"
   # TODO: QEMU log or no?
@@ -84,6 +85,8 @@ if [ "$EXEC_TARGET" == "qemu" ]; then
     # make test timing a bit more reliable.
     "--global" "ot-otp_ot_be.write_ns=10"
     "--global" "ot-otp_ot_be.read_ns=10"
+
+    "-trace" "ot_otp*"
   )
 
   echo "Starting QEMU for the Orchestrator..."

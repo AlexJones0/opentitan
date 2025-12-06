@@ -50,7 +50,7 @@ pub fn unlock_raw(transport: &TransportWrapper, jtag_params: &JtagParams) -> Res
         .pin_strapping("PINMUX_TAP_LC")?
         .apply()
         .context("failed to apply LC TAP strapping")?;
-    transport.reset(UartRx::Clear).context("failed to reset")?;
+    transport.reset(UartRx::Clear)?;
 
     // Connect to the LC TAP via JTAG.
     let mut jtag = jtag_params
@@ -150,7 +150,7 @@ pub fn reset_and_lock(transport: &TransportWrapper, jtag_params: &JtagParams) ->
         .pin_strapping("PINMUX_TAP_LC")?
         .apply()
         .context("failed to apply LC TAP strapping")?;
-    transport.reset(UartRx::Clear).context("failed to reset")?;
+    transport.reset(UartRx::Clear)?;
 
     // Connect to the LC TAP via JTAG.
     let mut jtag = jtag_params

@@ -1011,12 +1011,16 @@ impl TransportWrapper {
     pub fn reset_with_delay(&self, uart_rx: UartRx, delay: Duration) -> Result<()> {
         log::info!("Asserting the reset signal");
 
+        log::info!("Before disable dft on reset strapping");
         if self.disable_dft_on_reset.get() {
             self.pin_strapping("PRERESET_DFT_DISABLE")?.apply()?;
         }
+        log::info!("After disable dft on reset strapping");
 
         self.pin_strapping("RESET")?.apply()?;
+        log::info!("After applying RESET pin strapping");
         std::thread::sleep(delay);
+        log::info!("After sleep pin strapping");
 
         if uart_rx == UartRx::Clear {
             log::info!("Clearing the UART RX buffer");
@@ -1025,6 +1029,7 @@ impl TransportWrapper {
 
         log::info!("Deasserting the reset signal");
         self.pin_strapping("RESET")?.remove()?;
+        log::info!("After removing RESET pin strapping");
 
         if self.disable_dft_on_reset.get() {
             std::thread::sleep(Duration::from_millis(10));

@@ -208,13 +208,18 @@ impl Qemu {
 
         // If there's a chardev called `gpio`, configure it as a PTY and use as the GPIO pins.
         let gpio = match find_chardev(&chardevs, "gpio") {
-            Some(ChardevKind::Pty { path }) => {
-                let gpio = QemuGpio::new(path).context("failed to connect to QEMU GPIO PTY")?;
+            Some(ChardevKind::Socket { path }) => {
+                let path = if let Some(alt_path) = options.qemu_gpio_sock {
+                    alt_path
+                } else {
+                    path.clone()
+                };
+                let gpio = QemuGpio::new(path).context("failed to connect to QEMU GPIO Socket")?;
                 let gpio = Rc::new(RefCell::new(gpio));
                 Some(gpio)
             }
             _ => {
-                log::info!("could not find pty chardev with id=gpio, GPIO support disabled");
+                log::info!("could not find socket chardev with id=gpio, GPIO support disabled");
                 None
             }
         };

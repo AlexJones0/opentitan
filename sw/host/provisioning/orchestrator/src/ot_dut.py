@@ -106,6 +106,7 @@ class OtDut():
                 logging.error(f"Failed to parse {key}: {e}")
                 confirm()
         else:
+            print(log_data)
             logging.error(f"{key} not found.")
             confirm()
         return json_data
@@ -183,12 +184,24 @@ class OtDut():
         elif target_kind == ExecTargetKind.SILICON:
             host_flags += " --disable-dft-on-reset"
         elif self.exec_target == SimTarget.QEMU.value:
-            monitor_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-monitor"))
-            if not os.path.exists(monitor_path):
-                logging.error("Could not find QEMU Monitor PTY")
-                confirm()
             # TEMP MAYBE SYMLINK OR SPAWN QEMU IN PYTHON:
             # USE VERY SHORT NAMES TO WORK AROUND 108 CHAR SOCKET PATH LIMIT
+            monitor_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-monitor"))
+            if not os.path.exists(monitor_path):
+                logging.error("Could not find QEMU GPIO socket")
+                confirm()
+            if os.path.islink("qemu-monitor") or os.path.exists("qemu-monitor"):
+                os.unlink("qemu-monitor")
+            os.symlink(monitor_path, "qemu-monitor")
+            monitor_path = "qemu-monitor"
+            gpio_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-gpio.sock"))
+            if not os.path.exists(gpio_path):
+                logging.error("Could not find QEMU GPIO socket")
+                confirm()
+            if os.path.islink("qemu-gpio.sock") or os.path.exists("qemu-gpio.sock"):
+                os.unlink("qemu-gpio.sock")
+            os.symlink(gpio_path, "qemu-gpio.sock")
+            gpio_path = "qemu-gpio.sock"
             jtag_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-jtag.sock"))
             if not os.path.exists(jtag_path):
                 logging.error("Could not find QEMU RV_DM JTAG socket")
@@ -206,6 +219,7 @@ class OtDut():
             os.symlink(lc_jtag_path, "qemu-jtag-lc-ctrl.sock")
             lc_jtag_path = "qemu-jtag-lc-ctrl.sock"
             host_flags += f" --qemu-monitor-tty={monitor_path}"
+            host_flags += f" --qemu-gpio-sock={gpio_path}"
             host_flags += f" --qemu-rv-dm-jtag-sock={jtag_path}"
             host_flags += f" --qemu-lc-ctrl-jtag-sock={lc_jtag_path}"
             # Workaround for QEMU's lack of Pinmux/Padring connections
@@ -299,12 +313,24 @@ class OtDut():
         if self._target_kind == ExecTargetKind.SILICON:
             host_flags += " --disable-dft-on-reset"
         elif self.exec_target == SimTarget.QEMU.value:
-            monitor_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-monitor"))
-            if not os.path.exists(monitor_path):
-                logging.error("Could not find QEMU Monitor PTY")
-                confirm()
             # TEMP MAYBE SYMLINK OR SPAWN QEMU IN PYTHON:
             # USE VERY SHORT NAMES TO WORK AROUND 108 CHAR SOCKET PATH LIMIT
+            monitor_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-monitor"))
+            if not os.path.exists(monitor_path):
+                logging.error("Could not find QEMU GPIO socket")
+                confirm()
+            if os.path.islink("qemu-monitor") or os.path.exists("qemu-monitor"):
+                os.unlink("qemu-monitor")
+            os.symlink(monitor_path, "qemu-monitor")
+            monitor_path = "qemu-monitor"
+            gpio_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-gpio.sock"))
+            if not os.path.exists(gpio_path):
+                logging.error("Could not find QEMU GPIO socket")
+                confirm()
+            if os.path.islink("qemu-gpio.sock") or os.path.exists("qemu-gpio.sock"):
+                os.unlink("qemu-gpio.sock")
+            os.symlink(gpio_path, "qemu-gpio.sock")
+            gpio_path = "qemu-gpio.sock"
             jtag_path = os.path.abspath(os.path.join(os.environ["TEST_TMPDIR"], "qemu-jtag.sock"))
             if not os.path.exists(jtag_path):
                 logging.error("Could not find QEMU RV_DM JTAG socket")
@@ -322,8 +348,12 @@ class OtDut():
             os.symlink(lc_jtag_path, "qemu-jtag-lc-ctrl.sock")
             lc_jtag_path = "qemu-jtag-lc-ctrl.sock"
             host_flags += f" --qemu-monitor-tty={monitor_path}"
+            host_flags += f" --qemu-gpio-sock={gpio_path}"
             host_flags += f" --qemu-rv-dm-jtag-sock={jtag_path}"
             host_flags += f" --qemu-lc-ctrl-jtag-sock={lc_jtag_path}"
+            # QEMU might take a bit longer to emulate individualization,
+            # especially on slow hosts or running tests in parallel
+            host_flags += " --timeout=60s"
             # Workaround for QEMU's lack of Pinmux/Padring connections
             host_flags += " --console-tx-indicator-pin=3"
         # No need to load another bitstream on FPGA, as we take over where the

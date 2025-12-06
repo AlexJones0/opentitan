@@ -200,7 +200,7 @@ pub fn trigger_lc_transition(
 
     wait_for_status(
         &mut *jtag,
-        Duration::from_secs(3),
+        Duration::from_secs(5),
         LcCtrlStatus::TRANSITION_SUCCESSFUL,
     )
     .context("failed waiting for TRANSITION_SUCCESSFUL status.")?;
@@ -286,7 +286,7 @@ pub fn trigger_volatile_raw_unlock<'t>(
     if expect_raw_unlock_supported {
         wait_for_status(
             &mut *jtag,
-            Duration::from_secs(3),
+            Duration::from_secs(5),
             LcCtrlStatus::TRANSITION_SUCCESSFUL,
         )
         .context("failed waiting for TRANSITION_SUCCESSFUL status.")?;
@@ -295,7 +295,7 @@ pub fn trigger_volatile_raw_unlock<'t>(
         if use_external_clk {
             status |= LcCtrlStatus::EXT_CLOCK_SWITCHED;
         }
-        wait_for_status(&mut *jtag, Duration::from_secs(3), status)
+        wait_for_status(&mut *jtag, Duration::from_secs(5), status)
             .context("failed waiting for TOKEN_ERROR status.")?;
     }
     Ok(jtag)

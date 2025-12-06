@@ -97,8 +97,7 @@ sh_library(
 
 E2E_TEST_DATA = {
     exec_target: {
-        # TODO: QEMU OTP is currently slow, making these take a very long time
-        "timeout": "eternal" if exec_target == "qemu" else "moderate",
+        "timeout": "moderate",
         "data": [
             ":orchestrator_{}_zip".format(exec_target),
             "@python3",

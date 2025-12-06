@@ -18,6 +18,10 @@ pub struct QemuOpts {
     #[arg(long, required_if_eq("interface", "qemu"))]
     pub qemu_monitor_tty: Option<PathBuf>,
 
+    // TODO document / rework socket connections
+    #[arg(long)]
+    pub qemu_gpio_sock: Option<PathBuf>,
+
     /// Path to the socket connected to the RV_DM JTAG TAP Ctrl.
     /// Allows OpenOCD to communicate via the Remote-Bitbang protocol.
     ///

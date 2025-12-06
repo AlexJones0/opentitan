@@ -68,6 +68,7 @@ chmod +w "$QEMU_SPIFLASH"
 export QEMU_LOG="qemu.log"
 export QEMU_PIDFILE="qemu.pid"
 export QEMU_MONITOR="qemu-monitor"
+export QEMU_GPIO_SOCK="qemu-gpio.sock"
 export QEMU_RV_DM_JTAG_SOCK="qemu-jtag.sock"
 export QEMU_LC_JTAG_SOCK="qemu-jtag-lc-ctrl.sock"
 
@@ -100,7 +101,7 @@ cleanup() {
     rm -f "$mutable_otp" "$mutable_flash"
 
     # Clean up CharDevs
-    rm -f "$QEMU_MONITOR" "$QEMU_RV_DM_JTAG_SOCK" "$QEMU_LC_JTAG_SOCK"
+    rm -f "$QEMU_MONITOR" "$QEMU_GPIO_SOCK" "$QEMU_RV_DM_JTAG_SOCK" "$QEMU_LC_JTAG_SOCK"
 
     exit "$ret"
 }

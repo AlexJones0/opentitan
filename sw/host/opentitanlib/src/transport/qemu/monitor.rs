@@ -5,10 +5,10 @@
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+use std::os::unix::net::UnixStream;
 
 use anyhow::{Context, bail, ensure};
 use serde::Deserialize;
-use serialport::TTYPort;
 
 /// QEMU can take some time to startup and send the greeting.
 /// There's no real harm in waiting a while for that message.
@@ -20,7 +20,7 @@ const CONNECT_TIMEOUT_S: u64 = 5;
 /// protocol, not "human" mode.
 pub struct Monitor {
     /// TTY port connected to QEMU's monitor.
-    tty: BufReader<TTYPort>,
+    tty: BufReader<UnixStream>,
 
     /// Incrementing ID attached to each command and checked with each response.
     id_counter: usize,
@@ -38,16 +38,15 @@ pub enum QomPropertyValue {
 
 impl Monitor {
     /// Connect to the QEMU monitor over a given TTY.
-    pub fn new<P: AsRef<Path>>(tty_path: P, quit_qemu: bool) -> anyhow::Result<Self> {
-        let tty = serialport::new(
-            tty_path.as_ref().to_str().context("TTY path not UTF8")?,
-            115200,
-        )
-        .timeout(Duration::from_secs(CONNECT_TIMEOUT_S))
-        .open_native()
-        .context("failed to open QEMU monitor PTY")?;
+    pub fn new<P: AsRef<Path>>(sock_path: P, quit_qemu: bool) -> anyhow::Result<Self> {
+        let mut sock = UnixStream::connect(sock_path.as_ref().to_str().context("TTY path not UTF8")?)
+            .context("failed to connect to QEMU Monitor Socket")?;
+        //sock.set_read_timeout(Some(std::time::Duration::from_millis(25)))?;
+        sock.set_read_timeout(None);
 
-        let mut tty = BufReader::new(tty);
+        // TODO: connect timeout? blocking?
+        // TODO: rename tty.
+        let mut tty = BufReader::new(sock);
 
         // QMP sends us a greeting line on every connection:
         let mut greeting = String::new();

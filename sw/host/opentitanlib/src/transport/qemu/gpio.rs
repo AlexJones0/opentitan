@@ -9,7 +9,7 @@ use std::path::Path;
 use std::rc::Rc;
 
 use anyhow::{Context, bail};
-use serialport::{SerialPort, TTYPort};
+use std::os::unix::net::UnixStream;
 
 use crate::io::gpio::{GpioPin, PinMode, PullMode};
 
@@ -22,9 +22,10 @@ const QEMU_GPIO_FLOATING: char = 'Z';
 const QEMU_GPIO_INPUT: char = 'I';
 const QEMU_GPIO_MASK: char = 'M';
 const QEMU_GPIO_INPUT_FORWARD: char = 'Y';
+const QEMU_GPIO_REPEAT: char = 'R';
 
 pub struct QemuGpio {
-    pty: BufReader<TTYPort>,
+    sock: BufReader<UnixStream>,
     pub pins: HashMap<u8, Rc<dyn GpioPin>>,
 
     /// Current outputs being driven from host to QEMU when pins are in an
@@ -67,18 +68,38 @@ pub struct QemuGpio {
 }
 
 impl QemuGpio {
-    pub fn new<P: AsRef<Path>>(gpio_pty: P) -> anyhow::Result<Self> {
-        let mut pty = serialport::new(gpio_pty.as_ref().to_str().unwrap(), 0)
-            .open_native()
-            .context("failed to open QEMU GPIO PTY")?;
+    pub fn new<P: AsRef<Path>>(gpio_sock: P) -> anyhow::Result<Self> {
+        let mut sock = UnixStream::connect(gpio_sock)
+            .context("failed to connect to QEMU GPIO Socket")?;
+        
+        // Set a minimal timeout to emulate non-block GPIO socket reads
+        sock.set_read_timeout(Some(std::time::Duration::from_millis(1)))?;
+
+        //let mut pty = serialport::new(gpio_pty.as_ref().to_str().unwrap(), 0)
+            //.timeout(std::time::Duration::from_millis(0))
+        //    .open_native()
+        //    .context("failed to open QEMU GPIO PTY")?;
         // We mark the PTY non-exclusive to allow re-connection, as dropping
         // the serialport::TTYPort with data left to receive will not close
         // the PTY fd. We do try and receive all data on drop however.
-        pty.set_exclusive(false)?;
-        let pty = BufReader::new(pty);
+        //pty.set_exclusive(false)?;
 
-        let qemu_gpio = QemuGpio {
-            pty,
+        //println!("GPIO: looking for existing junk");
+        //while let Ok(n_bytes) = pty.bytes_to_read() {
+        //    if n_bytes == 0 {
+        //        break;
+        //    }
+        //    println!("GPIO: found {} bytes of junk!", n_bytes);
+        //    let mut garbage = vec![0; n_bytes as usize];
+        //    pty.read_exact(&mut garbage);
+        //    println!("GPIO: read {} bytes of junk: {:?}", n_bytes, garbage);
+        //}
+        //println!("Done reading garbage from GPIO pty!");
+
+        let sock = BufReader::new(sock);
+        
+        let mut qemu_gpio = QemuGpio {
+            sock,
             pins: HashMap::default(),
             host_to_qemu: 0x0,
             host_output_enable: 0x0,
@@ -89,7 +110,56 @@ impl QemuGpio {
             qemu_input_fwd: 0x0,
         };
 
+        // TODO: should probably send a repeat command here but figuring
+        // out the synchronization and signals across resets (persistence
+        // vs non-persistence, kernel PTY buffer space, async vs. sync etc.)
+        // is very non-trivial, so leave it for now.
+        // TODO this changes with sockets, document it
+
         Ok(qemu_gpio)
+    }
+
+    pub fn process_frame(&mut self, line: &str) -> anyhow::Result<()> {
+        let (cmd, value) = line
+            .split_once(":")
+            .context("bad QEMU GPIO frame: missing ':'")?;
+        let (cmd, value) = (cmd.trim(), value.trim());
+
+        let &[cmd] = cmd.as_bytes() else {
+            bail!("bad QEMU GPIO frame: expected single ascii char command, got {cmd}");
+        };
+
+        let value = u32::from_str_radix(value, 16).with_context(|| {
+            format!("bad QEMU GPIO frame: expected four-hex value, got {value}")
+        })?;
+
+        // QEMU wants us to clear / reset what we know about its pins.
+        match cmd as char {
+            QEMU_GPIO_CLEAR => {
+                self.qemu_to_host = 0;
+                self.qemu_outputting = 0;
+                self.qemu_pull = 0;
+                self.qemu_floating = 0;
+            }
+            // The direction of one or more pins has changed between input/output.
+            QEMU_GPIO_DIRECTION => self.qemu_outputting = value,
+            // The output of one or more pins has changed.
+            QEMU_GPIO_OUTPUT => self.qemu_to_host = value,
+            // The pull up/down of one or more pins has changed.
+            QEMU_GPIO_PULL => self.qemu_pull = value,
+            // QEMU is querying our inputs to its pins.
+            QEMU_GPIO_QUERY => {
+                self.send_frame(QEMU_GPIO_MASK, self.host_to_qemu)?;
+                self.send_frame(QEMU_GPIO_INPUT, self.host_to_qemu)?;
+            }
+            // The hi-Z value of one or more pins has changed.
+            QEMU_GPIO_FLOATING => self.qemu_floating = value,
+            // QEMU is telling us what its last GPIO input values were
+            QEMU_GPIO_INPUT_FORWARD => self.qemu_input_fwd = value,
+            _ => bail!("unknown command from QEMU: {cmd}"),
+        }
+
+        Ok(())
     }
 
     /// Process all GPIO command frames received from QEMU over the TTY.
@@ -106,50 +176,18 @@ impl QemuGpio {
     /// OpenTitan's QEMU machine.
     pub fn process_frames(&mut self) -> anyhow::Result<()> {
         let mut line = String::new();
-        while let Ok(bytes_read) = self.pty.read_line(&mut line) {
+        while let Ok(bytes_read) = self.sock.read_line(&mut line) {
             if bytes_read == 0 {
                 break; // EOF reached
             }
-
-            let (cmd, value) = line
-                .split_once(":")
-                .context("bad QEMU GPIO frame: missing ':'")?;
-            let (cmd, value) = (cmd.trim(), value.trim());
-
-            let &[cmd] = cmd.as_bytes() else {
-                bail!("bad QEMU GPIO frame: expected single ascii char command, got {cmd}");
-            };
-
-            let value = u32::from_str_radix(value, 16).with_context(|| {
-                format!("bad QEMU GPIO frame: expected four-hex value, got {value}")
-            })?;
-
-            match cmd as char {
-                // QEMU wants us to clear / reset what we know about its pins.
-                QEMU_GPIO_CLEAR => {
-                    self.qemu_to_host = 0;
-                    self.qemu_outputting = 0;
-                    self.qemu_pull = 0;
-                    self.qemu_floating = 0;
-                }
-                // The direction of one or more pins has changed between input/output.
-                QEMU_GPIO_DIRECTION => self.qemu_outputting = value,
-                // The output of one or more pins has changed.
-                QEMU_GPIO_OUTPUT => self.qemu_to_host = value,
-                // The pull up/down of one or more pins has changed.
-                QEMU_GPIO_PULL => self.qemu_pull = value,
-                // QEMU is querying our inputs to its pins.
-                QEMU_GPIO_QUERY => {
-                    self.send_frame(QEMU_GPIO_MASK, self.host_to_qemu)?;
-                    self.send_frame(QEMU_GPIO_INPUT, self.host_to_qemu)?;
-                }
-                // The hi-Z value of one or more pins has changed.
-                QEMU_GPIO_FLOATING => self.qemu_floating = value,
-                // QEMU is telling us what its last GPIO input values were
-                QEMU_GPIO_INPUT_FORWARD => self.qemu_input_fwd = value,
-                _ => bail!("unknown command from QEMU: {cmd}"),
-            }
-
+            let res = self.process_frame(&line);
+            res?;
+            //if res.is_err() {
+            //    // TODO: log the error as well
+            //    log::warn!("Discarding malformed GPIO frame: '{}'", &line);
+            //    log::warn!("With error: {:?}", res);
+            //    self.send_frame(QEMU_GPIO_REPEAT, 0)?;
+            //}
             line.clear();
         }
 
@@ -166,25 +204,26 @@ impl QemuGpio {
     /// * `M:<value>`:  the inputs are masked with `<value>`, meaning driven/connected.
     /// * `R:00000000`: ask QEMU to repeat the last `D` and `O` frames (see [`process_frames`]).
     pub fn send_frame(&mut self, cmd: char, value: u32) -> anyhow::Result<()> {
-        writeln!(self.pty.get_mut(), "{cmd}:{value:08x}").context("failed to send GPIO frame")?;
+        writeln!(self.sock.get_mut(), "{cmd}:{value:08x}").context("failed to send GPIO frame")?;
 
         Ok(())
     }
 }
 
-impl Drop for QemuGpio {
-    fn drop(&mut self) {
-        let pty: &mut dyn SerialPort = self.pty.get_mut();
-        let _ = pty.flush();
-        while let Some(bytes) = pty.bytes_to_read().ok() {
-            // Discard any remaining bytes
-            let mut rx = Vec::with_capacity(bytes.try_into().unwrap());
-            let _ = pty.read_exact(&mut rx);
-            // Wait a little in case QEMU has more data to send
-            std::thread::sleep(std::time::Duration::from_millis(100));
-        }
-    }
-}
+//impl Drop for QemuGpio {
+//    fn drop(&mut self) {
+//        let pty: &mut dyn SerialPort = self.pty.get_mut();
+//        let _ = pty.flush();
+//        while let Some(bytes) = pty.bytes_to_read().ok() {
+//            // Discard any remaining bytes
+//            let mut rx = Vec::with_capacity(bytes.try_into().unwrap());
+//            let _ = pty.read_exact(&mut rx);
+//            // Wait a little in case QEMU has more data to send
+//            std::thread::sleep(std::time::Duration::from_millis(50));
+//        }
+//    }
+//}
+
 pub struct QemuGpioPin {
     qemu_gpio: Rc<RefCell<QemuGpio>>,
     idx: u8,

@@ -128,7 +128,7 @@ pub fn run_sram_ft_individualize(
     }
 
     // Wait for provisioning operations to complete.
-    jtag.wait_halt(timeout * 50)?;
+    jtag.wait_halt(timeout)?;
     jtag.halt()?;
     let sp = jtag.read_riscv_reg(&RiscvReg::Gpr(RiscvGpr::SP))?;
     log::info!("after timeout, sp = {:x}", sp);

@@ -262,7 +262,7 @@ def main():
         file_header = '// Generated on {} with\n// $ gen-otp-img.py {}\n//\n'.format(
             dtstr, argstr)
 
-    print(args)
+
     if args.c_out:
         log.info(f'Generating C file: {args.c_out}')
         file_body = otp_mem_img.generate_c_file(file_header, args.c_template)
