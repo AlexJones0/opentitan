@@ -29,7 +29,7 @@ $PYTHON ${ORCHESTRATOR_PATH} \
   --sku-config=sw/host/provisioning/orchestrator/configs/skus/emulation.hjson \
   --test-unlock-token="0x11111111_11111111_11111111_11111111" \
   --test-exit-token="0x22222222_22222222_22222222_22222222" \
-  --exec-target=hyper310 \
+  --exec-target=${EXEC_TARGET} \
   --use-ate-individ-bin \
   --log-ujson-payloads \
   --non-interactive \

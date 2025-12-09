@@ -8,6 +8,10 @@ load(
     "EARLGREY_SKUS",
 )
 load(
+    "//sw/host/provisioning/orchestrator/src:defs.bzl",
+    "FPGA_TARGETS",
+)
+load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
     "orchestrator_cw340_test_settings_transition",
     "orchestrator_hyper310_test_settings_transition",
@@ -79,123 +83,123 @@ orchestrator_qemu_test_settings_transition(
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
 
-sh_test(
-    name = "e2e_option_flags_test",
-    timeout = "moderate",
-    srcs = ["e2e_option_flags.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-        "PACKAGE": "npcr12",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
-
-sh_test(
-    name = "e2e_multistage_test",
-    srcs = ["e2e_multistage.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
-
-sh_test(
-    name = "e2e_ate_individ_test",
-    timeout = "moderate",
-    srcs = ["e2e_ate_individ.sh"],
-    data = [
-        ":orchestrator_hyper310_zip",
-        "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
-        "@python3",
-    ],
-    env = {
-        "PYTHON": "$(location @python3//:python3)",
-        "PACKAGE": "npcr12",
-    },
-    tags = [
-        "changes_otp",
-        "exclusive",
-        "hyper310",
-        "manuf",
-    ],
-)
+[
+    sh_test(
+        name = "e2e_{}_option_flags_test".format(exec_target),
+        timeout = "moderate",
+        srcs = ["e2e_option_flags.sh"],
+        data = [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
+            "@python3",
+        ],
+        env = {
+            "PYTHON": "$(location @python3//:python3)",
+            "PACKAGE": "npcr12",
+            "EXEC_TARGET": "{}".format(exec_target),
+        },
+        tags = [
+            "changes_otp",
+            "exclusive",
+            "manuf",
+        ] + [exec_target],
+    )
+    for exec_target in FPGA_TARGETS
+]
 
 [
     sh_test(
-        name = "e2e_{}_{}_test".format(sku, fpga),
+        name = "e2e_{}_multistage_test".format(exec_target),
+        srcs = ["e2e_multistage.sh"],
+        data = [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@python3",
+        ],
+        env = {
+            "PYTHON": "$(location @python3//:python3)",
+            "EXEC_TARGET": "{}".format(exec_target),
+        },
+        tags = [
+            "changes_otp",
+            "exclusive",
+            "manuf",
+        ] + [exec_target],
+    )
+    for exec_target in FPGA_TARGETS
+]
+
+[
+    sh_test(
+        name = "e2e_{}_ate_individ_test".format(exec_target),
+        timeout = "moderate",
+        srcs = ["e2e_ate_individ.sh"],
+        data = [
+            ":orchestrator_{}_zip".format(exec_target),
+            "@//sw/host/provisioning/orchestrator/configs/skus:emulation.hjson",
+            "@python3",
+        ],
+        env = {
+            "PYTHON": "$(location @python3//:python3)",
+            "PACKAGE": "npcr12",
+            "EXEC_TARGET": "{}".format(exec_target),
+        },
+        tags = [
+            "changes_otp",
+            "exclusive",
+            "manuf",
+        ] + [exec_target],
+    )
+    for exec_target in FPGA_TARGETS
+]
+
+[
+    sh_test(
+        name = "e2e_{}_{}_test".format(sku, exec_target),
         timeout = "moderate",
         srcs = ["e2e.sh"],
         data = [
-            ":orchestrator_{}_zip".format(fpga),
+            ":orchestrator_{}_zip".format(exec_target),
             "@python3",
             cfg["orchestrator_cfg"],
         ],
         env = {
             "PYTHON": "$(location @python3//:python3)",
             "SKU_CONFIG_PATH": "$(location {})".format(cfg["orchestrator_cfg"]),
-            "FPGA": "{}".format(fpga),
+            "EXEC_TARGET": "{}".format(exec_target),
         },
         tags = [
             "changes_otp",
             "exclusive",
             "manuf",
-        ] + [fpga] + ([
+        ] + [exec_target] + ([
             "manual",
         ] if cfg.get("offline", False) else []),
     )
     for sku, cfg in EARLGREY_SKUS.items()
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target in FPGA_TARGETS
 ]
 
 [
     test_suite(
-        name = "e2e_{}".format(fpga),
+        name = "e2e_{}".format(exec_target),
         tags = ["manual"],
         tests = [
-            ":e2e_{}_{}_test".format(sku, fpga)
+            ":e2e_{}_{}_test".format(sku, exec_target)
             for sku, config in EARLGREY_SKUS.items()
             if not config.get("offline", False)
         ],
     )
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target in FPGA_TARGETS
 ]
 
 [
     test_suite(
-        name = "e2e_including_offline_{}".format(fpga),
+        name = "e2e_including_offline_{}".format(exec_target),
         tags = ["manual"],
         tests = [
-            ":e2e_{}_{}_test".format(sku, fpga)
+            ":e2e_{}_{}_test".format(sku, exec_target)
             for sku in EARLGREY_SKUS.keys()
         ],
     )
-    for fpga in [
-        "hyper310",
-        "cw340",
-    ]
+    for exec_target in FPGA_TARGETS
 ]

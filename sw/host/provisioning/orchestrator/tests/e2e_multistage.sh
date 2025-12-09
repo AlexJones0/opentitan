@@ -30,7 +30,7 @@ $PYTHON ${ORCHESTRATOR_PATH} \
   --sku-config=sw/host/provisioning/orchestrator/configs/skus/emulation.hjson \
   --test-unlock-token="0x11111111_11111111_11111111_11111111" \
   --test-exit-token="0x22222222_22222222_22222222_22222222" \
-  --exec-target=hyper310 \
+  --exec-target=${EXEC_TARGET} \
   --non-interactive \
   --cp-only \
   --db-path=$TEST_TMPDIR/registry.sqlite
@@ -42,7 +42,7 @@ $PYTHON ${ORCHESTRATOR_PATH} \
   --sku-config=sw/host/provisioning/orchestrator/configs/skus/emulation.hjson \
   --test-unlock-token="0x11111111_11111111_11111111_11111111" \
   --test-exit-token="0x22222222_22222222_22222222_22222222" \
-  --exec-target=hyper310 \
+  --exec-target=${EXEC_TARGET} \
   --fpga-dont-clear-bitstream \
   --non-interactive \
   --db-path=$TEST_TMPDIR/registry.sqlite
