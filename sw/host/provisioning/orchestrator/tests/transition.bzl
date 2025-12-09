@@ -32,6 +32,17 @@ _orchestrator_cw340_settings = transition(
     ],
 )
 
+def _orchestrator_qemu_settings_impl(settings, attr):
+    return {
+        "//sw/host/provisioning/orchestrator/src:include_qemu_dependencies": True,
+    }
+
+_orchestrator_qemu_settings = transition(
+    implementation = _orchestrator_qemu_settings_impl,
+    inputs = [],
+    outputs = ["//sw/host/provisioning/orchestrator/src:include_qemu_dependencies"],
+)
+
 def _orchestrator_test_settings_transition_impl(ctx):
     info = ctx.attr.target[DefaultInfo]
     return [
@@ -55,6 +66,17 @@ orchestrator_hyper310_test_settings_transition = rule(
 orchestrator_cw340_test_settings_transition = rule(
     implementation = _orchestrator_test_settings_transition_impl,
     cfg = _orchestrator_cw340_settings,
+    attrs = {
+        "target": attr.label(),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+    },
+)
+
+orchestrator_qemu_test_settings_transition = rule(
+    implementation = _orchestrator_test_settings_transition_impl,
+    cfg = _orchestrator_qemu_settings,
     attrs = {
         "target": attr.label(),
         "_allowlist_function_transition": attr.label(

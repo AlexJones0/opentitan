@@ -11,6 +11,7 @@ load(
     "//sw/host/provisioning/orchestrator/tests:transition.bzl",
     "orchestrator_cw340_test_settings_transition",
     "orchestrator_hyper310_test_settings_transition",
+    "orchestrator_qemu_test_settings_transition",
 )
 load("@ot_python_deps//:requirements.bzl", "requirement")
 
@@ -65,6 +66,15 @@ orchestrator_hyper310_test_settings_transition(
 
 orchestrator_cw340_test_settings_transition(
     name = "orchestrator_cw340_zip",
+    testonly = True,
+    target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
+)
+
+# This transition has the same effect as supplying the following flag to bazel test:
+#  --//sw/host/provisioning/orchestrator/src:include_qemu_dependencies=True
+# which will include the dependencies for testing with QEMU in the orchestrator zip
+orchestrator_qemu_test_settings_transition(
+    name = "orchestrator_qemu_zip",
     testonly = True,
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
