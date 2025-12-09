@@ -28,11 +28,16 @@ exec_env_filegroup(
         "//hw/top_earlgrey:fpga_hyper310_rom_with_fake_keys": "cw310",
         "//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys": "cw340",
         "//hw/top_earlgrey:silicon_creator": "silicon",
+        # TODO: QEMU does not have a signed binary for now, the checked in
+        # file is meaningless. It exists only to allow the provisioning
+        # Orchestrator to be built for QEMU.
+        "//hw/top_earlgrey:sim_qemu_rom_with_fake_keys": "qemu",
     },
     files = {
         "ft_personalize_sival_fpga_hyper310_rom_with_fake_keys.signed.bin": "cw310",
         "ft_personalize_sival_fpga_cw340_rom_with_fake_keys.signed.bin": "cw340",
         "ft_personalize_sival_silicon_creator.signed.bin": "silicon",
+        "ft_personalize_sival_sim_qemu_rom_with_fake_keys.signed.bin": "qemu",
     },
 )
 
