@@ -83,6 +83,14 @@ orchestrator_qemu_test_settings_transition(
     target = "//sw/host/provisioning/orchestrator/src:orchestrator.zip",
 )
 
+sh_library(
+    name = "e2e_test_lib",
+    srcs = [
+        "common_e2e_cleanup.sh",
+        "common_e2e_setup.sh",
+    ],
+)
+
 [
     sh_test(
         name = "e2e_{}_option_flags_test".format(exec_target),
@@ -103,6 +111,7 @@ orchestrator_qemu_test_settings_transition(
             "exclusive",
             "manuf",
         ] + [exec_target],
+        deps = [":e2e_test_lib"],
     )
     for exec_target in FPGA_TARGETS
 ]
@@ -124,6 +133,7 @@ orchestrator_qemu_test_settings_transition(
             "exclusive",
             "manuf",
         ] + [exec_target],
+        deps = [":e2e_test_lib"],
     )
     for exec_target in FPGA_TARGETS
 ]
@@ -148,6 +158,7 @@ orchestrator_qemu_test_settings_transition(
             "exclusive",
             "manuf",
         ] + [exec_target],
+        deps = [":e2e_test_lib"],
     )
     for exec_target in FPGA_TARGETS
 ]
@@ -174,6 +185,7 @@ orchestrator_qemu_test_settings_transition(
         ] + [exec_target] + ([
             "manual",
         ] if cfg.get("offline", False) else []),
+        deps = [":e2e_test_lib"],
     )
     for sku, cfg in EARLGREY_SKUS.items()
     for exec_target in FPGA_TARGETS

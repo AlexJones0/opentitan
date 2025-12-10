@@ -14,15 +14,7 @@
 
 set -ex
 
-cp sw/host/provisioning/orchestrator/src/orchestrator.zip $TEST_TMPDIR
-
-ORCHESTRATOR_PATH=$TEST_TMPDIR/orchestrator.zip
-
-# This script is run by a Bazel sh_test rule, which sets RUNFILES_DIR to point
-# at the test's runfiles. However, if RUNFILES_DIR is set, orchestrator.zip will
-# inherit its value instead of setting it to the proper directory. This breaks
-# runfile resolution, so we unset this variable here.
-unset RUNFILES_DIR
+source sw/host/provisioning/orchestrator/tests/common_e2e_setup.sh
 
 # Run tool in CP-only mode first. The path to the --sku-config parameter is
 # relative to the runfiles-dir.
@@ -46,3 +38,5 @@ $PYTHON ${ORCHESTRATOR_PATH} \
   --fpga-dont-clear-bitstream \
   --non-interactive \
   --db-path=$TEST_TMPDIR/registry.sqlite
+
+source sw/host/provisioning/orchestrator/tests/common_e2e_cleanup.sh
