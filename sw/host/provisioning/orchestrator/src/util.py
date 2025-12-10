@@ -53,6 +53,23 @@ def confirm():
         exit(1)
 
 
+def symlink_to_test_tmpdir(path_suffix: str) -> None:
+    """Create a symlink in the CWD to a file located in the Bazel $TEST_TMPDIR.
+
+    Takes as input the path suffix (relative to $TEST_TMPDIR / CWD) at which to
+    find and symlink.
+    """
+    tmpdir = os.environ["TEST_TMPDIR"]
+    target_path = os.path.join(tmpdir, path_suffix)
+    target_path = os.path.abspath(target_path)
+    if not os.path.exists(target_path):
+        logging.error("Could not find %s in $TEST_TMPDIR", path_suffix)
+        confirm()
+    if os.path.islink(path_suffix):
+        os.unlink(path_suffix)
+    os.symlink(target_path, path_suffix)
+
+
 def run(cmd, stdout_logfile, stderr_logfile):
     out_tee = subprocess.Popen(['/usr/bin/tee', stdout_logfile],
                                stdin=subprocess.PIPE)

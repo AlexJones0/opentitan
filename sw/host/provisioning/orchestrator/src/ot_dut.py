@@ -16,18 +16,29 @@ import hjson
 
 from device_id import DeviceId, DeviceIdentificationNumber
 from sku_config import SkuConfig
-from util import confirm, format_hex, resolve_runfile, run
+from util import (
+    confirm, format_hex, resolve_runfile, run,
+    symlink_to_test_tmpdir as symlink_tmp
+)
 
 # FPGA bitstream.
 _FPGA_UNIVERSAL_SPLICE_BITSTREAM = "hw/bitstream/universal/splice.bit"
+
+# QEMU devices that can be communicated with via sockets.
+# A mapping of QEMU device CharDev ID to socket path suffix (in $TEST_TMPDIR).
+_QEMU_MONITOR = "qemu-monitor.sock"
+_QEMU_DEVICE_SOCKETS = {
+    "gpio": "qemu-gpio.sock",
+    "taprbb": "qemu-jtag.sock",
+    "taprbb-lc-ctrl": "qemu-jtag-lc-ctrl.sock"
+}
 
 # CP and FT shared flags.
 _OPENOCD_BIN = "third_party/openocd/build_openocd/bin/openocd"
 _OPENOCD_ADAPTER_CONFIG = "external/openocd/tcl/interface/cmsis-dap.cfg"
 _BASE_PROVISIONING_FLAGS = """
     --interface={target} \
-    --openocd={openocd_bin} \
-    --openocd-adapter-config={openocd_cfg} \
+    --openocd={openocd_bin}
 """
 _ZERO_256BIT_HEXSTR = "0x" + "_".join(["00000000"] * 8)
 
@@ -157,34 +168,72 @@ class OtDut():
         else:
             return "silicon_creator"
 
+    def base_host_flags(self) -> str:
+        """The base (shared) host harness flags for the defined target."""
+        host_flags = _BASE_PROVISIONING_FLAGS
+
+        # Add the path to the OpenOCD & any adapter config, if required
+        openocd_bin = resolve_runfile(_OPENOCD_BIN)
+        if self.exec_target != SimTarget.QEMU.value:
+            openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
+            host_flags += f" --openocd-adapter-config={openocd_cfg}"
+        host_flags = host_flags.format(target=self._host_interface,
+                                       openocd_bin=openocd_bin)
+
+        return host_flags
+
+    def common_host_flags(self) -> str:
+        """The target-specific host harness flags that are common (shared)
+        between both the CP and FT stages.
+        """
+        host_flags = ""
+
+        if self._target_kind == ExecTargetKind.SILICON:
+            # SW workaround for DFT straps being on the same pins as the console
+            # UART (IOC3 & 4), which can cause JTAG reliability issues in test
+            # unlocked states.
+            host_flags += " --disable-dft-on-reset"
+        elif self.exec_target == SimTarget.QEMU.value:
+            # Give OTLib the path to sockets for various QEMU devices, since
+            # we changed directory. These were created in $TEST_TMPDIR, but
+            # passing their absolute paths may exceed Unix socket path length
+            # limits. To work around this, create symlinks in the current
+            # working directory and pass relative paths instead.
+            symlink_tmp(_QEMU_MONITOR)
+            host_flags += f" --qemu-monitor-socket={_QEMU_MONITOR}"
+            for device_id, socket_path in _QEMU_DEVICE_SOCKETS.items():
+                symlink_tmp(socket_path)
+                host_flags += f" --qemu-device-path {device_id}={socket_path}"
+
+            # Workaround for QEMU's lack of Pinmux/Padring connections
+            # (always speak directly to GPIO 3)
+            host_flags += " --console-tx-indicator-pin=3"
+
+        return host_flags
+
     def run_cp(self) -> None:
         """Runs the CP provisioning flow on the target DUT."""
         logging.info("Running CP provisioning ...")
 
         # Set cmd args and device ELF.
-        host_flags = _BASE_PROVISIONING_FLAGS
         device_elf = _CP_DEVICE_ELF
         print(f"device_elf: {device_elf}")
+        device_elf = device_elf.format(base_dir=self._base_dev_dir(),
+                                       target=self._device_exec_env)
+        device_elf = resolve_runfile(device_elf)
 
         # Set host flags and device binary for the configured execution target
-        openocd_bin = resolve_runfile(_OPENOCD_BIN)
-        openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
-        host_flags = host_flags.format(target=self._host_interface,
-                                       openocd_bin=openocd_bin,
-                                       openocd_cfg=openocd_cfg)
-        target_kind = self._target_kind
-        # Target-specific host flags
-        if target_kind == ExecTargetKind.FPGA:
+        host_flags = self.base_host_flags()
+
+        # CP/FT shared target-specific host flags
+        host_flags += self.common_host_flags()
+
+        # CP-specific host flags
+        if self._target_kind == ExecTargetKind.FPGA:
             if not self.fpga_dont_clear_bitstream:
                 host_flags += " --clear-bitstream"
                 bitstream = resolve_runfile(_FPGA_UNIVERSAL_SPLICE_BITSTREAM)
                 host_flags += f" --bitstream={bitstream}"
-        elif target_kind == ExecTargetKind.SILICON:
-            host_flags += " --disable-dft-on-reset"
-
-        device_elf = device_elf.format(base_dir=self._base_dev_dir(),
-                                       target=self._device_exec_env)
-        device_elf = resolve_runfile(device_elf)
 
         # Assemble CP command.
         cp_host_bin = resolve_runfile(_CP_HOST_BIN)
@@ -251,9 +300,6 @@ class OtDut():
         # Set cmd args and device binaries.
         host_bin = _FT_HOST_BIN.format(sku=self.sku_config.name)
         host_bin = resolve_runfile(host_bin)
-        openocd_bin = resolve_runfile(_OPENOCD_BIN)
-        openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
-        host_flags = _BASE_PROVISIONING_FLAGS
         individ_elf = _FT_INDIVID_DEVICE_ELF
         ate_suffix = "_ate" if self.ate_mode else ""
         # Emulation perso bins are signed online with fake keys, and therefore
@@ -262,12 +308,16 @@ class OtDut():
         fw_bundle_bin = _FT_FW_BUNDLE_BIN
 
         # Set host flags and device binary for the configured execution target
-        host_flags = host_flags.format(target=self._host_interface,
-                                       openocd_bin=openocd_bin,
-                                       openocd_cfg=openocd_cfg)
-        # Target-specific host flags
-        if self._target_kind == ExecTargetKind.SILICON:
-            host_flags += " --disable-dft-on-reset"
+        host_flags = self.base_host_flags()
+
+        # CP/FT shared target-specific host flags
+        host_flags += self.common_host_flags()
+
+        # FT-specific host flags
+        if self.exec_target == SimTarget.QEMU.value:
+            # QEMU might take a bit longer to emulate individualization,
+            # especially on slow hosts or running tests in parallel
+            host_flags += " --timeout=60s"
         # No need to load another bitstream on FPGA, as we take over where the
         # CP stage left off.
 
