@@ -21,7 +21,7 @@ You can refer to the QEMU repository's documentation for more information on the
 
 Currently only the Earlgrey machine (`ot-earlgrey`) has any support within OpenTitanLib for test integration, primarily on the `earlgrey_1.0.0` branch.
 It is important to note that emulation is **ongoing** and **incomplete** - there are many devices and features which are not yet implemented or are infeasible to emulate within QEMU.
-Before using QEMU, it is strongly advised to read relevant QEMU [Earlgrey](https://github.com/lowRISC/qemu/blob/ot-9.2.0/docs/opentitan/ot_earlgrey.md) and [Darjeeling](https://github.com/lowRISC/qemu/blob/ot-9.2.0/docs/opentitan/ot_darjeeling.md) documentation pages to better understand whether the devices and features that you need are supported.
+Before using QEMU, it is strongly advised to read relevant QEMU [Earlgrey](https://github.com/lowRISC/qemu/blob/ot-10.1.0/docs/opentitan/ot_earlgrey.md) and [Darjeeling](https://github.com/lowRISC/qemu/blob/ot-10.1.0/docs/opentitan/ot_darjeeling.md) documentation pages to better understand whether the devices and features that you need are supported.
 Note that these also may not be up-to-date compared to the implementation, and as such the source files should be treated as the root source of truth.
 Furthermore, QEMU releases are pinned in Bazel, meaning that the supported features may differ compared to when this release was taken (see the [setup guide](./setup.md)).
 
@@ -49,6 +49,9 @@ One potential solution is modifying the `icount` shift parameter, which informs 
 When providing an icount shift of `N`, the virtual CPU will execute one instruction every `2^N` nanoseconds of virtual time, meaning that changing this parameter may allow emulation to "pass" tighter timing checks at the cost of less accurate timing overall.
 By default, an `icount` of 6 is used to align execution time with wall-clock time.
 
+Note that when the host is under heavy load and sharing processing resources (and QEMU is frequently pre-empted), handling of QEMU BHs (Bottom Halves) may be deferred longer than expected which can notably increase the timing differences seen.
+See related [#]
+
 ### The TLB and PMP
 
 Hardware will often use a Translation Lookaside Buffer (TLB) as a high-speed cache to accelerate translation from virtual addresses to physical addresses.
@@ -65,6 +68,11 @@ In particular, Earlgrey's ROM & ROM_EXT text sections (containing the executable
 The 4 byte stack guard placed at the top of stack may also cause issues when using all available stack.
 For any hot loops in the code, this can result in a substantial increase in emulation time.
 For example, the `sec_mmio` checks often cause large slowdowns in the ROM.
+
+Another example case where this matters is executing from SRAM.
+To more accurately model SRAM initialization and scrambling logic, QEMU will by default use a device MMIO memory region to process reads and writes to SRAM cells whilst uninitialized.
+Upon SRAM initialization, this is dynamically switched to guest RAM via an alias to speed up execution from SRAM.
+For flows that execute from uninitialized SRAM (e.g. provisioning flows) where it is not important to emulate the exact SRAM initialization semantics, it may therefore be preferable to add the `--global ot-sram_ctrl.noinit=true` option to force QEMU to always use guest RAM.
 
 ### Host Performance and Parallelism
 
