@@ -4,16 +4,10 @@
 
 name: CI
 on:
-  pull_request:
-  push:
-    branches-ignore:
-      - "backport-*"
-      - "gh-readonly-queue/**"
-    tags:
-      - "*"
-  merge_group:
+  workflow_run:
+    workflows: ["Quick Lint"]
     types:
-      - checks_requested
+      - completed
 
 permissions:
   contents: read
@@ -22,7 +16,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
 
 env:
   VIVADO_VERSION: "2021.1"
@@ -30,62 +24,10 @@ env:
   TOOLCHAIN_VERSION: 20220210-1
 
 jobs:
-  quick_lint:
-    name: Lint (quick)
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required so we can lint commit messages.
-      - name: Prepare environment
-        uses: ./.github/actions/prepare-env
-        with:
-          service_account_json: '${{ secrets.BAZEL_CACHE_CREDS }}'
-      - name: Show environment
-        run: ./ci/scripts/show-env.sh
-      - name: Commit metadata
-        run: ./ci/scripts/lint-commits.sh "$GITHUB_BASE_REF"
-        if: ${{ github.event_name == 'pull_request' }}
-      - name: License headers
-        run: ./ci/scripts/check-licence-headers.sh "$GITHUB_BASE_REF"
-        if: ${{ github.event_name == 'pull_request' }}
-      - name: Executable bits
-        run: ./ci/scripts/exec-check.sh
-      - name: Non-ASCII characters
-        run: ./ci/scripts/check-ascii.sh
-      - name: Python (flake8)
-        run: ./ci/scripts/python-lint.sh "$GITHUB_BASE_REF"
-        if: ${{ github.event_name == 'pull_request' }}
-      - name: Python (mypy)
-        run: ./ci/scripts/mypy.sh
-      - name: Python (ruff)
-        run: ruff check
-      - name: Validate testplans with schema
-        run: ./ci/scripts/validate_testplans.sh
-      - name: C/C++ formatting
-        run: ./bazelisk.sh test //quality:clang_format_check
-      - name: Rust formatting
-        run: ./bazelisk.sh test //quality:rustfmt_check
-      - name: Shellcheck
-        run: ./bazelisk.sh test //quality:shellcheck_check
-      - name: Header guards
-        run: ./ci/scripts/include-guard.sh "$GITHUB_BASE_REF"
-        if: ${{ github.event_name == 'pull_request' }}
-      - name: Trailing whitespace
-        run: ./ci/scripts/whitespace.sh "$GITHUB_BASE_REF"
-        if: ${{ github.event_name == 'pull_request' }}
-      - name: Broken links
-        run: ./ci/scripts/check-links.sh
-      - name: Generated documentation
-        run: ./ci/scripts/check-cmdgen.sh
-      - name: Lock files
-        run: ./ci/scripts/check-lock-files.sh
-
   slow_lint:
     name: Lint (slow)
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -141,8 +83,7 @@ jobs:
   build_docs:
     name: Build documentation
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     env:
       BUCKET: gold-hybrid-255313-prod
     steps:
@@ -162,7 +103,7 @@ jobs:
           path: build-site/
           overwrite: true
       - name: Upload files
-        if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' && github.ref_name == 'master' }}
         run: |
           echo "::group::Upload all uncompressed files"
           gcloud storage cp -R --gzip-in-flight=js,css,html "build-site/*" gs://$BUCKET
@@ -190,8 +131,7 @@ jobs:
   airgapped_build:
     name: Airgapped build
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -217,8 +157,7 @@ jobs:
   verible_lint:
     name: Verible lint
     runs-on: ubuntu-24.04
-    needs: quick_lint
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
     env:
       verible_config: hw/lint/tools/veriblelint/lowrisc-styleguide.rules.verible_lint
       verible_version: v0.0-3430-g060bde0f
@@ -248,9 +187,8 @@ jobs:
 
   otbn_standalone_tests:
     name: Run OTBN smoke Test
-    needs: quick_lint
     runs-on: ubuntu-22.04
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -282,9 +220,8 @@ jobs:
 
   otbn_crypto_tests:
     name: Run OTBN crypto tests
-    needs: quick_lint
     runs-on: ubuntu-22.04
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -300,8 +237,7 @@ jobs:
   verilator_englishbreakfast:
     name: Verilated English Breakfast
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
       - name: Prepare environment
@@ -331,8 +267,7 @@ jobs:
   verilator_earlgrey:
     name: Verilated Earl Grey
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
@@ -352,8 +287,7 @@ jobs:
   chip_englishbreakfast_cw305:
     name: CW305's Bitstream
     runs-on: ubuntu-22.04-vivado
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
       - name: Prepare environment
@@ -407,7 +341,7 @@ jobs:
 
   chip_earlgrey_cw310_hyperdebug:
     name: Earl Grey for CW310 Hyperdebug
-    needs: quick_lint
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     uses: ./.github/workflows/bitstream.yml
     secrets: inherit
     with:
@@ -416,7 +350,7 @@ jobs:
 
   chip_earlgrey_cw340:
     name: Earl Grey for CW340
-    needs: quick_lint
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     uses: ./.github/workflows/bitstream.yml
     secrets: inherit
     with:
@@ -431,24 +365,24 @@ jobs:
       - chip_earlgrey_cw340
     steps:
       - name: Skipped message
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event.workflow_run.event == 'pull_request' }}
         run: |
           echo ":information_source: Bitstream caching is skipped for this pull request job" \
             >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/checkout@v4
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
       - name: Prepare environment
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         uses: ./.github/actions/prepare-env
         with:
           service_account_json: '${{ secrets.BAZEL_CACHE_CREDS }}'
       - name: Download partial build-bin
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         uses: ./.github/actions/download-partial-build-bin
         with:
           job-patterns: chip_earlgrey_{cw310,cw310_hyperdebug,cw340}
       - name: Create bitstream cache archive
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         run: |
           shopt -s globstar # Allow use of **
           ./bazelisk.sh build //util/py/scripts:bitstream_cache_create
@@ -458,7 +392,7 @@ jobs:
             --out $PWD/build-bin/bitstream-cache \
             $PWD/build-bin/**/manifest.json
       - name: Upload bitstreams to GCP bucket
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         run: |
           BUCKET_URI=gs://opentitan-bitstreams/${{ github.ref_name }}
           printf "$(date -u +%Y-%m-%dT%H:%M:%S)\n${{ github.sha }}" > latest.txt
@@ -471,7 +405,7 @@ jobs:
     name: CW310 Test ROM Tests
     needs: chip_earlgrey_cw310_hyperdebug
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_test_rom_fpga_tests_cw310
@@ -484,7 +418,7 @@ jobs:
     name: CW310 ROM Tests
     needs: chip_earlgrey_cw310_hyperdebug
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_rom_fpga_tests_cw310
@@ -498,7 +432,7 @@ jobs:
     name: CW310 ROM_EXT Tests
     needs: chip_earlgrey_cw310_hyperdebug
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_rom_ext_fpga_tests_cw310
@@ -511,7 +445,7 @@ jobs:
     name: CW310 SiVal Tests
     needs: chip_earlgrey_cw310_hyperdebug
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_sival_fpga_tests_cw310
@@ -524,7 +458,7 @@ jobs:
     name: CW310 SiVal ROM_EXT Tests
     needs: chip_earlgrey_cw310_hyperdebug
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_sival_rom_ext_fpga_tests_cw310
@@ -537,7 +471,7 @@ jobs:
     name: CW310 Manufacturing Tests
     needs: chip_earlgrey_cw310_hyperdebug
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_manuf_fpga_tests_cw310
@@ -551,7 +485,7 @@ jobs:
     name: CW340 Test ROM Tests
     needs: chip_earlgrey_cw340
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_test_rom_fpga_tests_cw340
@@ -564,7 +498,7 @@ jobs:
     name: CW340 ROM Tests
     needs: chip_earlgrey_cw340
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_rom_fpga_tests_cw340
@@ -577,7 +511,7 @@ jobs:
     name: CW340 ROM_EXT Tests
     needs: chip_earlgrey_cw340
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_rom_ext_fpga_tests_cw340
@@ -590,7 +524,7 @@ jobs:
     name: CW340 SiVal Tests
     needs: chip_earlgrey_cw340
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_sival_fpga_tests_cw340
@@ -603,7 +537,7 @@ jobs:
     name: CW340 SiVal ROM_EXT Tests
     needs: chip_earlgrey_cw340
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_sival_rom_ext_fpga_tests_cw340
@@ -616,7 +550,7 @@ jobs:
     name: CW340 Manufacturing Tests
     needs: chip_earlgrey_cw340
     uses: ./.github/workflows/fpga.yml
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.event != 'merge_group' }}
     secrets: inherit
     with:
       job_name: execute_manuf_fpga_tests_cw340
@@ -683,8 +617,7 @@ jobs:
   build_docker_containers:
     name: Build Docker Containers
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
       - name: Build Developer Utility Container
@@ -700,8 +633,7 @@ jobs:
     name: Build and test software
     runs-on: ubuntu-22.04-vivado
     timeout-minutes: 120
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -771,8 +703,7 @@ jobs:
     name: Build and test Darjeeling software
     runs-on: ubuntu-22.04-vivado
     timeout-minutes: 120
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -797,8 +728,7 @@ jobs:
   qemu_smoketest:
     name: QEMU smoketest
     runs-on: ubuntu-22.04-vivado
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -814,8 +744,7 @@ jobs:
   qemu_local_dev_test:
     name: Test QEMU local development override
     runs-on: ubuntu-22.04
-    needs: quick_lint
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'merge_group' }}
     steps:
       - uses: actions/checkout@v4
         with:
