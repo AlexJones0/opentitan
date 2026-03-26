@@ -192,6 +192,10 @@ def main():
         exit(0)
 
     memfile_body, bitness = otp_mem_img.streamout_memfile()
+    creator_sw_cfg = otp_mem_img.get_part("CREATOR_SW_CFG")
+    cpuctrl = [item for item in creator_sw_cfg.get("items", ())
+                if 'cpuctrl' in item["name"].lower()][0]
+    print("cpuctrl value:", cpuctrl.get("value", "undefined"), f"(otp: {args.out})")
 
     # If the out argument does not contain "BITWIDTH", it will not be changed.
     memfile_path = Path(args.out.replace('BITWIDTH', str(bitness)))
