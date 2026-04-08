@@ -51,11 +51,23 @@ module prim_ram_1p import prim_ram_1p_pkg::*; #(
     always @(posedge clk_i) begin
       if (req_i) begin
         if (write_i) begin
-          for (int i=0; i < MaskWidth; i = i + 1) begin
-            if (wmask[i]) begin
-              mem[addr_i][i*DataBitsPerMask +: DataBitsPerMask] <=
-                wdata_i[i*DataBitsPerMask +: DataBitsPerMask];
+          if (&wmask) begin
+            mem[addr_i] <= wdata_i;
+          end else if (wmask != '0) begin
+            // Avoid iterative part-selects on elements to reduce dynamic slicing costs in simulation
+            logic [Width-1:0] updated_word;
+            updated_word = mem[addr_i];
+
+            // Masked update
+            for (int i = 0; i < MaskWidth; i++) begin
+              if (wmask[i]) begin
+                int lo;
+                lo = i * DataBitsPerMask;
+                updated_word[lo +: DataBitsPerMask] = wdata_i[lo +: DataBitsPerMask];
+              end
             end
+
+            mem[addr_i] <= updated_word;
           end
         end else begin
           rdata_o <= mem[addr_i];
