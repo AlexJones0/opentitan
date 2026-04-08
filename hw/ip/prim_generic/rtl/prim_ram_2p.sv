@@ -77,11 +77,23 @@ module prim_ram_2p import prim_ram_2p_pkg::*; #(
   always @(posedge clk_a_i) begin
     if (a_req_i) begin
       if (a_write_i) begin
-        for (int i=0; i < MaskWidth; i = i + 1) begin
-          if (a_wmask[i]) begin
-            mem[a_addr_i][i*DataBitsPerMask +: DataBitsPerMask] <=
-              a_wdata_i[i*DataBitsPerMask +: DataBitsPerMask];
+        if (&a_wmask) begin
+          mem[a_addr_i] <= a_wdata_i;
+        end else if (a_wmask != '0) begin
+          // Avoid iterative part-selects to reduce dynamic slicing costs in simulation
+          logic [Width-1:0] a_updated_word;
+          a_updated_word = mem[a_addr_i];
+
+          // Masked update
+          for (int i = 0; i < MaskWidth; i++) begin
+            if (a_wmask[i]) begin
+              int lo;
+              lo = i * DataBitsPerMask;
+              a_updated_word[lo +: DataBitsPerMask] = a_wdata_i[lo +: DataBitsPerMask];
+            end
           end
+
+          mem[a_addr_i] <= a_updated_word;
         end
       end else begin
         a_rdata_o <= mem[a_addr_i];
@@ -92,11 +104,23 @@ module prim_ram_2p import prim_ram_2p_pkg::*; #(
   always @(posedge clk_b_i) begin
     if (b_req_i) begin
       if (b_write_i) begin
-        for (int i=0; i < MaskWidth; i = i + 1) begin
-          if (b_wmask[i]) begin
-            mem[b_addr_i][i*DataBitsPerMask +: DataBitsPerMask] <=
-              b_wdata_i[i*DataBitsPerMask +: DataBitsPerMask];
+        if (&b_wmask) begin
+          mem[b_addr_i] <= b_wdata_i;
+        end else if (b_wmask != '0) begin
+          // Avoid iterative part-selects on elements to reduce dynamic slicing costs in simulation
+          logic [Width-1:0] b_updated_word;
+          b_updated_word = mem[b_addr_i];
+
+          // Masked update
+          for (int i = 0; i < MaskWidth; i++) begin
+            if (b_wmask[i]) begin
+              int lo;
+              lo = i * DataBitsPerMask;
+              b_updated_word[lo +: DataBitsPerMask] = b_wdata_i[lo +: DataBitsPerMask];
+            end
           end
+
+          mem[b_addr_i] <= b_updated_word;
         end
       end else begin
         b_rdata_o <= mem[b_addr_i];
