@@ -430,7 +430,9 @@ class cip_base_scoreboard #(type RAL_T = dv_base_reg_block,
     uvm_reg_addr_t norm_addr = block.get_normalized_addr(addr);
     addr_range_t   loc_mem_ranges[$] = block.mem_ranges;
     foreach (loc_mem_ranges[i]) begin
-      if (norm_addr inside {[loc_mem_ranges[i].start_addr : loc_mem_ranges[i].end_addr]}) begin
+      if (norm_addr < loc_mem_ranges[i].start_addr) begin
+        break;
+      end else if (norm_addr <= loc_mem_ranges[i].end_addr) begin
         return 1;
       end
     end

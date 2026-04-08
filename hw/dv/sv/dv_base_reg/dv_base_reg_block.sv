@@ -270,6 +270,7 @@ class dv_base_reg_block extends uvm_reg_block;
                              mems[i].get_size() * mems[i].get_n_bytes() - 1;
       mem_ranges.push_back(mem_range);
     end
+    mem_ranges.sort(a) with (a.start_addr);
     `uvm_info(`gfn, $sformatf("mem_ranges: %0p", mem_ranges), UVM_HIGH)
   endfunction
 
