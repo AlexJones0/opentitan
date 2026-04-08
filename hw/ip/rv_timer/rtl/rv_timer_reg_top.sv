@@ -485,12 +485,15 @@ module rv_timer_reg_top
 
 
 
-  logic [9:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [9:0] racl_addr_hit_read;
-  logic [9:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -509,38 +512,48 @@ module rv_timer_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[0] = (reg_addr == RV_TIMER_ALERT_TEST_OFFSET);
-    addr_hit[1] = (reg_addr == RV_TIMER_CTRL_OFFSET);
-    addr_hit[2] = (reg_addr == RV_TIMER_INTR_ENABLE0_OFFSET);
-    addr_hit[3] = (reg_addr == RV_TIMER_INTR_STATE0_OFFSET);
-    addr_hit[4] = (reg_addr == RV_TIMER_INTR_TEST0_OFFSET);
-    addr_hit[5] = (reg_addr == RV_TIMER_CFG0_OFFSET);
-    addr_hit[6] = (reg_addr == RV_TIMER_TIMER_V_LOWER0_OFFSET);
-    addr_hit[7] = (reg_addr == RV_TIMER_TIMER_V_UPPER0_OFFSET);
-    addr_hit[8] = (reg_addr == RV_TIMER_COMPARE_LOWER0_0_OFFSET);
-    addr_hit[9] = (reg_addr == RV_TIMER_COMPARE_UPPER0_0_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      RV_TIMER_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      RV_TIMER_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      RV_TIMER_INTR_ENABLE0_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      RV_TIMER_INTR_STATE0_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      RV_TIMER_INTR_TEST0_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      RV_TIMER_CFG0_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      RV_TIMER_TIMER_V_LOWER0_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      RV_TIMER_TIMER_V_UPPER0_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      RV_TIMER_COMPARE_LOWER0_0_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      RV_TIMER_COMPARE_UPPER0_0_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 10; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -555,52 +568,67 @@ module rv_timer_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[0] & (|(RV_TIMER_PERMIT[0] & ~reg_be))) |
-               (racl_addr_hit_write[1] & (|(RV_TIMER_PERMIT[1] & ~reg_be))) |
-               (racl_addr_hit_write[2] & (|(RV_TIMER_PERMIT[2] & ~reg_be))) |
-               (racl_addr_hit_write[3] & (|(RV_TIMER_PERMIT[3] & ~reg_be))) |
-               (racl_addr_hit_write[4] & (|(RV_TIMER_PERMIT[4] & ~reg_be))) |
-               (racl_addr_hit_write[5] & (|(RV_TIMER_PERMIT[5] & ~reg_be))) |
-               (racl_addr_hit_write[6] & (|(RV_TIMER_PERMIT[6] & ~reg_be))) |
-               (racl_addr_hit_write[7] & (|(RV_TIMER_PERMIT[7] & ~reg_be))) |
-               (racl_addr_hit_write[8] & (|(RV_TIMER_PERMIT[8] & ~reg_be))) |
-               (racl_addr_hit_write[9] & (|(RV_TIMER_PERMIT[9] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0: wr_err = |(RV_TIMER_PERMIT[0] & ~reg_be);
+        1: wr_err = |(RV_TIMER_PERMIT[1] & ~reg_be);
+        2: wr_err = |(RV_TIMER_PERMIT[2] & ~reg_be);
+        3: wr_err = |(RV_TIMER_PERMIT[3] & ~reg_be);
+        4: wr_err = |(RV_TIMER_PERMIT[4] & ~reg_be);
+        5: wr_err = |(RV_TIMER_PERMIT[5] & ~reg_be);
+        6: wr_err = |(RV_TIMER_PERMIT[6] & ~reg_be);
+        7: wr_err = |(RV_TIMER_PERMIT[7] & ~reg_be);
+        8: wr_err = |(RV_TIMER_PERMIT[8] & ~reg_be);
+        9: wr_err = |(RV_TIMER_PERMIT[9] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign alert_test_we = racl_addr_hit_write[0] & reg_we & !reg_error;
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign ctrl_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign ctrl_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign ctrl_wd = reg_wdata[0];
-  assign intr_enable0_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign intr_enable0_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign intr_enable0_wd = reg_wdata[0];
-  assign intr_state0_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign intr_state0_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign intr_state0_wd = reg_wdata[0];
-  assign intr_test0_we = racl_addr_hit_write[4] & reg_we & !reg_error;
+
+  assign intr_test0_we = racl_addr_write_valid & (racl_addr_write_idx == 4) & reg_we & !reg_error;
 
   assign intr_test0_wd = reg_wdata[0];
-  assign cfg0_we = racl_addr_hit_write[5] & reg_we & !reg_error;
+
+  assign cfg0_we = racl_addr_write_valid & (racl_addr_write_idx == 5) & reg_we & !reg_error;
 
   assign cfg0_prescale_wd = reg_wdata[11:0];
-
   assign cfg0_step_wd = reg_wdata[23:16];
-  assign timer_v_lower0_we = racl_addr_hit_write[6] & reg_we & !reg_error;
+
+  assign timer_v_lower0_we = racl_addr_write_valid & (racl_addr_write_idx == 6) & reg_we & !reg_error;
 
   assign timer_v_lower0_wd = reg_wdata[31:0];
-  assign timer_v_upper0_we = racl_addr_hit_write[7] & reg_we & !reg_error;
+
+  assign timer_v_upper0_we = racl_addr_write_valid & (racl_addr_write_idx == 7) & reg_we & !reg_error;
 
   assign timer_v_upper0_wd = reg_wdata[31:0];
-  assign compare_lower0_0_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+
+  assign compare_lower0_0_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
   assign compare_lower0_0_wd = reg_wdata[31:0];
-  assign compare_upper0_0_we = racl_addr_hit_write[9] & reg_we & !reg_error;
+
+  assign compare_upper0_0_we = racl_addr_write_valid & (racl_addr_write_idx == 9) & reg_we & !reg_error;
 
   assign compare_upper0_0_wd = reg_wdata[31:0];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -618,53 +646,58 @@ module rv_timer_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = '0;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = ctrl_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = ctrl_qs;
+        end
 
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[0] = intr_enable0_qs;
-      end
+        2: begin
+          reg_rdata_next[0] = intr_enable0_qs;
+        end
 
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[0] = intr_state0_qs;
-      end
+        3: begin
+          reg_rdata_next[0] = intr_state0_qs;
+        end
 
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next[0] = '0;
-      end
+        4: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next[11:0] = cfg0_prescale_qs;
-        reg_rdata_next[23:16] = cfg0_step_qs;
-      end
+        5: begin
+          reg_rdata_next[11:0] = cfg0_prescale_qs;
+          reg_rdata_next[23:16] = cfg0_step_qs;
+        end
 
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next[31:0] = timer_v_lower0_qs;
-      end
+        6: begin
+          reg_rdata_next[31:0] = timer_v_lower0_qs;
+        end
 
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next[31:0] = timer_v_upper0_qs;
-      end
+        7: begin
+          reg_rdata_next[31:0] = timer_v_upper0_qs;
+        end
 
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next[31:0] = compare_lower0_0_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = compare_lower0_0_qs;
+        end
 
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next[31:0] = compare_upper0_0_qs;
-      end
+        9: begin
+          reg_rdata_next[31:0] = compare_upper0_0_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -691,7 +724,7 @@ module rv_timer_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

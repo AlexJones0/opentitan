@@ -501,59 +501,74 @@ module soc_dbg_ctrl_core_reg_top (
 
 
 
-  logic [6:0] addr_hit;
+  logic [$clog2(NumRegsCore)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[0] = (reg_addr == SOC_DBG_CTRL_ALERT_TEST_OFFSET);
-    addr_hit[1] = (reg_addr == SOC_DBG_CTRL_DEBUG_POLICY_VALID_SHADOWED_OFFSET);
-    addr_hit[2] = (reg_addr == SOC_DBG_CTRL_DEBUG_POLICY_CATEGORY_SHADOWED_OFFSET);
-    addr_hit[3] = (reg_addr == SOC_DBG_CTRL_DEBUG_POLICY_RELOCKED_OFFSET);
-    addr_hit[4] = (reg_addr == SOC_DBG_CTRL_TRACE_DEBUG_POLICY_CATEGORY_OFFSET);
-    addr_hit[5] = (reg_addr == SOC_DBG_CTRL_TRACE_DEBUG_POLICY_VALID_RELOCKED_OFFSET);
-    addr_hit[6] = (reg_addr == SOC_DBG_CTRL_STATUS_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SOC_DBG_CTRL_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SOC_DBG_CTRL_DEBUG_POLICY_VALID_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      SOC_DBG_CTRL_DEBUG_POLICY_CATEGORY_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      SOC_DBG_CTRL_DEBUG_POLICY_RELOCKED_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      SOC_DBG_CTRL_TRACE_DEBUG_POLICY_CATEGORY_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      SOC_DBG_CTRL_TRACE_DEBUG_POLICY_VALID_RELOCKED_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      SOC_DBG_CTRL_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[0] & (|(SOC_DBG_CTRL_CORE_PERMIT[0] & ~reg_be))) |
-               (addr_hit[1] & (|(SOC_DBG_CTRL_CORE_PERMIT[1] & ~reg_be))) |
-               (addr_hit[2] & (|(SOC_DBG_CTRL_CORE_PERMIT[2] & ~reg_be))) |
-               (addr_hit[3] & (|(SOC_DBG_CTRL_CORE_PERMIT[3] & ~reg_be))) |
-               (addr_hit[4] & (|(SOC_DBG_CTRL_CORE_PERMIT[4] & ~reg_be))) |
-               (addr_hit[5] & (|(SOC_DBG_CTRL_CORE_PERMIT[5] & ~reg_be))) |
-               (addr_hit[6] & (|(SOC_DBG_CTRL_CORE_PERMIT[6] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[0] & ~reg_be);
+        1: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[1] & ~reg_be);
+        2: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[2] & ~reg_be);
+        3: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[3] & ~reg_be);
+        4: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[4] & ~reg_be);
+        5: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[5] & ~reg_be);
+        6: wr_err = |(SOC_DBG_CTRL_CORE_PERMIT[6] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign alert_test_we = addr_hit[0] & reg_we & !reg_error;
+  assign alert_test_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign alert_test_fatal_fault_wd = reg_wdata[0];
-
   assign alert_test_recov_ctrl_update_err_wd = reg_wdata[1];
-  assign debug_policy_valid_shadowed_re = addr_hit[1] & reg_re & !reg_error;
-  assign debug_policy_valid_shadowed_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign debug_policy_valid_shadowed_re = addr_valid & (addr_idx == 1) & reg_re & !reg_error;
+  assign debug_policy_valid_shadowed_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign debug_policy_valid_shadowed_wd = reg_wdata[3:0];
-  assign debug_policy_category_shadowed_re = addr_hit[2] & reg_re & !reg_error;
-  assign debug_policy_category_shadowed_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign debug_policy_category_shadowed_re = addr_valid & (addr_idx == 2) & reg_re & !reg_error;
+  assign debug_policy_category_shadowed_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign debug_policy_category_shadowed_wd = reg_wdata[6:0];
-  assign debug_policy_relocked_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign debug_policy_relocked_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign debug_policy_relocked_wd = reg_wdata[3:0];
-  assign status_we = addr_hit[6] & reg_we & !reg_error;
+
+
+
+  assign status_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign status_auth_debug_intent_set_wd = reg_wdata[0];
-
   assign status_auth_window_open_wd = reg_wdata[4];
-
   assign status_auth_window_closed_wd = reg_wdata[5];
-
   assign status_auth_unlock_success_wd = reg_wdata[6];
-
   assign status_auth_unlock_failed_wd = reg_wdata[7];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -568,46 +583,51 @@ module soc_dbg_ctrl_core_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[3:0] = debug_policy_valid_shadowed_qs;
-      end
+        1: begin
+          reg_rdata_next[3:0] = debug_policy_valid_shadowed_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[6:0] = debug_policy_category_shadowed_qs;
-      end
+        2: begin
+          reg_rdata_next[6:0] = debug_policy_category_shadowed_qs;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[3:0] = debug_policy_relocked_qs;
-      end
+        3: begin
+          reg_rdata_next[3:0] = debug_policy_relocked_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[6:0] = trace_debug_policy_category_qs;
-      end
+        4: begin
+          reg_rdata_next[6:0] = trace_debug_policy_category_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[3:0] = trace_debug_policy_valid_relocked_valid_qs;
-        reg_rdata_next[7:4] = trace_debug_policy_valid_relocked_relocked_qs;
-      end
+        5: begin
+          reg_rdata_next[3:0] = trace_debug_policy_valid_relocked_valid_qs;
+          reg_rdata_next[7:4] = trace_debug_policy_valid_relocked_relocked_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[0] = status_auth_debug_intent_set_qs;
-        reg_rdata_next[4] = status_auth_window_open_qs;
-        reg_rdata_next[5] = status_auth_window_closed_qs;
-        reg_rdata_next[6] = status_auth_unlock_success_qs;
-        reg_rdata_next[7] = status_auth_unlock_failed_qs;
-      end
+        6: begin
+          reg_rdata_next[0] = status_auth_debug_intent_set_qs;
+          reg_rdata_next[4] = status_auth_window_open_qs;
+          reg_rdata_next[5] = status_auth_window_closed_qs;
+          reg_rdata_next[6] = status_auth_unlock_success_qs;
+          reg_rdata_next[7] = status_auth_unlock_failed_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -659,7 +679,7 @@ module soc_dbg_ctrl_core_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

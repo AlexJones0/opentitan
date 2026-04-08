@@ -470,12 +470,15 @@ module mbx_soc_reg_top
 
 
 
-  logic [3:0] addr_hit;
+  logic [$clog2(NumRegsSoc)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [3:0] racl_addr_hit_read;
-  logic [3:0] racl_addr_hit_write;
+  logic [$clog2(NumRegsSoc)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegsSoc)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -494,32 +497,42 @@ module mbx_soc_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[0] = (reg_addr == MBX_SOC_CONTROL_OFFSET);
-    addr_hit[1] = (reg_addr == MBX_SOC_STATUS_OFFSET);
-    addr_hit[2] = (reg_addr == MBX_SOC_DOE_INTR_MSG_ADDR_OFFSET);
-    addr_hit[3] = (reg_addr == MBX_SOC_DOE_INTR_MSG_DATA_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      MBX_SOC_CONTROL_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      MBX_SOC_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      MBX_SOC_DOE_INTR_MSG_ADDR_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      MBX_SOC_DOE_INTR_MSG_DATA_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 4; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -534,33 +547,39 @@ module mbx_soc_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[0] & (|(MBX_SOC_PERMIT[0] & ~reg_be))) |
-               (racl_addr_hit_write[1] & (|(MBX_SOC_PERMIT[1] & ~reg_be))) |
-               (racl_addr_hit_write[2] & (|(MBX_SOC_PERMIT[2] & ~reg_be))) |
-               (racl_addr_hit_write[3] & (|(MBX_SOC_PERMIT[3] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0: wr_err = |(MBX_SOC_PERMIT[0] & ~reg_be);
+        1: wr_err = |(MBX_SOC_PERMIT[1] & ~reg_be);
+        2: wr_err = |(MBX_SOC_PERMIT[2] & ~reg_be);
+        3: wr_err = |(MBX_SOC_PERMIT[3] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign soc_control_re = racl_addr_hit_read[0] & reg_re & !reg_error;
-  assign soc_control_we = racl_addr_hit_write[0] & reg_we & !reg_error;
+  assign soc_control_re = racl_addr_read_valid & (racl_addr_read_idx == 0) & reg_re & !reg_error;
+  assign soc_control_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
 
   assign soc_control_abort_wd = reg_wdata[0];
-
   assign soc_control_doe_intr_en_wd = reg_wdata[1];
-
   assign soc_control_doe_async_msg_en_wd = reg_wdata[3];
-
   assign soc_control_go_wd = reg_wdata[31];
-  assign soc_status_we = racl_addr_hit_write[1] & reg_we & !reg_error;
 
+  assign soc_status_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
   assign soc_status_doe_intr_status_wd = reg_wdata[1];
-  assign soc_doe_intr_msg_addr_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign soc_doe_intr_msg_addr_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign soc_doe_intr_msg_addr_wd = reg_wdata[31:0];
-  assign soc_doe_intr_msg_data_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign soc_doe_intr_msg_data_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign soc_doe_intr_msg_data_wd = reg_wdata[31:0];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -572,35 +591,40 @@ module mbx_soc_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = soc_control_doe_intr_en_qs;
-        reg_rdata_next[3] = soc_control_doe_async_msg_en_qs;
-        reg_rdata_next[31] = '0;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = soc_control_doe_intr_en_qs;
+          reg_rdata_next[3] = soc_control_doe_async_msg_en_qs;
+          reg_rdata_next[31] = '0;
+        end
 
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = soc_status_busy_qs;
-        reg_rdata_next[1] = soc_status_doe_intr_status_qs;
-        reg_rdata_next[2] = soc_status_error_qs;
-        reg_rdata_next[3] = soc_status_doe_async_msg_status_qs;
-        reg_rdata_next[31] = soc_status_ready_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = soc_status_busy_qs;
+          reg_rdata_next[1] = soc_status_doe_intr_status_qs;
+          reg_rdata_next[2] = soc_status_error_qs;
+          reg_rdata_next[3] = soc_status_doe_async_msg_status_qs;
+          reg_rdata_next[31] = soc_status_ready_qs;
+        end
 
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[31:0] = soc_doe_intr_msg_addr_qs;
-      end
+        2: begin
+          reg_rdata_next[31:0] = soc_doe_intr_msg_addr_qs;
+        end
 
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[31:0] = soc_doe_intr_msg_data_qs;
-      end
+        3: begin
+          reg_rdata_next[31:0] = soc_doe_intr_msg_data_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -627,7 +651,7 @@ module mbx_soc_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

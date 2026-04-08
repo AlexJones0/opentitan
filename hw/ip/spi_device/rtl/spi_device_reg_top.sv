@@ -19470,12 +19470,15 @@ module spi_device_reg_top
 
 
 
-  logic [72:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [72:0] racl_addr_hit_read;
-  logic [72:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -19494,101 +19497,111 @@ module spi_device_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[ 0] = (reg_addr == SPI_DEVICE_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == SPI_DEVICE_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == SPI_DEVICE_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == SPI_DEVICE_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == SPI_DEVICE_CONTROL_OFFSET);
-    addr_hit[ 5] = (reg_addr == SPI_DEVICE_CFG_OFFSET);
-    addr_hit[ 6] = (reg_addr == SPI_DEVICE_STATUS_OFFSET);
-    addr_hit[ 7] = (reg_addr == SPI_DEVICE_INTERCEPT_EN_OFFSET);
-    addr_hit[ 8] = (reg_addr == SPI_DEVICE_ADDR_MODE_OFFSET);
-    addr_hit[ 9] = (reg_addr == SPI_DEVICE_LAST_READ_ADDR_OFFSET);
-    addr_hit[10] = (reg_addr == SPI_DEVICE_FLASH_STATUS_OFFSET);
-    addr_hit[11] = (reg_addr == SPI_DEVICE_JEDEC_CC_OFFSET);
-    addr_hit[12] = (reg_addr == SPI_DEVICE_JEDEC_ID_OFFSET);
-    addr_hit[13] = (reg_addr == SPI_DEVICE_READ_THRESHOLD_OFFSET);
-    addr_hit[14] = (reg_addr == SPI_DEVICE_MAILBOX_ADDR_OFFSET);
-    addr_hit[15] = (reg_addr == SPI_DEVICE_UPLOAD_STATUS_OFFSET);
-    addr_hit[16] = (reg_addr == SPI_DEVICE_UPLOAD_STATUS2_OFFSET);
-    addr_hit[17] = (reg_addr == SPI_DEVICE_UPLOAD_CMDFIFO_OFFSET);
-    addr_hit[18] = (reg_addr == SPI_DEVICE_UPLOAD_ADDRFIFO_OFFSET);
-    addr_hit[19] = (reg_addr == SPI_DEVICE_CMD_FILTER_0_OFFSET);
-    addr_hit[20] = (reg_addr == SPI_DEVICE_CMD_FILTER_1_OFFSET);
-    addr_hit[21] = (reg_addr == SPI_DEVICE_CMD_FILTER_2_OFFSET);
-    addr_hit[22] = (reg_addr == SPI_DEVICE_CMD_FILTER_3_OFFSET);
-    addr_hit[23] = (reg_addr == SPI_DEVICE_CMD_FILTER_4_OFFSET);
-    addr_hit[24] = (reg_addr == SPI_DEVICE_CMD_FILTER_5_OFFSET);
-    addr_hit[25] = (reg_addr == SPI_DEVICE_CMD_FILTER_6_OFFSET);
-    addr_hit[26] = (reg_addr == SPI_DEVICE_CMD_FILTER_7_OFFSET);
-    addr_hit[27] = (reg_addr == SPI_DEVICE_ADDR_SWAP_MASK_OFFSET);
-    addr_hit[28] = (reg_addr == SPI_DEVICE_ADDR_SWAP_DATA_OFFSET);
-    addr_hit[29] = (reg_addr == SPI_DEVICE_PAYLOAD_SWAP_MASK_OFFSET);
-    addr_hit[30] = (reg_addr == SPI_DEVICE_PAYLOAD_SWAP_DATA_OFFSET);
-    addr_hit[31] = (reg_addr == SPI_DEVICE_CMD_INFO_0_OFFSET);
-    addr_hit[32] = (reg_addr == SPI_DEVICE_CMD_INFO_1_OFFSET);
-    addr_hit[33] = (reg_addr == SPI_DEVICE_CMD_INFO_2_OFFSET);
-    addr_hit[34] = (reg_addr == SPI_DEVICE_CMD_INFO_3_OFFSET);
-    addr_hit[35] = (reg_addr == SPI_DEVICE_CMD_INFO_4_OFFSET);
-    addr_hit[36] = (reg_addr == SPI_DEVICE_CMD_INFO_5_OFFSET);
-    addr_hit[37] = (reg_addr == SPI_DEVICE_CMD_INFO_6_OFFSET);
-    addr_hit[38] = (reg_addr == SPI_DEVICE_CMD_INFO_7_OFFSET);
-    addr_hit[39] = (reg_addr == SPI_DEVICE_CMD_INFO_8_OFFSET);
-    addr_hit[40] = (reg_addr == SPI_DEVICE_CMD_INFO_9_OFFSET);
-    addr_hit[41] = (reg_addr == SPI_DEVICE_CMD_INFO_10_OFFSET);
-    addr_hit[42] = (reg_addr == SPI_DEVICE_CMD_INFO_11_OFFSET);
-    addr_hit[43] = (reg_addr == SPI_DEVICE_CMD_INFO_12_OFFSET);
-    addr_hit[44] = (reg_addr == SPI_DEVICE_CMD_INFO_13_OFFSET);
-    addr_hit[45] = (reg_addr == SPI_DEVICE_CMD_INFO_14_OFFSET);
-    addr_hit[46] = (reg_addr == SPI_DEVICE_CMD_INFO_15_OFFSET);
-    addr_hit[47] = (reg_addr == SPI_DEVICE_CMD_INFO_16_OFFSET);
-    addr_hit[48] = (reg_addr == SPI_DEVICE_CMD_INFO_17_OFFSET);
-    addr_hit[49] = (reg_addr == SPI_DEVICE_CMD_INFO_18_OFFSET);
-    addr_hit[50] = (reg_addr == SPI_DEVICE_CMD_INFO_19_OFFSET);
-    addr_hit[51] = (reg_addr == SPI_DEVICE_CMD_INFO_20_OFFSET);
-    addr_hit[52] = (reg_addr == SPI_DEVICE_CMD_INFO_21_OFFSET);
-    addr_hit[53] = (reg_addr == SPI_DEVICE_CMD_INFO_22_OFFSET);
-    addr_hit[54] = (reg_addr == SPI_DEVICE_CMD_INFO_23_OFFSET);
-    addr_hit[55] = (reg_addr == SPI_DEVICE_CMD_INFO_EN4B_OFFSET);
-    addr_hit[56] = (reg_addr == SPI_DEVICE_CMD_INFO_EX4B_OFFSET);
-    addr_hit[57] = (reg_addr == SPI_DEVICE_CMD_INFO_WREN_OFFSET);
-    addr_hit[58] = (reg_addr == SPI_DEVICE_CMD_INFO_WRDI_OFFSET);
-    addr_hit[59] = (reg_addr == SPI_DEVICE_TPM_CAP_OFFSET);
-    addr_hit[60] = (reg_addr == SPI_DEVICE_TPM_CFG_OFFSET);
-    addr_hit[61] = (reg_addr == SPI_DEVICE_TPM_STATUS_OFFSET);
-    addr_hit[62] = (reg_addr == SPI_DEVICE_TPM_ACCESS_0_OFFSET);
-    addr_hit[63] = (reg_addr == SPI_DEVICE_TPM_ACCESS_1_OFFSET);
-    addr_hit[64] = (reg_addr == SPI_DEVICE_TPM_STS_OFFSET);
-    addr_hit[65] = (reg_addr == SPI_DEVICE_TPM_INTF_CAPABILITY_OFFSET);
-    addr_hit[66] = (reg_addr == SPI_DEVICE_TPM_INT_ENABLE_OFFSET);
-    addr_hit[67] = (reg_addr == SPI_DEVICE_TPM_INT_VECTOR_OFFSET);
-    addr_hit[68] = (reg_addr == SPI_DEVICE_TPM_INT_STATUS_OFFSET);
-    addr_hit[69] = (reg_addr == SPI_DEVICE_TPM_DID_VID_OFFSET);
-    addr_hit[70] = (reg_addr == SPI_DEVICE_TPM_RID_OFFSET);
-    addr_hit[71] = (reg_addr == SPI_DEVICE_TPM_CMD_ADDR_OFFSET);
-    addr_hit[72] = (reg_addr == SPI_DEVICE_TPM_READ_FIFO_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SPI_DEVICE_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SPI_DEVICE_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      SPI_DEVICE_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      SPI_DEVICE_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      SPI_DEVICE_CONTROL_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      SPI_DEVICE_CFG_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      SPI_DEVICE_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      SPI_DEVICE_INTERCEPT_EN_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      SPI_DEVICE_ADDR_MODE_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      SPI_DEVICE_LAST_READ_ADDR_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      SPI_DEVICE_FLASH_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      SPI_DEVICE_JEDEC_CC_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      SPI_DEVICE_JEDEC_ID_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      SPI_DEVICE_READ_THRESHOLD_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      SPI_DEVICE_MAILBOX_ADDR_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      SPI_DEVICE_UPLOAD_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      SPI_DEVICE_UPLOAD_STATUS2_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      SPI_DEVICE_UPLOAD_CMDFIFO_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      SPI_DEVICE_UPLOAD_ADDRFIFO_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      SPI_DEVICE_CMD_FILTER_0_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      SPI_DEVICE_CMD_FILTER_1_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      SPI_DEVICE_CMD_FILTER_2_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      SPI_DEVICE_CMD_FILTER_3_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      SPI_DEVICE_CMD_FILTER_4_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      SPI_DEVICE_CMD_FILTER_5_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      SPI_DEVICE_CMD_FILTER_6_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      SPI_DEVICE_CMD_FILTER_7_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      SPI_DEVICE_ADDR_SWAP_MASK_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      SPI_DEVICE_ADDR_SWAP_DATA_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      SPI_DEVICE_PAYLOAD_SWAP_MASK_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      SPI_DEVICE_PAYLOAD_SWAP_DATA_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      SPI_DEVICE_CMD_INFO_0_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      SPI_DEVICE_CMD_INFO_1_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      SPI_DEVICE_CMD_INFO_2_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      SPI_DEVICE_CMD_INFO_3_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      SPI_DEVICE_CMD_INFO_4_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      SPI_DEVICE_CMD_INFO_5_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      SPI_DEVICE_CMD_INFO_6_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      SPI_DEVICE_CMD_INFO_7_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      SPI_DEVICE_CMD_INFO_8_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      SPI_DEVICE_CMD_INFO_9_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      SPI_DEVICE_CMD_INFO_10_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      SPI_DEVICE_CMD_INFO_11_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      SPI_DEVICE_CMD_INFO_12_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      SPI_DEVICE_CMD_INFO_13_OFFSET: begin addr_valid = 1; addr_idx = 44; end
+      SPI_DEVICE_CMD_INFO_14_OFFSET: begin addr_valid = 1; addr_idx = 45; end
+      SPI_DEVICE_CMD_INFO_15_OFFSET: begin addr_valid = 1; addr_idx = 46; end
+      SPI_DEVICE_CMD_INFO_16_OFFSET: begin addr_valid = 1; addr_idx = 47; end
+      SPI_DEVICE_CMD_INFO_17_OFFSET: begin addr_valid = 1; addr_idx = 48; end
+      SPI_DEVICE_CMD_INFO_18_OFFSET: begin addr_valid = 1; addr_idx = 49; end
+      SPI_DEVICE_CMD_INFO_19_OFFSET: begin addr_valid = 1; addr_idx = 50; end
+      SPI_DEVICE_CMD_INFO_20_OFFSET: begin addr_valid = 1; addr_idx = 51; end
+      SPI_DEVICE_CMD_INFO_21_OFFSET: begin addr_valid = 1; addr_idx = 52; end
+      SPI_DEVICE_CMD_INFO_22_OFFSET: begin addr_valid = 1; addr_idx = 53; end
+      SPI_DEVICE_CMD_INFO_23_OFFSET: begin addr_valid = 1; addr_idx = 54; end
+      SPI_DEVICE_CMD_INFO_EN4B_OFFSET: begin addr_valid = 1; addr_idx = 55; end
+      SPI_DEVICE_CMD_INFO_EX4B_OFFSET: begin addr_valid = 1; addr_idx = 56; end
+      SPI_DEVICE_CMD_INFO_WREN_OFFSET: begin addr_valid = 1; addr_idx = 57; end
+      SPI_DEVICE_CMD_INFO_WRDI_OFFSET: begin addr_valid = 1; addr_idx = 58; end
+      SPI_DEVICE_TPM_CAP_OFFSET: begin addr_valid = 1; addr_idx = 59; end
+      SPI_DEVICE_TPM_CFG_OFFSET: begin addr_valid = 1; addr_idx = 60; end
+      SPI_DEVICE_TPM_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 61; end
+      SPI_DEVICE_TPM_ACCESS_0_OFFSET: begin addr_valid = 1; addr_idx = 62; end
+      SPI_DEVICE_TPM_ACCESS_1_OFFSET: begin addr_valid = 1; addr_idx = 63; end
+      SPI_DEVICE_TPM_STS_OFFSET: begin addr_valid = 1; addr_idx = 64; end
+      SPI_DEVICE_TPM_INTF_CAPABILITY_OFFSET: begin addr_valid = 1; addr_idx = 65; end
+      SPI_DEVICE_TPM_INT_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 66; end
+      SPI_DEVICE_TPM_INT_VECTOR_OFFSET: begin addr_valid = 1; addr_idx = 67; end
+      SPI_DEVICE_TPM_INT_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 68; end
+      SPI_DEVICE_TPM_DID_VID_OFFSET: begin addr_valid = 1; addr_idx = 69; end
+      SPI_DEVICE_TPM_RID_OFFSET: begin addr_valid = 1; addr_idx = 70; end
+      SPI_DEVICE_TPM_CMD_ADDR_OFFSET: begin addr_valid = 1; addr_idx = 71; end
+      SPI_DEVICE_TPM_READ_FIFO_OFFSET: begin addr_valid = 1; addr_idx = 72; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 73; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -19603,1444 +19616,943 @@ module spi_device_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[ 0] & (|(SPI_DEVICE_PERMIT[ 0] & ~reg_be))) |
-               (racl_addr_hit_write[ 1] & (|(SPI_DEVICE_PERMIT[ 1] & ~reg_be))) |
-               (racl_addr_hit_write[ 2] & (|(SPI_DEVICE_PERMIT[ 2] & ~reg_be))) |
-               (racl_addr_hit_write[ 3] & (|(SPI_DEVICE_PERMIT[ 3] & ~reg_be))) |
-               (racl_addr_hit_write[ 4] & (|(SPI_DEVICE_PERMIT[ 4] & ~reg_be))) |
-               (racl_addr_hit_write[ 5] & (|(SPI_DEVICE_PERMIT[ 5] & ~reg_be))) |
-               (racl_addr_hit_write[ 6] & (|(SPI_DEVICE_PERMIT[ 6] & ~reg_be))) |
-               (racl_addr_hit_write[ 7] & (|(SPI_DEVICE_PERMIT[ 7] & ~reg_be))) |
-               (racl_addr_hit_write[ 8] & (|(SPI_DEVICE_PERMIT[ 8] & ~reg_be))) |
-               (racl_addr_hit_write[ 9] & (|(SPI_DEVICE_PERMIT[ 9] & ~reg_be))) |
-               (racl_addr_hit_write[10] & (|(SPI_DEVICE_PERMIT[10] & ~reg_be))) |
-               (racl_addr_hit_write[11] & (|(SPI_DEVICE_PERMIT[11] & ~reg_be))) |
-               (racl_addr_hit_write[12] & (|(SPI_DEVICE_PERMIT[12] & ~reg_be))) |
-               (racl_addr_hit_write[13] & (|(SPI_DEVICE_PERMIT[13] & ~reg_be))) |
-               (racl_addr_hit_write[14] & (|(SPI_DEVICE_PERMIT[14] & ~reg_be))) |
-               (racl_addr_hit_write[15] & (|(SPI_DEVICE_PERMIT[15] & ~reg_be))) |
-               (racl_addr_hit_write[16] & (|(SPI_DEVICE_PERMIT[16] & ~reg_be))) |
-               (racl_addr_hit_write[17] & (|(SPI_DEVICE_PERMIT[17] & ~reg_be))) |
-               (racl_addr_hit_write[18] & (|(SPI_DEVICE_PERMIT[18] & ~reg_be))) |
-               (racl_addr_hit_write[19] & (|(SPI_DEVICE_PERMIT[19] & ~reg_be))) |
-               (racl_addr_hit_write[20] & (|(SPI_DEVICE_PERMIT[20] & ~reg_be))) |
-               (racl_addr_hit_write[21] & (|(SPI_DEVICE_PERMIT[21] & ~reg_be))) |
-               (racl_addr_hit_write[22] & (|(SPI_DEVICE_PERMIT[22] & ~reg_be))) |
-               (racl_addr_hit_write[23] & (|(SPI_DEVICE_PERMIT[23] & ~reg_be))) |
-               (racl_addr_hit_write[24] & (|(SPI_DEVICE_PERMIT[24] & ~reg_be))) |
-               (racl_addr_hit_write[25] & (|(SPI_DEVICE_PERMIT[25] & ~reg_be))) |
-               (racl_addr_hit_write[26] & (|(SPI_DEVICE_PERMIT[26] & ~reg_be))) |
-               (racl_addr_hit_write[27] & (|(SPI_DEVICE_PERMIT[27] & ~reg_be))) |
-               (racl_addr_hit_write[28] & (|(SPI_DEVICE_PERMIT[28] & ~reg_be))) |
-               (racl_addr_hit_write[29] & (|(SPI_DEVICE_PERMIT[29] & ~reg_be))) |
-               (racl_addr_hit_write[30] & (|(SPI_DEVICE_PERMIT[30] & ~reg_be))) |
-               (racl_addr_hit_write[31] & (|(SPI_DEVICE_PERMIT[31] & ~reg_be))) |
-               (racl_addr_hit_write[32] & (|(SPI_DEVICE_PERMIT[32] & ~reg_be))) |
-               (racl_addr_hit_write[33] & (|(SPI_DEVICE_PERMIT[33] & ~reg_be))) |
-               (racl_addr_hit_write[34] & (|(SPI_DEVICE_PERMIT[34] & ~reg_be))) |
-               (racl_addr_hit_write[35] & (|(SPI_DEVICE_PERMIT[35] & ~reg_be))) |
-               (racl_addr_hit_write[36] & (|(SPI_DEVICE_PERMIT[36] & ~reg_be))) |
-               (racl_addr_hit_write[37] & (|(SPI_DEVICE_PERMIT[37] & ~reg_be))) |
-               (racl_addr_hit_write[38] & (|(SPI_DEVICE_PERMIT[38] & ~reg_be))) |
-               (racl_addr_hit_write[39] & (|(SPI_DEVICE_PERMIT[39] & ~reg_be))) |
-               (racl_addr_hit_write[40] & (|(SPI_DEVICE_PERMIT[40] & ~reg_be))) |
-               (racl_addr_hit_write[41] & (|(SPI_DEVICE_PERMIT[41] & ~reg_be))) |
-               (racl_addr_hit_write[42] & (|(SPI_DEVICE_PERMIT[42] & ~reg_be))) |
-               (racl_addr_hit_write[43] & (|(SPI_DEVICE_PERMIT[43] & ~reg_be))) |
-               (racl_addr_hit_write[44] & (|(SPI_DEVICE_PERMIT[44] & ~reg_be))) |
-               (racl_addr_hit_write[45] & (|(SPI_DEVICE_PERMIT[45] & ~reg_be))) |
-               (racl_addr_hit_write[46] & (|(SPI_DEVICE_PERMIT[46] & ~reg_be))) |
-               (racl_addr_hit_write[47] & (|(SPI_DEVICE_PERMIT[47] & ~reg_be))) |
-               (racl_addr_hit_write[48] & (|(SPI_DEVICE_PERMIT[48] & ~reg_be))) |
-               (racl_addr_hit_write[49] & (|(SPI_DEVICE_PERMIT[49] & ~reg_be))) |
-               (racl_addr_hit_write[50] & (|(SPI_DEVICE_PERMIT[50] & ~reg_be))) |
-               (racl_addr_hit_write[51] & (|(SPI_DEVICE_PERMIT[51] & ~reg_be))) |
-               (racl_addr_hit_write[52] & (|(SPI_DEVICE_PERMIT[52] & ~reg_be))) |
-               (racl_addr_hit_write[53] & (|(SPI_DEVICE_PERMIT[53] & ~reg_be))) |
-               (racl_addr_hit_write[54] & (|(SPI_DEVICE_PERMIT[54] & ~reg_be))) |
-               (racl_addr_hit_write[55] & (|(SPI_DEVICE_PERMIT[55] & ~reg_be))) |
-               (racl_addr_hit_write[56] & (|(SPI_DEVICE_PERMIT[56] & ~reg_be))) |
-               (racl_addr_hit_write[57] & (|(SPI_DEVICE_PERMIT[57] & ~reg_be))) |
-               (racl_addr_hit_write[58] & (|(SPI_DEVICE_PERMIT[58] & ~reg_be))) |
-               (racl_addr_hit_write[59] & (|(SPI_DEVICE_PERMIT[59] & ~reg_be))) |
-               (racl_addr_hit_write[60] & (|(SPI_DEVICE_PERMIT[60] & ~reg_be))) |
-               (racl_addr_hit_write[61] & (|(SPI_DEVICE_PERMIT[61] & ~reg_be))) |
-               (racl_addr_hit_write[62] & (|(SPI_DEVICE_PERMIT[62] & ~reg_be))) |
-               (racl_addr_hit_write[63] & (|(SPI_DEVICE_PERMIT[63] & ~reg_be))) |
-               (racl_addr_hit_write[64] & (|(SPI_DEVICE_PERMIT[64] & ~reg_be))) |
-               (racl_addr_hit_write[65] & (|(SPI_DEVICE_PERMIT[65] & ~reg_be))) |
-               (racl_addr_hit_write[66] & (|(SPI_DEVICE_PERMIT[66] & ~reg_be))) |
-               (racl_addr_hit_write[67] & (|(SPI_DEVICE_PERMIT[67] & ~reg_be))) |
-               (racl_addr_hit_write[68] & (|(SPI_DEVICE_PERMIT[68] & ~reg_be))) |
-               (racl_addr_hit_write[69] & (|(SPI_DEVICE_PERMIT[69] & ~reg_be))) |
-               (racl_addr_hit_write[70] & (|(SPI_DEVICE_PERMIT[70] & ~reg_be))) |
-               (racl_addr_hit_write[71] & (|(SPI_DEVICE_PERMIT[71] & ~reg_be))) |
-               (racl_addr_hit_write[72] & (|(SPI_DEVICE_PERMIT[72] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(SPI_DEVICE_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(SPI_DEVICE_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(SPI_DEVICE_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(SPI_DEVICE_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(SPI_DEVICE_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(SPI_DEVICE_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(SPI_DEVICE_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(SPI_DEVICE_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(SPI_DEVICE_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(SPI_DEVICE_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(SPI_DEVICE_PERMIT[10] & ~reg_be);
+        11: wr_err = |(SPI_DEVICE_PERMIT[11] & ~reg_be);
+        12: wr_err = |(SPI_DEVICE_PERMIT[12] & ~reg_be);
+        13: wr_err = |(SPI_DEVICE_PERMIT[13] & ~reg_be);
+        14: wr_err = |(SPI_DEVICE_PERMIT[14] & ~reg_be);
+        15: wr_err = |(SPI_DEVICE_PERMIT[15] & ~reg_be);
+        16: wr_err = |(SPI_DEVICE_PERMIT[16] & ~reg_be);
+        17: wr_err = |(SPI_DEVICE_PERMIT[17] & ~reg_be);
+        18: wr_err = |(SPI_DEVICE_PERMIT[18] & ~reg_be);
+        19: wr_err = |(SPI_DEVICE_PERMIT[19] & ~reg_be);
+        20: wr_err = |(SPI_DEVICE_PERMIT[20] & ~reg_be);
+        21: wr_err = |(SPI_DEVICE_PERMIT[21] & ~reg_be);
+        22: wr_err = |(SPI_DEVICE_PERMIT[22] & ~reg_be);
+        23: wr_err = |(SPI_DEVICE_PERMIT[23] & ~reg_be);
+        24: wr_err = |(SPI_DEVICE_PERMIT[24] & ~reg_be);
+        25: wr_err = |(SPI_DEVICE_PERMIT[25] & ~reg_be);
+        26: wr_err = |(SPI_DEVICE_PERMIT[26] & ~reg_be);
+        27: wr_err = |(SPI_DEVICE_PERMIT[27] & ~reg_be);
+        28: wr_err = |(SPI_DEVICE_PERMIT[28] & ~reg_be);
+        29: wr_err = |(SPI_DEVICE_PERMIT[29] & ~reg_be);
+        30: wr_err = |(SPI_DEVICE_PERMIT[30] & ~reg_be);
+        31: wr_err = |(SPI_DEVICE_PERMIT[31] & ~reg_be);
+        32: wr_err = |(SPI_DEVICE_PERMIT[32] & ~reg_be);
+        33: wr_err = |(SPI_DEVICE_PERMIT[33] & ~reg_be);
+        34: wr_err = |(SPI_DEVICE_PERMIT[34] & ~reg_be);
+        35: wr_err = |(SPI_DEVICE_PERMIT[35] & ~reg_be);
+        36: wr_err = |(SPI_DEVICE_PERMIT[36] & ~reg_be);
+        37: wr_err = |(SPI_DEVICE_PERMIT[37] & ~reg_be);
+        38: wr_err = |(SPI_DEVICE_PERMIT[38] & ~reg_be);
+        39: wr_err = |(SPI_DEVICE_PERMIT[39] & ~reg_be);
+        40: wr_err = |(SPI_DEVICE_PERMIT[40] & ~reg_be);
+        41: wr_err = |(SPI_DEVICE_PERMIT[41] & ~reg_be);
+        42: wr_err = |(SPI_DEVICE_PERMIT[42] & ~reg_be);
+        43: wr_err = |(SPI_DEVICE_PERMIT[43] & ~reg_be);
+        44: wr_err = |(SPI_DEVICE_PERMIT[44] & ~reg_be);
+        45: wr_err = |(SPI_DEVICE_PERMIT[45] & ~reg_be);
+        46: wr_err = |(SPI_DEVICE_PERMIT[46] & ~reg_be);
+        47: wr_err = |(SPI_DEVICE_PERMIT[47] & ~reg_be);
+        48: wr_err = |(SPI_DEVICE_PERMIT[48] & ~reg_be);
+        49: wr_err = |(SPI_DEVICE_PERMIT[49] & ~reg_be);
+        50: wr_err = |(SPI_DEVICE_PERMIT[50] & ~reg_be);
+        51: wr_err = |(SPI_DEVICE_PERMIT[51] & ~reg_be);
+        52: wr_err = |(SPI_DEVICE_PERMIT[52] & ~reg_be);
+        53: wr_err = |(SPI_DEVICE_PERMIT[53] & ~reg_be);
+        54: wr_err = |(SPI_DEVICE_PERMIT[54] & ~reg_be);
+        55: wr_err = |(SPI_DEVICE_PERMIT[55] & ~reg_be);
+        56: wr_err = |(SPI_DEVICE_PERMIT[56] & ~reg_be);
+        57: wr_err = |(SPI_DEVICE_PERMIT[57] & ~reg_be);
+        58: wr_err = |(SPI_DEVICE_PERMIT[58] & ~reg_be);
+        59: wr_err = |(SPI_DEVICE_PERMIT[59] & ~reg_be);
+        60: wr_err = |(SPI_DEVICE_PERMIT[60] & ~reg_be);
+        61: wr_err = |(SPI_DEVICE_PERMIT[61] & ~reg_be);
+        62: wr_err = |(SPI_DEVICE_PERMIT[62] & ~reg_be);
+        63: wr_err = |(SPI_DEVICE_PERMIT[63] & ~reg_be);
+        64: wr_err = |(SPI_DEVICE_PERMIT[64] & ~reg_be);
+        65: wr_err = |(SPI_DEVICE_PERMIT[65] & ~reg_be);
+        66: wr_err = |(SPI_DEVICE_PERMIT[66] & ~reg_be);
+        67: wr_err = |(SPI_DEVICE_PERMIT[67] & ~reg_be);
+        68: wr_err = |(SPI_DEVICE_PERMIT[68] & ~reg_be);
+        69: wr_err = |(SPI_DEVICE_PERMIT[69] & ~reg_be);
+        70: wr_err = |(SPI_DEVICE_PERMIT[70] & ~reg_be);
+        71: wr_err = |(SPI_DEVICE_PERMIT[71] & ~reg_be);
+        72: wr_err = |(SPI_DEVICE_PERMIT[72] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = racl_addr_hit_write[0] & reg_we & !reg_error;
+  assign intr_state_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_upload_cmdfifo_not_empty_wd = reg_wdata[0];
-
   assign intr_state_upload_payload_not_empty_wd = reg_wdata[1];
-
   assign intr_state_upload_payload_overflow_wd = reg_wdata[2];
-
   assign intr_state_readbuf_watermark_wd = reg_wdata[3];
-
   assign intr_state_readbuf_flip_wd = reg_wdata[4];
-
   assign intr_state_tpm_rdfifo_cmd_end_wd = reg_wdata[6];
-
   assign intr_state_tpm_rdfifo_drop_wd = reg_wdata[7];
-  assign intr_enable_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_upload_cmdfifo_not_empty_wd = reg_wdata[0];
-
   assign intr_enable_upload_payload_not_empty_wd = reg_wdata[1];
-
   assign intr_enable_upload_payload_overflow_wd = reg_wdata[2];
-
   assign intr_enable_readbuf_watermark_wd = reg_wdata[3];
-
   assign intr_enable_readbuf_flip_wd = reg_wdata[4];
-
   assign intr_enable_tpm_header_not_empty_wd = reg_wdata[5];
-
   assign intr_enable_tpm_rdfifo_cmd_end_wd = reg_wdata[6];
-
   assign intr_enable_tpm_rdfifo_drop_wd = reg_wdata[7];
-  assign intr_test_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign intr_test_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_upload_cmdfifo_not_empty_wd = reg_wdata[0];
-
   assign intr_test_upload_payload_not_empty_wd = reg_wdata[1];
-
   assign intr_test_upload_payload_overflow_wd = reg_wdata[2];
-
   assign intr_test_readbuf_watermark_wd = reg_wdata[3];
-
   assign intr_test_readbuf_flip_wd = reg_wdata[4];
-
   assign intr_test_tpm_header_not_empty_wd = reg_wdata[5];
-
   assign intr_test_tpm_rdfifo_cmd_end_wd = reg_wdata[6];
-
   assign intr_test_tpm_rdfifo_drop_wd = reg_wdata[7];
-  assign alert_test_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign control_we = racl_addr_hit_write[4] & reg_we & !reg_error;
+
+  assign control_we = racl_addr_write_valid & (racl_addr_write_idx == 4) & reg_we & !reg_error;
 
   assign control_flash_status_fifo_clr_wd = reg_wdata[0];
-
   assign control_flash_read_buffer_clr_wd = reg_wdata[1];
-
   assign control_mode_wd = reg_wdata[5:4];
-  assign cfg_we = racl_addr_hit_write[5] & reg_we & !reg_error;
+
+  assign cfg_we = racl_addr_write_valid & (racl_addr_write_idx == 5) & reg_we & !reg_error;
 
   assign cfg_tx_order_wd = reg_wdata[2];
-
   assign cfg_rx_order_wd = reg_wdata[3];
-
   assign cfg_mailbox_en_wd = reg_wdata[24];
-  assign status_re = racl_addr_hit_read[6] & reg_re & !reg_error;
-  assign intercept_en_we = racl_addr_hit_write[7] & reg_we & !reg_error;
+
+  assign status_re = racl_addr_read_valid & (racl_addr_read_idx == 6) & reg_re & !reg_error;
+
+  assign intercept_en_we = racl_addr_write_valid & (racl_addr_write_idx == 7) & reg_we & !reg_error;
 
   assign intercept_en_status_wd = reg_wdata[0];
-
   assign intercept_en_jedec_wd = reg_wdata[1];
-
   assign intercept_en_sfdp_wd = reg_wdata[2];
-
   assign intercept_en_mbx_wd = reg_wdata[3];
-  assign addr_mode_re = racl_addr_hit_read[8] & reg_re & !reg_error;
-  assign addr_mode_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+
+  assign addr_mode_re = racl_addr_read_valid & (racl_addr_read_idx == 8) & reg_re & !reg_error;
+  assign addr_mode_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
   assign addr_mode_addr_4b_en_wd = reg_wdata[0];
-  assign last_read_addr_re = racl_addr_hit_read[9] & reg_re & !reg_error;
-  assign flash_status_re = racl_addr_hit_read[10] & reg_re & !reg_error;
-  assign flash_status_we = racl_addr_hit_write[10] & reg_we & !reg_error;
+
+  assign last_read_addr_re = racl_addr_read_valid & (racl_addr_read_idx == 9) & reg_re & !reg_error;
+
+  assign flash_status_re = racl_addr_read_valid & (racl_addr_read_idx == 10) & reg_re & !reg_error;
+  assign flash_status_we = racl_addr_write_valid & (racl_addr_write_idx == 10) & reg_we & !reg_error;
 
   assign flash_status_busy_wd = reg_wdata[0];
-
   assign flash_status_wel_wd = reg_wdata[1];
-
   assign flash_status_status_wd = reg_wdata[23:2];
-  assign jedec_cc_we = racl_addr_hit_write[11] & reg_we & !reg_error;
+
+  assign jedec_cc_we = racl_addr_write_valid & (racl_addr_write_idx == 11) & reg_we & !reg_error;
 
   assign jedec_cc_cc_wd = reg_wdata[7:0];
-
   assign jedec_cc_num_cc_wd = reg_wdata[15:8];
-  assign jedec_id_we = racl_addr_hit_write[12] & reg_we & !reg_error;
+
+  assign jedec_id_we = racl_addr_write_valid & (racl_addr_write_idx == 12) & reg_we & !reg_error;
 
   assign jedec_id_id_wd = reg_wdata[15:0];
-
   assign jedec_id_mf_wd = reg_wdata[23:16];
-  assign read_threshold_we = racl_addr_hit_write[13] & reg_we & !reg_error;
+
+  assign read_threshold_we = racl_addr_write_valid & (racl_addr_write_idx == 13) & reg_we & !reg_error;
 
   assign read_threshold_wd = reg_wdata[9:0];
-  assign mailbox_addr_we = racl_addr_hit_write[14] & reg_we & !reg_error;
+
+  assign mailbox_addr_we = racl_addr_write_valid & (racl_addr_write_idx == 14) & reg_we & !reg_error;
 
   assign mailbox_addr_wd = reg_wdata[31:0];
-  assign upload_cmdfifo_re = racl_addr_hit_read[17] & reg_re & !reg_error;
-  assign upload_addrfifo_re = racl_addr_hit_read[18] & reg_re & !reg_error;
-  assign cmd_filter_0_we = racl_addr_hit_write[19] & reg_we & !reg_error;
+
+
+
+  assign upload_cmdfifo_re = racl_addr_read_valid & (racl_addr_read_idx == 17) & reg_re & !reg_error;
+
+  assign upload_addrfifo_re = racl_addr_read_valid & (racl_addr_read_idx == 18) & reg_re & !reg_error;
+
+  assign cmd_filter_0_we = racl_addr_write_valid & (racl_addr_write_idx == 19) & reg_we & !reg_error;
 
   assign cmd_filter_0_filter_0_wd = reg_wdata[0];
-
   assign cmd_filter_0_filter_1_wd = reg_wdata[1];
-
   assign cmd_filter_0_filter_2_wd = reg_wdata[2];
-
   assign cmd_filter_0_filter_3_wd = reg_wdata[3];
-
   assign cmd_filter_0_filter_4_wd = reg_wdata[4];
-
   assign cmd_filter_0_filter_5_wd = reg_wdata[5];
-
   assign cmd_filter_0_filter_6_wd = reg_wdata[6];
-
   assign cmd_filter_0_filter_7_wd = reg_wdata[7];
-
   assign cmd_filter_0_filter_8_wd = reg_wdata[8];
-
   assign cmd_filter_0_filter_9_wd = reg_wdata[9];
-
   assign cmd_filter_0_filter_10_wd = reg_wdata[10];
-
   assign cmd_filter_0_filter_11_wd = reg_wdata[11];
-
   assign cmd_filter_0_filter_12_wd = reg_wdata[12];
-
   assign cmd_filter_0_filter_13_wd = reg_wdata[13];
-
   assign cmd_filter_0_filter_14_wd = reg_wdata[14];
-
   assign cmd_filter_0_filter_15_wd = reg_wdata[15];
-
   assign cmd_filter_0_filter_16_wd = reg_wdata[16];
-
   assign cmd_filter_0_filter_17_wd = reg_wdata[17];
-
   assign cmd_filter_0_filter_18_wd = reg_wdata[18];
-
   assign cmd_filter_0_filter_19_wd = reg_wdata[19];
-
   assign cmd_filter_0_filter_20_wd = reg_wdata[20];
-
   assign cmd_filter_0_filter_21_wd = reg_wdata[21];
-
   assign cmd_filter_0_filter_22_wd = reg_wdata[22];
-
   assign cmd_filter_0_filter_23_wd = reg_wdata[23];
-
   assign cmd_filter_0_filter_24_wd = reg_wdata[24];
-
   assign cmd_filter_0_filter_25_wd = reg_wdata[25];
-
   assign cmd_filter_0_filter_26_wd = reg_wdata[26];
-
   assign cmd_filter_0_filter_27_wd = reg_wdata[27];
-
   assign cmd_filter_0_filter_28_wd = reg_wdata[28];
-
   assign cmd_filter_0_filter_29_wd = reg_wdata[29];
-
   assign cmd_filter_0_filter_30_wd = reg_wdata[30];
-
   assign cmd_filter_0_filter_31_wd = reg_wdata[31];
-  assign cmd_filter_1_we = racl_addr_hit_write[20] & reg_we & !reg_error;
+
+  assign cmd_filter_1_we = racl_addr_write_valid & (racl_addr_write_idx == 20) & reg_we & !reg_error;
 
   assign cmd_filter_1_filter_32_wd = reg_wdata[0];
-
   assign cmd_filter_1_filter_33_wd = reg_wdata[1];
-
   assign cmd_filter_1_filter_34_wd = reg_wdata[2];
-
   assign cmd_filter_1_filter_35_wd = reg_wdata[3];
-
   assign cmd_filter_1_filter_36_wd = reg_wdata[4];
-
   assign cmd_filter_1_filter_37_wd = reg_wdata[5];
-
   assign cmd_filter_1_filter_38_wd = reg_wdata[6];
-
   assign cmd_filter_1_filter_39_wd = reg_wdata[7];
-
   assign cmd_filter_1_filter_40_wd = reg_wdata[8];
-
   assign cmd_filter_1_filter_41_wd = reg_wdata[9];
-
   assign cmd_filter_1_filter_42_wd = reg_wdata[10];
-
   assign cmd_filter_1_filter_43_wd = reg_wdata[11];
-
   assign cmd_filter_1_filter_44_wd = reg_wdata[12];
-
   assign cmd_filter_1_filter_45_wd = reg_wdata[13];
-
   assign cmd_filter_1_filter_46_wd = reg_wdata[14];
-
   assign cmd_filter_1_filter_47_wd = reg_wdata[15];
-
   assign cmd_filter_1_filter_48_wd = reg_wdata[16];
-
   assign cmd_filter_1_filter_49_wd = reg_wdata[17];
-
   assign cmd_filter_1_filter_50_wd = reg_wdata[18];
-
   assign cmd_filter_1_filter_51_wd = reg_wdata[19];
-
   assign cmd_filter_1_filter_52_wd = reg_wdata[20];
-
   assign cmd_filter_1_filter_53_wd = reg_wdata[21];
-
   assign cmd_filter_1_filter_54_wd = reg_wdata[22];
-
   assign cmd_filter_1_filter_55_wd = reg_wdata[23];
-
   assign cmd_filter_1_filter_56_wd = reg_wdata[24];
-
   assign cmd_filter_1_filter_57_wd = reg_wdata[25];
-
   assign cmd_filter_1_filter_58_wd = reg_wdata[26];
-
   assign cmd_filter_1_filter_59_wd = reg_wdata[27];
-
   assign cmd_filter_1_filter_60_wd = reg_wdata[28];
-
   assign cmd_filter_1_filter_61_wd = reg_wdata[29];
-
   assign cmd_filter_1_filter_62_wd = reg_wdata[30];
-
   assign cmd_filter_1_filter_63_wd = reg_wdata[31];
-  assign cmd_filter_2_we = racl_addr_hit_write[21] & reg_we & !reg_error;
+
+  assign cmd_filter_2_we = racl_addr_write_valid & (racl_addr_write_idx == 21) & reg_we & !reg_error;
 
   assign cmd_filter_2_filter_64_wd = reg_wdata[0];
-
   assign cmd_filter_2_filter_65_wd = reg_wdata[1];
-
   assign cmd_filter_2_filter_66_wd = reg_wdata[2];
-
   assign cmd_filter_2_filter_67_wd = reg_wdata[3];
-
   assign cmd_filter_2_filter_68_wd = reg_wdata[4];
-
   assign cmd_filter_2_filter_69_wd = reg_wdata[5];
-
   assign cmd_filter_2_filter_70_wd = reg_wdata[6];
-
   assign cmd_filter_2_filter_71_wd = reg_wdata[7];
-
   assign cmd_filter_2_filter_72_wd = reg_wdata[8];
-
   assign cmd_filter_2_filter_73_wd = reg_wdata[9];
-
   assign cmd_filter_2_filter_74_wd = reg_wdata[10];
-
   assign cmd_filter_2_filter_75_wd = reg_wdata[11];
-
   assign cmd_filter_2_filter_76_wd = reg_wdata[12];
-
   assign cmd_filter_2_filter_77_wd = reg_wdata[13];
-
   assign cmd_filter_2_filter_78_wd = reg_wdata[14];
-
   assign cmd_filter_2_filter_79_wd = reg_wdata[15];
-
   assign cmd_filter_2_filter_80_wd = reg_wdata[16];
-
   assign cmd_filter_2_filter_81_wd = reg_wdata[17];
-
   assign cmd_filter_2_filter_82_wd = reg_wdata[18];
-
   assign cmd_filter_2_filter_83_wd = reg_wdata[19];
-
   assign cmd_filter_2_filter_84_wd = reg_wdata[20];
-
   assign cmd_filter_2_filter_85_wd = reg_wdata[21];
-
   assign cmd_filter_2_filter_86_wd = reg_wdata[22];
-
   assign cmd_filter_2_filter_87_wd = reg_wdata[23];
-
   assign cmd_filter_2_filter_88_wd = reg_wdata[24];
-
   assign cmd_filter_2_filter_89_wd = reg_wdata[25];
-
   assign cmd_filter_2_filter_90_wd = reg_wdata[26];
-
   assign cmd_filter_2_filter_91_wd = reg_wdata[27];
-
   assign cmd_filter_2_filter_92_wd = reg_wdata[28];
-
   assign cmd_filter_2_filter_93_wd = reg_wdata[29];
-
   assign cmd_filter_2_filter_94_wd = reg_wdata[30];
-
   assign cmd_filter_2_filter_95_wd = reg_wdata[31];
-  assign cmd_filter_3_we = racl_addr_hit_write[22] & reg_we & !reg_error;
+
+  assign cmd_filter_3_we = racl_addr_write_valid & (racl_addr_write_idx == 22) & reg_we & !reg_error;
 
   assign cmd_filter_3_filter_96_wd = reg_wdata[0];
-
   assign cmd_filter_3_filter_97_wd = reg_wdata[1];
-
   assign cmd_filter_3_filter_98_wd = reg_wdata[2];
-
   assign cmd_filter_3_filter_99_wd = reg_wdata[3];
-
   assign cmd_filter_3_filter_100_wd = reg_wdata[4];
-
   assign cmd_filter_3_filter_101_wd = reg_wdata[5];
-
   assign cmd_filter_3_filter_102_wd = reg_wdata[6];
-
   assign cmd_filter_3_filter_103_wd = reg_wdata[7];
-
   assign cmd_filter_3_filter_104_wd = reg_wdata[8];
-
   assign cmd_filter_3_filter_105_wd = reg_wdata[9];
-
   assign cmd_filter_3_filter_106_wd = reg_wdata[10];
-
   assign cmd_filter_3_filter_107_wd = reg_wdata[11];
-
   assign cmd_filter_3_filter_108_wd = reg_wdata[12];
-
   assign cmd_filter_3_filter_109_wd = reg_wdata[13];
-
   assign cmd_filter_3_filter_110_wd = reg_wdata[14];
-
   assign cmd_filter_3_filter_111_wd = reg_wdata[15];
-
   assign cmd_filter_3_filter_112_wd = reg_wdata[16];
-
   assign cmd_filter_3_filter_113_wd = reg_wdata[17];
-
   assign cmd_filter_3_filter_114_wd = reg_wdata[18];
-
   assign cmd_filter_3_filter_115_wd = reg_wdata[19];
-
   assign cmd_filter_3_filter_116_wd = reg_wdata[20];
-
   assign cmd_filter_3_filter_117_wd = reg_wdata[21];
-
   assign cmd_filter_3_filter_118_wd = reg_wdata[22];
-
   assign cmd_filter_3_filter_119_wd = reg_wdata[23];
-
   assign cmd_filter_3_filter_120_wd = reg_wdata[24];
-
   assign cmd_filter_3_filter_121_wd = reg_wdata[25];
-
   assign cmd_filter_3_filter_122_wd = reg_wdata[26];
-
   assign cmd_filter_3_filter_123_wd = reg_wdata[27];
-
   assign cmd_filter_3_filter_124_wd = reg_wdata[28];
-
   assign cmd_filter_3_filter_125_wd = reg_wdata[29];
-
   assign cmd_filter_3_filter_126_wd = reg_wdata[30];
-
   assign cmd_filter_3_filter_127_wd = reg_wdata[31];
-  assign cmd_filter_4_we = racl_addr_hit_write[23] & reg_we & !reg_error;
+
+  assign cmd_filter_4_we = racl_addr_write_valid & (racl_addr_write_idx == 23) & reg_we & !reg_error;
 
   assign cmd_filter_4_filter_128_wd = reg_wdata[0];
-
   assign cmd_filter_4_filter_129_wd = reg_wdata[1];
-
   assign cmd_filter_4_filter_130_wd = reg_wdata[2];
-
   assign cmd_filter_4_filter_131_wd = reg_wdata[3];
-
   assign cmd_filter_4_filter_132_wd = reg_wdata[4];
-
   assign cmd_filter_4_filter_133_wd = reg_wdata[5];
-
   assign cmd_filter_4_filter_134_wd = reg_wdata[6];
-
   assign cmd_filter_4_filter_135_wd = reg_wdata[7];
-
   assign cmd_filter_4_filter_136_wd = reg_wdata[8];
-
   assign cmd_filter_4_filter_137_wd = reg_wdata[9];
-
   assign cmd_filter_4_filter_138_wd = reg_wdata[10];
-
   assign cmd_filter_4_filter_139_wd = reg_wdata[11];
-
   assign cmd_filter_4_filter_140_wd = reg_wdata[12];
-
   assign cmd_filter_4_filter_141_wd = reg_wdata[13];
-
   assign cmd_filter_4_filter_142_wd = reg_wdata[14];
-
   assign cmd_filter_4_filter_143_wd = reg_wdata[15];
-
   assign cmd_filter_4_filter_144_wd = reg_wdata[16];
-
   assign cmd_filter_4_filter_145_wd = reg_wdata[17];
-
   assign cmd_filter_4_filter_146_wd = reg_wdata[18];
-
   assign cmd_filter_4_filter_147_wd = reg_wdata[19];
-
   assign cmd_filter_4_filter_148_wd = reg_wdata[20];
-
   assign cmd_filter_4_filter_149_wd = reg_wdata[21];
-
   assign cmd_filter_4_filter_150_wd = reg_wdata[22];
-
   assign cmd_filter_4_filter_151_wd = reg_wdata[23];
-
   assign cmd_filter_4_filter_152_wd = reg_wdata[24];
-
   assign cmd_filter_4_filter_153_wd = reg_wdata[25];
-
   assign cmd_filter_4_filter_154_wd = reg_wdata[26];
-
   assign cmd_filter_4_filter_155_wd = reg_wdata[27];
-
   assign cmd_filter_4_filter_156_wd = reg_wdata[28];
-
   assign cmd_filter_4_filter_157_wd = reg_wdata[29];
-
   assign cmd_filter_4_filter_158_wd = reg_wdata[30];
-
   assign cmd_filter_4_filter_159_wd = reg_wdata[31];
-  assign cmd_filter_5_we = racl_addr_hit_write[24] & reg_we & !reg_error;
+
+  assign cmd_filter_5_we = racl_addr_write_valid & (racl_addr_write_idx == 24) & reg_we & !reg_error;
 
   assign cmd_filter_5_filter_160_wd = reg_wdata[0];
-
   assign cmd_filter_5_filter_161_wd = reg_wdata[1];
-
   assign cmd_filter_5_filter_162_wd = reg_wdata[2];
-
   assign cmd_filter_5_filter_163_wd = reg_wdata[3];
-
   assign cmd_filter_5_filter_164_wd = reg_wdata[4];
-
   assign cmd_filter_5_filter_165_wd = reg_wdata[5];
-
   assign cmd_filter_5_filter_166_wd = reg_wdata[6];
-
   assign cmd_filter_5_filter_167_wd = reg_wdata[7];
-
   assign cmd_filter_5_filter_168_wd = reg_wdata[8];
-
   assign cmd_filter_5_filter_169_wd = reg_wdata[9];
-
   assign cmd_filter_5_filter_170_wd = reg_wdata[10];
-
   assign cmd_filter_5_filter_171_wd = reg_wdata[11];
-
   assign cmd_filter_5_filter_172_wd = reg_wdata[12];
-
   assign cmd_filter_5_filter_173_wd = reg_wdata[13];
-
   assign cmd_filter_5_filter_174_wd = reg_wdata[14];
-
   assign cmd_filter_5_filter_175_wd = reg_wdata[15];
-
   assign cmd_filter_5_filter_176_wd = reg_wdata[16];
-
   assign cmd_filter_5_filter_177_wd = reg_wdata[17];
-
   assign cmd_filter_5_filter_178_wd = reg_wdata[18];
-
   assign cmd_filter_5_filter_179_wd = reg_wdata[19];
-
   assign cmd_filter_5_filter_180_wd = reg_wdata[20];
-
   assign cmd_filter_5_filter_181_wd = reg_wdata[21];
-
   assign cmd_filter_5_filter_182_wd = reg_wdata[22];
-
   assign cmd_filter_5_filter_183_wd = reg_wdata[23];
-
   assign cmd_filter_5_filter_184_wd = reg_wdata[24];
-
   assign cmd_filter_5_filter_185_wd = reg_wdata[25];
-
   assign cmd_filter_5_filter_186_wd = reg_wdata[26];
-
   assign cmd_filter_5_filter_187_wd = reg_wdata[27];
-
   assign cmd_filter_5_filter_188_wd = reg_wdata[28];
-
   assign cmd_filter_5_filter_189_wd = reg_wdata[29];
-
   assign cmd_filter_5_filter_190_wd = reg_wdata[30];
-
   assign cmd_filter_5_filter_191_wd = reg_wdata[31];
-  assign cmd_filter_6_we = racl_addr_hit_write[25] & reg_we & !reg_error;
+
+  assign cmd_filter_6_we = racl_addr_write_valid & (racl_addr_write_idx == 25) & reg_we & !reg_error;
 
   assign cmd_filter_6_filter_192_wd = reg_wdata[0];
-
   assign cmd_filter_6_filter_193_wd = reg_wdata[1];
-
   assign cmd_filter_6_filter_194_wd = reg_wdata[2];
-
   assign cmd_filter_6_filter_195_wd = reg_wdata[3];
-
   assign cmd_filter_6_filter_196_wd = reg_wdata[4];
-
   assign cmd_filter_6_filter_197_wd = reg_wdata[5];
-
   assign cmd_filter_6_filter_198_wd = reg_wdata[6];
-
   assign cmd_filter_6_filter_199_wd = reg_wdata[7];
-
   assign cmd_filter_6_filter_200_wd = reg_wdata[8];
-
   assign cmd_filter_6_filter_201_wd = reg_wdata[9];
-
   assign cmd_filter_6_filter_202_wd = reg_wdata[10];
-
   assign cmd_filter_6_filter_203_wd = reg_wdata[11];
-
   assign cmd_filter_6_filter_204_wd = reg_wdata[12];
-
   assign cmd_filter_6_filter_205_wd = reg_wdata[13];
-
   assign cmd_filter_6_filter_206_wd = reg_wdata[14];
-
   assign cmd_filter_6_filter_207_wd = reg_wdata[15];
-
   assign cmd_filter_6_filter_208_wd = reg_wdata[16];
-
   assign cmd_filter_6_filter_209_wd = reg_wdata[17];
-
   assign cmd_filter_6_filter_210_wd = reg_wdata[18];
-
   assign cmd_filter_6_filter_211_wd = reg_wdata[19];
-
   assign cmd_filter_6_filter_212_wd = reg_wdata[20];
-
   assign cmd_filter_6_filter_213_wd = reg_wdata[21];
-
   assign cmd_filter_6_filter_214_wd = reg_wdata[22];
-
   assign cmd_filter_6_filter_215_wd = reg_wdata[23];
-
   assign cmd_filter_6_filter_216_wd = reg_wdata[24];
-
   assign cmd_filter_6_filter_217_wd = reg_wdata[25];
-
   assign cmd_filter_6_filter_218_wd = reg_wdata[26];
-
   assign cmd_filter_6_filter_219_wd = reg_wdata[27];
-
   assign cmd_filter_6_filter_220_wd = reg_wdata[28];
-
   assign cmd_filter_6_filter_221_wd = reg_wdata[29];
-
   assign cmd_filter_6_filter_222_wd = reg_wdata[30];
-
   assign cmd_filter_6_filter_223_wd = reg_wdata[31];
-  assign cmd_filter_7_we = racl_addr_hit_write[26] & reg_we & !reg_error;
+
+  assign cmd_filter_7_we = racl_addr_write_valid & (racl_addr_write_idx == 26) & reg_we & !reg_error;
 
   assign cmd_filter_7_filter_224_wd = reg_wdata[0];
-
   assign cmd_filter_7_filter_225_wd = reg_wdata[1];
-
   assign cmd_filter_7_filter_226_wd = reg_wdata[2];
-
   assign cmd_filter_7_filter_227_wd = reg_wdata[3];
-
   assign cmd_filter_7_filter_228_wd = reg_wdata[4];
-
   assign cmd_filter_7_filter_229_wd = reg_wdata[5];
-
   assign cmd_filter_7_filter_230_wd = reg_wdata[6];
-
   assign cmd_filter_7_filter_231_wd = reg_wdata[7];
-
   assign cmd_filter_7_filter_232_wd = reg_wdata[8];
-
   assign cmd_filter_7_filter_233_wd = reg_wdata[9];
-
   assign cmd_filter_7_filter_234_wd = reg_wdata[10];
-
   assign cmd_filter_7_filter_235_wd = reg_wdata[11];
-
   assign cmd_filter_7_filter_236_wd = reg_wdata[12];
-
   assign cmd_filter_7_filter_237_wd = reg_wdata[13];
-
   assign cmd_filter_7_filter_238_wd = reg_wdata[14];
-
   assign cmd_filter_7_filter_239_wd = reg_wdata[15];
-
   assign cmd_filter_7_filter_240_wd = reg_wdata[16];
-
   assign cmd_filter_7_filter_241_wd = reg_wdata[17];
-
   assign cmd_filter_7_filter_242_wd = reg_wdata[18];
-
   assign cmd_filter_7_filter_243_wd = reg_wdata[19];
-
   assign cmd_filter_7_filter_244_wd = reg_wdata[20];
-
   assign cmd_filter_7_filter_245_wd = reg_wdata[21];
-
   assign cmd_filter_7_filter_246_wd = reg_wdata[22];
-
   assign cmd_filter_7_filter_247_wd = reg_wdata[23];
-
   assign cmd_filter_7_filter_248_wd = reg_wdata[24];
-
   assign cmd_filter_7_filter_249_wd = reg_wdata[25];
-
   assign cmd_filter_7_filter_250_wd = reg_wdata[26];
-
   assign cmd_filter_7_filter_251_wd = reg_wdata[27];
-
   assign cmd_filter_7_filter_252_wd = reg_wdata[28];
-
   assign cmd_filter_7_filter_253_wd = reg_wdata[29];
-
   assign cmd_filter_7_filter_254_wd = reg_wdata[30];
-
   assign cmd_filter_7_filter_255_wd = reg_wdata[31];
-  assign addr_swap_mask_we = racl_addr_hit_write[27] & reg_we & !reg_error;
+
+  assign addr_swap_mask_we = racl_addr_write_valid & (racl_addr_write_idx == 27) & reg_we & !reg_error;
 
   assign addr_swap_mask_wd = reg_wdata[31:0];
-  assign addr_swap_data_we = racl_addr_hit_write[28] & reg_we & !reg_error;
+
+  assign addr_swap_data_we = racl_addr_write_valid & (racl_addr_write_idx == 28) & reg_we & !reg_error;
 
   assign addr_swap_data_wd = reg_wdata[31:0];
-  assign payload_swap_mask_we = racl_addr_hit_write[29] & reg_we & !reg_error;
+
+  assign payload_swap_mask_we = racl_addr_write_valid & (racl_addr_write_idx == 29) & reg_we & !reg_error;
 
   assign payload_swap_mask_wd = reg_wdata[31:0];
-  assign payload_swap_data_we = racl_addr_hit_write[30] & reg_we & !reg_error;
+
+  assign payload_swap_data_we = racl_addr_write_valid & (racl_addr_write_idx == 30) & reg_we & !reg_error;
 
   assign payload_swap_data_wd = reg_wdata[31:0];
-  assign cmd_info_0_we = racl_addr_hit_write[31] & reg_we & !reg_error;
+
+  assign cmd_info_0_we = racl_addr_write_valid & (racl_addr_write_idx == 31) & reg_we & !reg_error;
 
   assign cmd_info_0_opcode_0_wd = reg_wdata[7:0];
-
   assign cmd_info_0_addr_mode_0_wd = reg_wdata[9:8];
-
   assign cmd_info_0_addr_swap_en_0_wd = reg_wdata[10];
-
   assign cmd_info_0_mbyte_en_0_wd = reg_wdata[11];
-
   assign cmd_info_0_dummy_size_0_wd = reg_wdata[14:12];
-
   assign cmd_info_0_dummy_en_0_wd = reg_wdata[15];
-
   assign cmd_info_0_payload_en_0_wd = reg_wdata[19:16];
-
   assign cmd_info_0_payload_dir_0_wd = reg_wdata[20];
-
   assign cmd_info_0_payload_swap_en_0_wd = reg_wdata[21];
-
   assign cmd_info_0_read_pipeline_mode_0_wd = reg_wdata[23:22];
-
   assign cmd_info_0_upload_0_wd = reg_wdata[24];
-
   assign cmd_info_0_busy_0_wd = reg_wdata[25];
-
   assign cmd_info_0_valid_0_wd = reg_wdata[31];
-  assign cmd_info_1_we = racl_addr_hit_write[32] & reg_we & !reg_error;
+
+  assign cmd_info_1_we = racl_addr_write_valid & (racl_addr_write_idx == 32) & reg_we & !reg_error;
 
   assign cmd_info_1_opcode_1_wd = reg_wdata[7:0];
-
   assign cmd_info_1_addr_mode_1_wd = reg_wdata[9:8];
-
   assign cmd_info_1_addr_swap_en_1_wd = reg_wdata[10];
-
   assign cmd_info_1_mbyte_en_1_wd = reg_wdata[11];
-
   assign cmd_info_1_dummy_size_1_wd = reg_wdata[14:12];
-
   assign cmd_info_1_dummy_en_1_wd = reg_wdata[15];
-
   assign cmd_info_1_payload_en_1_wd = reg_wdata[19:16];
-
   assign cmd_info_1_payload_dir_1_wd = reg_wdata[20];
-
   assign cmd_info_1_payload_swap_en_1_wd = reg_wdata[21];
-
   assign cmd_info_1_read_pipeline_mode_1_wd = reg_wdata[23:22];
-
   assign cmd_info_1_upload_1_wd = reg_wdata[24];
-
   assign cmd_info_1_busy_1_wd = reg_wdata[25];
-
   assign cmd_info_1_valid_1_wd = reg_wdata[31];
-  assign cmd_info_2_we = racl_addr_hit_write[33] & reg_we & !reg_error;
+
+  assign cmd_info_2_we = racl_addr_write_valid & (racl_addr_write_idx == 33) & reg_we & !reg_error;
 
   assign cmd_info_2_opcode_2_wd = reg_wdata[7:0];
-
   assign cmd_info_2_addr_mode_2_wd = reg_wdata[9:8];
-
   assign cmd_info_2_addr_swap_en_2_wd = reg_wdata[10];
-
   assign cmd_info_2_mbyte_en_2_wd = reg_wdata[11];
-
   assign cmd_info_2_dummy_size_2_wd = reg_wdata[14:12];
-
   assign cmd_info_2_dummy_en_2_wd = reg_wdata[15];
-
   assign cmd_info_2_payload_en_2_wd = reg_wdata[19:16];
-
   assign cmd_info_2_payload_dir_2_wd = reg_wdata[20];
-
   assign cmd_info_2_payload_swap_en_2_wd = reg_wdata[21];
-
   assign cmd_info_2_read_pipeline_mode_2_wd = reg_wdata[23:22];
-
   assign cmd_info_2_upload_2_wd = reg_wdata[24];
-
   assign cmd_info_2_busy_2_wd = reg_wdata[25];
-
   assign cmd_info_2_valid_2_wd = reg_wdata[31];
-  assign cmd_info_3_we = racl_addr_hit_write[34] & reg_we & !reg_error;
+
+  assign cmd_info_3_we = racl_addr_write_valid & (racl_addr_write_idx == 34) & reg_we & !reg_error;
 
   assign cmd_info_3_opcode_3_wd = reg_wdata[7:0];
-
   assign cmd_info_3_addr_mode_3_wd = reg_wdata[9:8];
-
   assign cmd_info_3_addr_swap_en_3_wd = reg_wdata[10];
-
   assign cmd_info_3_mbyte_en_3_wd = reg_wdata[11];
-
   assign cmd_info_3_dummy_size_3_wd = reg_wdata[14:12];
-
   assign cmd_info_3_dummy_en_3_wd = reg_wdata[15];
-
   assign cmd_info_3_payload_en_3_wd = reg_wdata[19:16];
-
   assign cmd_info_3_payload_dir_3_wd = reg_wdata[20];
-
   assign cmd_info_3_payload_swap_en_3_wd = reg_wdata[21];
-
   assign cmd_info_3_read_pipeline_mode_3_wd = reg_wdata[23:22];
-
   assign cmd_info_3_upload_3_wd = reg_wdata[24];
-
   assign cmd_info_3_busy_3_wd = reg_wdata[25];
-
   assign cmd_info_3_valid_3_wd = reg_wdata[31];
-  assign cmd_info_4_we = racl_addr_hit_write[35] & reg_we & !reg_error;
+
+  assign cmd_info_4_we = racl_addr_write_valid & (racl_addr_write_idx == 35) & reg_we & !reg_error;
 
   assign cmd_info_4_opcode_4_wd = reg_wdata[7:0];
-
   assign cmd_info_4_addr_mode_4_wd = reg_wdata[9:8];
-
   assign cmd_info_4_addr_swap_en_4_wd = reg_wdata[10];
-
   assign cmd_info_4_mbyte_en_4_wd = reg_wdata[11];
-
   assign cmd_info_4_dummy_size_4_wd = reg_wdata[14:12];
-
   assign cmd_info_4_dummy_en_4_wd = reg_wdata[15];
-
   assign cmd_info_4_payload_en_4_wd = reg_wdata[19:16];
-
   assign cmd_info_4_payload_dir_4_wd = reg_wdata[20];
-
   assign cmd_info_4_payload_swap_en_4_wd = reg_wdata[21];
-
   assign cmd_info_4_read_pipeline_mode_4_wd = reg_wdata[23:22];
-
   assign cmd_info_4_upload_4_wd = reg_wdata[24];
-
   assign cmd_info_4_busy_4_wd = reg_wdata[25];
-
   assign cmd_info_4_valid_4_wd = reg_wdata[31];
-  assign cmd_info_5_we = racl_addr_hit_write[36] & reg_we & !reg_error;
+
+  assign cmd_info_5_we = racl_addr_write_valid & (racl_addr_write_idx == 36) & reg_we & !reg_error;
 
   assign cmd_info_5_opcode_5_wd = reg_wdata[7:0];
-
   assign cmd_info_5_addr_mode_5_wd = reg_wdata[9:8];
-
   assign cmd_info_5_addr_swap_en_5_wd = reg_wdata[10];
-
   assign cmd_info_5_mbyte_en_5_wd = reg_wdata[11];
-
   assign cmd_info_5_dummy_size_5_wd = reg_wdata[14:12];
-
   assign cmd_info_5_dummy_en_5_wd = reg_wdata[15];
-
   assign cmd_info_5_payload_en_5_wd = reg_wdata[19:16];
-
   assign cmd_info_5_payload_dir_5_wd = reg_wdata[20];
-
   assign cmd_info_5_payload_swap_en_5_wd = reg_wdata[21];
-
   assign cmd_info_5_read_pipeline_mode_5_wd = reg_wdata[23:22];
-
   assign cmd_info_5_upload_5_wd = reg_wdata[24];
-
   assign cmd_info_5_busy_5_wd = reg_wdata[25];
-
   assign cmd_info_5_valid_5_wd = reg_wdata[31];
-  assign cmd_info_6_we = racl_addr_hit_write[37] & reg_we & !reg_error;
+
+  assign cmd_info_6_we = racl_addr_write_valid & (racl_addr_write_idx == 37) & reg_we & !reg_error;
 
   assign cmd_info_6_opcode_6_wd = reg_wdata[7:0];
-
   assign cmd_info_6_addr_mode_6_wd = reg_wdata[9:8];
-
   assign cmd_info_6_addr_swap_en_6_wd = reg_wdata[10];
-
   assign cmd_info_6_mbyte_en_6_wd = reg_wdata[11];
-
   assign cmd_info_6_dummy_size_6_wd = reg_wdata[14:12];
-
   assign cmd_info_6_dummy_en_6_wd = reg_wdata[15];
-
   assign cmd_info_6_payload_en_6_wd = reg_wdata[19:16];
-
   assign cmd_info_6_payload_dir_6_wd = reg_wdata[20];
-
   assign cmd_info_6_payload_swap_en_6_wd = reg_wdata[21];
-
   assign cmd_info_6_read_pipeline_mode_6_wd = reg_wdata[23:22];
-
   assign cmd_info_6_upload_6_wd = reg_wdata[24];
-
   assign cmd_info_6_busy_6_wd = reg_wdata[25];
-
   assign cmd_info_6_valid_6_wd = reg_wdata[31];
-  assign cmd_info_7_we = racl_addr_hit_write[38] & reg_we & !reg_error;
+
+  assign cmd_info_7_we = racl_addr_write_valid & (racl_addr_write_idx == 38) & reg_we & !reg_error;
 
   assign cmd_info_7_opcode_7_wd = reg_wdata[7:0];
-
   assign cmd_info_7_addr_mode_7_wd = reg_wdata[9:8];
-
   assign cmd_info_7_addr_swap_en_7_wd = reg_wdata[10];
-
   assign cmd_info_7_mbyte_en_7_wd = reg_wdata[11];
-
   assign cmd_info_7_dummy_size_7_wd = reg_wdata[14:12];
-
   assign cmd_info_7_dummy_en_7_wd = reg_wdata[15];
-
   assign cmd_info_7_payload_en_7_wd = reg_wdata[19:16];
-
   assign cmd_info_7_payload_dir_7_wd = reg_wdata[20];
-
   assign cmd_info_7_payload_swap_en_7_wd = reg_wdata[21];
-
   assign cmd_info_7_read_pipeline_mode_7_wd = reg_wdata[23:22];
-
   assign cmd_info_7_upload_7_wd = reg_wdata[24];
-
   assign cmd_info_7_busy_7_wd = reg_wdata[25];
-
   assign cmd_info_7_valid_7_wd = reg_wdata[31];
-  assign cmd_info_8_we = racl_addr_hit_write[39] & reg_we & !reg_error;
+
+  assign cmd_info_8_we = racl_addr_write_valid & (racl_addr_write_idx == 39) & reg_we & !reg_error;
 
   assign cmd_info_8_opcode_8_wd = reg_wdata[7:0];
-
   assign cmd_info_8_addr_mode_8_wd = reg_wdata[9:8];
-
   assign cmd_info_8_addr_swap_en_8_wd = reg_wdata[10];
-
   assign cmd_info_8_mbyte_en_8_wd = reg_wdata[11];
-
   assign cmd_info_8_dummy_size_8_wd = reg_wdata[14:12];
-
   assign cmd_info_8_dummy_en_8_wd = reg_wdata[15];
-
   assign cmd_info_8_payload_en_8_wd = reg_wdata[19:16];
-
   assign cmd_info_8_payload_dir_8_wd = reg_wdata[20];
-
   assign cmd_info_8_payload_swap_en_8_wd = reg_wdata[21];
-
   assign cmd_info_8_read_pipeline_mode_8_wd = reg_wdata[23:22];
-
   assign cmd_info_8_upload_8_wd = reg_wdata[24];
-
   assign cmd_info_8_busy_8_wd = reg_wdata[25];
-
   assign cmd_info_8_valid_8_wd = reg_wdata[31];
-  assign cmd_info_9_we = racl_addr_hit_write[40] & reg_we & !reg_error;
+
+  assign cmd_info_9_we = racl_addr_write_valid & (racl_addr_write_idx == 40) & reg_we & !reg_error;
 
   assign cmd_info_9_opcode_9_wd = reg_wdata[7:0];
-
   assign cmd_info_9_addr_mode_9_wd = reg_wdata[9:8];
-
   assign cmd_info_9_addr_swap_en_9_wd = reg_wdata[10];
-
   assign cmd_info_9_mbyte_en_9_wd = reg_wdata[11];
-
   assign cmd_info_9_dummy_size_9_wd = reg_wdata[14:12];
-
   assign cmd_info_9_dummy_en_9_wd = reg_wdata[15];
-
   assign cmd_info_9_payload_en_9_wd = reg_wdata[19:16];
-
   assign cmd_info_9_payload_dir_9_wd = reg_wdata[20];
-
   assign cmd_info_9_payload_swap_en_9_wd = reg_wdata[21];
-
   assign cmd_info_9_read_pipeline_mode_9_wd = reg_wdata[23:22];
-
   assign cmd_info_9_upload_9_wd = reg_wdata[24];
-
   assign cmd_info_9_busy_9_wd = reg_wdata[25];
-
   assign cmd_info_9_valid_9_wd = reg_wdata[31];
-  assign cmd_info_10_we = racl_addr_hit_write[41] & reg_we & !reg_error;
+
+  assign cmd_info_10_we = racl_addr_write_valid & (racl_addr_write_idx == 41) & reg_we & !reg_error;
 
   assign cmd_info_10_opcode_10_wd = reg_wdata[7:0];
-
   assign cmd_info_10_addr_mode_10_wd = reg_wdata[9:8];
-
   assign cmd_info_10_addr_swap_en_10_wd = reg_wdata[10];
-
   assign cmd_info_10_mbyte_en_10_wd = reg_wdata[11];
-
   assign cmd_info_10_dummy_size_10_wd = reg_wdata[14:12];
-
   assign cmd_info_10_dummy_en_10_wd = reg_wdata[15];
-
   assign cmd_info_10_payload_en_10_wd = reg_wdata[19:16];
-
   assign cmd_info_10_payload_dir_10_wd = reg_wdata[20];
-
   assign cmd_info_10_payload_swap_en_10_wd = reg_wdata[21];
-
   assign cmd_info_10_read_pipeline_mode_10_wd = reg_wdata[23:22];
-
   assign cmd_info_10_upload_10_wd = reg_wdata[24];
-
   assign cmd_info_10_busy_10_wd = reg_wdata[25];
-
   assign cmd_info_10_valid_10_wd = reg_wdata[31];
-  assign cmd_info_11_we = racl_addr_hit_write[42] & reg_we & !reg_error;
+
+  assign cmd_info_11_we = racl_addr_write_valid & (racl_addr_write_idx == 42) & reg_we & !reg_error;
 
   assign cmd_info_11_opcode_11_wd = reg_wdata[7:0];
-
   assign cmd_info_11_addr_mode_11_wd = reg_wdata[9:8];
-
   assign cmd_info_11_addr_swap_en_11_wd = reg_wdata[10];
-
   assign cmd_info_11_mbyte_en_11_wd = reg_wdata[11];
-
   assign cmd_info_11_dummy_size_11_wd = reg_wdata[14:12];
-
   assign cmd_info_11_dummy_en_11_wd = reg_wdata[15];
-
   assign cmd_info_11_payload_en_11_wd = reg_wdata[19:16];
-
   assign cmd_info_11_payload_dir_11_wd = reg_wdata[20];
-
   assign cmd_info_11_payload_swap_en_11_wd = reg_wdata[21];
-
   assign cmd_info_11_read_pipeline_mode_11_wd = reg_wdata[23:22];
-
   assign cmd_info_11_upload_11_wd = reg_wdata[24];
-
   assign cmd_info_11_busy_11_wd = reg_wdata[25];
-
   assign cmd_info_11_valid_11_wd = reg_wdata[31];
-  assign cmd_info_12_we = racl_addr_hit_write[43] & reg_we & !reg_error;
+
+  assign cmd_info_12_we = racl_addr_write_valid & (racl_addr_write_idx == 43) & reg_we & !reg_error;
 
   assign cmd_info_12_opcode_12_wd = reg_wdata[7:0];
-
   assign cmd_info_12_addr_mode_12_wd = reg_wdata[9:8];
-
   assign cmd_info_12_addr_swap_en_12_wd = reg_wdata[10];
-
   assign cmd_info_12_mbyte_en_12_wd = reg_wdata[11];
-
   assign cmd_info_12_dummy_size_12_wd = reg_wdata[14:12];
-
   assign cmd_info_12_dummy_en_12_wd = reg_wdata[15];
-
   assign cmd_info_12_payload_en_12_wd = reg_wdata[19:16];
-
   assign cmd_info_12_payload_dir_12_wd = reg_wdata[20];
-
   assign cmd_info_12_payload_swap_en_12_wd = reg_wdata[21];
-
   assign cmd_info_12_read_pipeline_mode_12_wd = reg_wdata[23:22];
-
   assign cmd_info_12_upload_12_wd = reg_wdata[24];
-
   assign cmd_info_12_busy_12_wd = reg_wdata[25];
-
   assign cmd_info_12_valid_12_wd = reg_wdata[31];
-  assign cmd_info_13_we = racl_addr_hit_write[44] & reg_we & !reg_error;
+
+  assign cmd_info_13_we = racl_addr_write_valid & (racl_addr_write_idx == 44) & reg_we & !reg_error;
 
   assign cmd_info_13_opcode_13_wd = reg_wdata[7:0];
-
   assign cmd_info_13_addr_mode_13_wd = reg_wdata[9:8];
-
   assign cmd_info_13_addr_swap_en_13_wd = reg_wdata[10];
-
   assign cmd_info_13_mbyte_en_13_wd = reg_wdata[11];
-
   assign cmd_info_13_dummy_size_13_wd = reg_wdata[14:12];
-
   assign cmd_info_13_dummy_en_13_wd = reg_wdata[15];
-
   assign cmd_info_13_payload_en_13_wd = reg_wdata[19:16];
-
   assign cmd_info_13_payload_dir_13_wd = reg_wdata[20];
-
   assign cmd_info_13_payload_swap_en_13_wd = reg_wdata[21];
-
   assign cmd_info_13_read_pipeline_mode_13_wd = reg_wdata[23:22];
-
   assign cmd_info_13_upload_13_wd = reg_wdata[24];
-
   assign cmd_info_13_busy_13_wd = reg_wdata[25];
-
   assign cmd_info_13_valid_13_wd = reg_wdata[31];
-  assign cmd_info_14_we = racl_addr_hit_write[45] & reg_we & !reg_error;
+
+  assign cmd_info_14_we = racl_addr_write_valid & (racl_addr_write_idx == 45) & reg_we & !reg_error;
 
   assign cmd_info_14_opcode_14_wd = reg_wdata[7:0];
-
   assign cmd_info_14_addr_mode_14_wd = reg_wdata[9:8];
-
   assign cmd_info_14_addr_swap_en_14_wd = reg_wdata[10];
-
   assign cmd_info_14_mbyte_en_14_wd = reg_wdata[11];
-
   assign cmd_info_14_dummy_size_14_wd = reg_wdata[14:12];
-
   assign cmd_info_14_dummy_en_14_wd = reg_wdata[15];
-
   assign cmd_info_14_payload_en_14_wd = reg_wdata[19:16];
-
   assign cmd_info_14_payload_dir_14_wd = reg_wdata[20];
-
   assign cmd_info_14_payload_swap_en_14_wd = reg_wdata[21];
-
   assign cmd_info_14_read_pipeline_mode_14_wd = reg_wdata[23:22];
-
   assign cmd_info_14_upload_14_wd = reg_wdata[24];
-
   assign cmd_info_14_busy_14_wd = reg_wdata[25];
-
   assign cmd_info_14_valid_14_wd = reg_wdata[31];
-  assign cmd_info_15_we = racl_addr_hit_write[46] & reg_we & !reg_error;
+
+  assign cmd_info_15_we = racl_addr_write_valid & (racl_addr_write_idx == 46) & reg_we & !reg_error;
 
   assign cmd_info_15_opcode_15_wd = reg_wdata[7:0];
-
   assign cmd_info_15_addr_mode_15_wd = reg_wdata[9:8];
-
   assign cmd_info_15_addr_swap_en_15_wd = reg_wdata[10];
-
   assign cmd_info_15_mbyte_en_15_wd = reg_wdata[11];
-
   assign cmd_info_15_dummy_size_15_wd = reg_wdata[14:12];
-
   assign cmd_info_15_dummy_en_15_wd = reg_wdata[15];
-
   assign cmd_info_15_payload_en_15_wd = reg_wdata[19:16];
-
   assign cmd_info_15_payload_dir_15_wd = reg_wdata[20];
-
   assign cmd_info_15_payload_swap_en_15_wd = reg_wdata[21];
-
   assign cmd_info_15_read_pipeline_mode_15_wd = reg_wdata[23:22];
-
   assign cmd_info_15_upload_15_wd = reg_wdata[24];
-
   assign cmd_info_15_busy_15_wd = reg_wdata[25];
-
   assign cmd_info_15_valid_15_wd = reg_wdata[31];
-  assign cmd_info_16_we = racl_addr_hit_write[47] & reg_we & !reg_error;
+
+  assign cmd_info_16_we = racl_addr_write_valid & (racl_addr_write_idx == 47) & reg_we & !reg_error;
 
   assign cmd_info_16_opcode_16_wd = reg_wdata[7:0];
-
   assign cmd_info_16_addr_mode_16_wd = reg_wdata[9:8];
-
   assign cmd_info_16_addr_swap_en_16_wd = reg_wdata[10];
-
   assign cmd_info_16_mbyte_en_16_wd = reg_wdata[11];
-
   assign cmd_info_16_dummy_size_16_wd = reg_wdata[14:12];
-
   assign cmd_info_16_dummy_en_16_wd = reg_wdata[15];
-
   assign cmd_info_16_payload_en_16_wd = reg_wdata[19:16];
-
   assign cmd_info_16_payload_dir_16_wd = reg_wdata[20];
-
   assign cmd_info_16_payload_swap_en_16_wd = reg_wdata[21];
-
   assign cmd_info_16_read_pipeline_mode_16_wd = reg_wdata[23:22];
-
   assign cmd_info_16_upload_16_wd = reg_wdata[24];
-
   assign cmd_info_16_busy_16_wd = reg_wdata[25];
-
   assign cmd_info_16_valid_16_wd = reg_wdata[31];
-  assign cmd_info_17_we = racl_addr_hit_write[48] & reg_we & !reg_error;
+
+  assign cmd_info_17_we = racl_addr_write_valid & (racl_addr_write_idx == 48) & reg_we & !reg_error;
 
   assign cmd_info_17_opcode_17_wd = reg_wdata[7:0];
-
   assign cmd_info_17_addr_mode_17_wd = reg_wdata[9:8];
-
   assign cmd_info_17_addr_swap_en_17_wd = reg_wdata[10];
-
   assign cmd_info_17_mbyte_en_17_wd = reg_wdata[11];
-
   assign cmd_info_17_dummy_size_17_wd = reg_wdata[14:12];
-
   assign cmd_info_17_dummy_en_17_wd = reg_wdata[15];
-
   assign cmd_info_17_payload_en_17_wd = reg_wdata[19:16];
-
   assign cmd_info_17_payload_dir_17_wd = reg_wdata[20];
-
   assign cmd_info_17_payload_swap_en_17_wd = reg_wdata[21];
-
   assign cmd_info_17_read_pipeline_mode_17_wd = reg_wdata[23:22];
-
   assign cmd_info_17_upload_17_wd = reg_wdata[24];
-
   assign cmd_info_17_busy_17_wd = reg_wdata[25];
-
   assign cmd_info_17_valid_17_wd = reg_wdata[31];
-  assign cmd_info_18_we = racl_addr_hit_write[49] & reg_we & !reg_error;
+
+  assign cmd_info_18_we = racl_addr_write_valid & (racl_addr_write_idx == 49) & reg_we & !reg_error;
 
   assign cmd_info_18_opcode_18_wd = reg_wdata[7:0];
-
   assign cmd_info_18_addr_mode_18_wd = reg_wdata[9:8];
-
   assign cmd_info_18_addr_swap_en_18_wd = reg_wdata[10];
-
   assign cmd_info_18_mbyte_en_18_wd = reg_wdata[11];
-
   assign cmd_info_18_dummy_size_18_wd = reg_wdata[14:12];
-
   assign cmd_info_18_dummy_en_18_wd = reg_wdata[15];
-
   assign cmd_info_18_payload_en_18_wd = reg_wdata[19:16];
-
   assign cmd_info_18_payload_dir_18_wd = reg_wdata[20];
-
   assign cmd_info_18_payload_swap_en_18_wd = reg_wdata[21];
-
   assign cmd_info_18_read_pipeline_mode_18_wd = reg_wdata[23:22];
-
   assign cmd_info_18_upload_18_wd = reg_wdata[24];
-
   assign cmd_info_18_busy_18_wd = reg_wdata[25];
-
   assign cmd_info_18_valid_18_wd = reg_wdata[31];
-  assign cmd_info_19_we = racl_addr_hit_write[50] & reg_we & !reg_error;
+
+  assign cmd_info_19_we = racl_addr_write_valid & (racl_addr_write_idx == 50) & reg_we & !reg_error;
 
   assign cmd_info_19_opcode_19_wd = reg_wdata[7:0];
-
   assign cmd_info_19_addr_mode_19_wd = reg_wdata[9:8];
-
   assign cmd_info_19_addr_swap_en_19_wd = reg_wdata[10];
-
   assign cmd_info_19_mbyte_en_19_wd = reg_wdata[11];
-
   assign cmd_info_19_dummy_size_19_wd = reg_wdata[14:12];
-
   assign cmd_info_19_dummy_en_19_wd = reg_wdata[15];
-
   assign cmd_info_19_payload_en_19_wd = reg_wdata[19:16];
-
   assign cmd_info_19_payload_dir_19_wd = reg_wdata[20];
-
   assign cmd_info_19_payload_swap_en_19_wd = reg_wdata[21];
-
   assign cmd_info_19_read_pipeline_mode_19_wd = reg_wdata[23:22];
-
   assign cmd_info_19_upload_19_wd = reg_wdata[24];
-
   assign cmd_info_19_busy_19_wd = reg_wdata[25];
-
   assign cmd_info_19_valid_19_wd = reg_wdata[31];
-  assign cmd_info_20_we = racl_addr_hit_write[51] & reg_we & !reg_error;
+
+  assign cmd_info_20_we = racl_addr_write_valid & (racl_addr_write_idx == 51) & reg_we & !reg_error;
 
   assign cmd_info_20_opcode_20_wd = reg_wdata[7:0];
-
   assign cmd_info_20_addr_mode_20_wd = reg_wdata[9:8];
-
   assign cmd_info_20_addr_swap_en_20_wd = reg_wdata[10];
-
   assign cmd_info_20_mbyte_en_20_wd = reg_wdata[11];
-
   assign cmd_info_20_dummy_size_20_wd = reg_wdata[14:12];
-
   assign cmd_info_20_dummy_en_20_wd = reg_wdata[15];
-
   assign cmd_info_20_payload_en_20_wd = reg_wdata[19:16];
-
   assign cmd_info_20_payload_dir_20_wd = reg_wdata[20];
-
   assign cmd_info_20_payload_swap_en_20_wd = reg_wdata[21];
-
   assign cmd_info_20_read_pipeline_mode_20_wd = reg_wdata[23:22];
-
   assign cmd_info_20_upload_20_wd = reg_wdata[24];
-
   assign cmd_info_20_busy_20_wd = reg_wdata[25];
-
   assign cmd_info_20_valid_20_wd = reg_wdata[31];
-  assign cmd_info_21_we = racl_addr_hit_write[52] & reg_we & !reg_error;
+
+  assign cmd_info_21_we = racl_addr_write_valid & (racl_addr_write_idx == 52) & reg_we & !reg_error;
 
   assign cmd_info_21_opcode_21_wd = reg_wdata[7:0];
-
   assign cmd_info_21_addr_mode_21_wd = reg_wdata[9:8];
-
   assign cmd_info_21_addr_swap_en_21_wd = reg_wdata[10];
-
   assign cmd_info_21_mbyte_en_21_wd = reg_wdata[11];
-
   assign cmd_info_21_dummy_size_21_wd = reg_wdata[14:12];
-
   assign cmd_info_21_dummy_en_21_wd = reg_wdata[15];
-
   assign cmd_info_21_payload_en_21_wd = reg_wdata[19:16];
-
   assign cmd_info_21_payload_dir_21_wd = reg_wdata[20];
-
   assign cmd_info_21_payload_swap_en_21_wd = reg_wdata[21];
-
   assign cmd_info_21_read_pipeline_mode_21_wd = reg_wdata[23:22];
-
   assign cmd_info_21_upload_21_wd = reg_wdata[24];
-
   assign cmd_info_21_busy_21_wd = reg_wdata[25];
-
   assign cmd_info_21_valid_21_wd = reg_wdata[31];
-  assign cmd_info_22_we = racl_addr_hit_write[53] & reg_we & !reg_error;
+
+  assign cmd_info_22_we = racl_addr_write_valid & (racl_addr_write_idx == 53) & reg_we & !reg_error;
 
   assign cmd_info_22_opcode_22_wd = reg_wdata[7:0];
-
   assign cmd_info_22_addr_mode_22_wd = reg_wdata[9:8];
-
   assign cmd_info_22_addr_swap_en_22_wd = reg_wdata[10];
-
   assign cmd_info_22_mbyte_en_22_wd = reg_wdata[11];
-
   assign cmd_info_22_dummy_size_22_wd = reg_wdata[14:12];
-
   assign cmd_info_22_dummy_en_22_wd = reg_wdata[15];
-
   assign cmd_info_22_payload_en_22_wd = reg_wdata[19:16];
-
   assign cmd_info_22_payload_dir_22_wd = reg_wdata[20];
-
   assign cmd_info_22_payload_swap_en_22_wd = reg_wdata[21];
-
   assign cmd_info_22_read_pipeline_mode_22_wd = reg_wdata[23:22];
-
   assign cmd_info_22_upload_22_wd = reg_wdata[24];
-
   assign cmd_info_22_busy_22_wd = reg_wdata[25];
-
   assign cmd_info_22_valid_22_wd = reg_wdata[31];
-  assign cmd_info_23_we = racl_addr_hit_write[54] & reg_we & !reg_error;
+
+  assign cmd_info_23_we = racl_addr_write_valid & (racl_addr_write_idx == 54) & reg_we & !reg_error;
 
   assign cmd_info_23_opcode_23_wd = reg_wdata[7:0];
-
   assign cmd_info_23_addr_mode_23_wd = reg_wdata[9:8];
-
   assign cmd_info_23_addr_swap_en_23_wd = reg_wdata[10];
-
   assign cmd_info_23_mbyte_en_23_wd = reg_wdata[11];
-
   assign cmd_info_23_dummy_size_23_wd = reg_wdata[14:12];
-
   assign cmd_info_23_dummy_en_23_wd = reg_wdata[15];
-
   assign cmd_info_23_payload_en_23_wd = reg_wdata[19:16];
-
   assign cmd_info_23_payload_dir_23_wd = reg_wdata[20];
-
   assign cmd_info_23_payload_swap_en_23_wd = reg_wdata[21];
-
   assign cmd_info_23_read_pipeline_mode_23_wd = reg_wdata[23:22];
-
   assign cmd_info_23_upload_23_wd = reg_wdata[24];
-
   assign cmd_info_23_busy_23_wd = reg_wdata[25];
-
   assign cmd_info_23_valid_23_wd = reg_wdata[31];
-  assign cmd_info_en4b_we = racl_addr_hit_write[55] & reg_we & !reg_error;
+
+  assign cmd_info_en4b_we = racl_addr_write_valid & (racl_addr_write_idx == 55) & reg_we & !reg_error;
 
   assign cmd_info_en4b_opcode_wd = reg_wdata[7:0];
-
   assign cmd_info_en4b_valid_wd = reg_wdata[31];
-  assign cmd_info_ex4b_we = racl_addr_hit_write[56] & reg_we & !reg_error;
+
+  assign cmd_info_ex4b_we = racl_addr_write_valid & (racl_addr_write_idx == 56) & reg_we & !reg_error;
 
   assign cmd_info_ex4b_opcode_wd = reg_wdata[7:0];
-
   assign cmd_info_ex4b_valid_wd = reg_wdata[31];
-  assign cmd_info_wren_we = racl_addr_hit_write[57] & reg_we & !reg_error;
+
+  assign cmd_info_wren_we = racl_addr_write_valid & (racl_addr_write_idx == 57) & reg_we & !reg_error;
 
   assign cmd_info_wren_opcode_wd = reg_wdata[7:0];
-
   assign cmd_info_wren_valid_wd = reg_wdata[31];
-  assign cmd_info_wrdi_we = racl_addr_hit_write[58] & reg_we & !reg_error;
+
+  assign cmd_info_wrdi_we = racl_addr_write_valid & (racl_addr_write_idx == 58) & reg_we & !reg_error;
 
   assign cmd_info_wrdi_opcode_wd = reg_wdata[7:0];
-
   assign cmd_info_wrdi_valid_wd = reg_wdata[31];
-  assign tpm_cfg_we = racl_addr_hit_write[60] & reg_we & !reg_error;
+
+
+  assign tpm_cfg_we = racl_addr_write_valid & (racl_addr_write_idx == 60) & reg_we & !reg_error;
 
   assign tpm_cfg_en_wd = reg_wdata[0];
-
   assign tpm_cfg_tpm_mode_wd = reg_wdata[1];
-
   assign tpm_cfg_hw_reg_dis_wd = reg_wdata[2];
-
   assign tpm_cfg_tpm_reg_chk_dis_wd = reg_wdata[3];
-
   assign tpm_cfg_invalid_locality_wd = reg_wdata[4];
-  assign tpm_status_re = racl_addr_hit_read[61] & reg_re & !reg_error;
-  assign tpm_status_we = racl_addr_hit_write[61] & reg_we & !reg_error;
 
+  assign tpm_status_re = racl_addr_read_valid & (racl_addr_read_idx == 61) & reg_re & !reg_error;
+  assign tpm_status_we = racl_addr_write_valid & (racl_addr_write_idx == 61) & reg_we & !reg_error;
   assign tpm_status_wrfifo_pending_wd = reg_wdata[1];
-  assign tpm_access_0_we = racl_addr_hit_write[62] & reg_we & !reg_error;
+
+  assign tpm_access_0_we = racl_addr_write_valid & (racl_addr_write_idx == 62) & reg_we & !reg_error;
 
   assign tpm_access_0_access_0_wd = reg_wdata[7:0];
-
   assign tpm_access_0_access_1_wd = reg_wdata[15:8];
-
   assign tpm_access_0_access_2_wd = reg_wdata[23:16];
-
   assign tpm_access_0_access_3_wd = reg_wdata[31:24];
-  assign tpm_access_1_we = racl_addr_hit_write[63] & reg_we & !reg_error;
+
+  assign tpm_access_1_we = racl_addr_write_valid & (racl_addr_write_idx == 63) & reg_we & !reg_error;
 
   assign tpm_access_1_wd = reg_wdata[7:0];
-  assign tpm_sts_we = racl_addr_hit_write[64] & reg_we & !reg_error;
+
+  assign tpm_sts_we = racl_addr_write_valid & (racl_addr_write_idx == 64) & reg_we & !reg_error;
 
   assign tpm_sts_wd = reg_wdata[31:0];
-  assign tpm_intf_capability_we = racl_addr_hit_write[65] & reg_we & !reg_error;
+
+  assign tpm_intf_capability_we = racl_addr_write_valid & (racl_addr_write_idx == 65) & reg_we & !reg_error;
 
   assign tpm_intf_capability_wd = reg_wdata[31:0];
-  assign tpm_int_enable_we = racl_addr_hit_write[66] & reg_we & !reg_error;
+
+  assign tpm_int_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 66) & reg_we & !reg_error;
 
   assign tpm_int_enable_wd = reg_wdata[31:0];
-  assign tpm_int_vector_we = racl_addr_hit_write[67] & reg_we & !reg_error;
+
+  assign tpm_int_vector_we = racl_addr_write_valid & (racl_addr_write_idx == 67) & reg_we & !reg_error;
 
   assign tpm_int_vector_wd = reg_wdata[7:0];
-  assign tpm_int_status_we = racl_addr_hit_write[68] & reg_we & !reg_error;
+
+  assign tpm_int_status_we = racl_addr_write_valid & (racl_addr_write_idx == 68) & reg_we & !reg_error;
 
   assign tpm_int_status_wd = reg_wdata[31:0];
-  assign tpm_did_vid_we = racl_addr_hit_write[69] & reg_we & !reg_error;
+
+  assign tpm_did_vid_we = racl_addr_write_valid & (racl_addr_write_idx == 69) & reg_we & !reg_error;
 
   assign tpm_did_vid_vid_wd = reg_wdata[15:0];
-
   assign tpm_did_vid_did_wd = reg_wdata[31:16];
-  assign tpm_rid_we = racl_addr_hit_write[70] & reg_we & !reg_error;
+
+  assign tpm_rid_we = racl_addr_write_valid & (racl_addr_write_idx == 70) & reg_we & !reg_error;
 
   assign tpm_rid_wd = reg_wdata[7:0];
-  assign tpm_cmd_addr_re = racl_addr_hit_read[71] & reg_re & !reg_error;
-  assign tpm_read_fifo_we = racl_addr_hit_write[72] & reg_we & !reg_error;
+
+  assign tpm_cmd_addr_re = racl_addr_read_valid & (racl_addr_read_idx == 71) & reg_re & !reg_error;
+
+  assign tpm_read_fifo_we = racl_addr_write_valid & (racl_addr_write_idx == 72) & reg_we & !reg_error;
 
   assign tpm_read_fifo_wd = reg_wdata[31:0];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -21121,899 +20633,904 @@ module spi_device_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = intr_state_upload_cmdfifo_not_empty_qs;
-        reg_rdata_next[1] = intr_state_upload_payload_not_empty_qs;
-        reg_rdata_next[2] = intr_state_upload_payload_overflow_qs;
-        reg_rdata_next[3] = intr_state_readbuf_watermark_qs;
-        reg_rdata_next[4] = intr_state_readbuf_flip_qs;
-        reg_rdata_next[5] = intr_state_tpm_header_not_empty_qs;
-        reg_rdata_next[6] = intr_state_tpm_rdfifo_cmd_end_qs;
-        reg_rdata_next[7] = intr_state_tpm_rdfifo_drop_qs;
-      end
-
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = intr_enable_upload_cmdfifo_not_empty_qs;
-        reg_rdata_next[1] = intr_enable_upload_payload_not_empty_qs;
-        reg_rdata_next[2] = intr_enable_upload_payload_overflow_qs;
-        reg_rdata_next[3] = intr_enable_readbuf_watermark_qs;
-        reg_rdata_next[4] = intr_enable_readbuf_flip_qs;
-        reg_rdata_next[5] = intr_enable_tpm_header_not_empty_qs;
-        reg_rdata_next[6] = intr_enable_tpm_rdfifo_cmd_end_qs;
-        reg_rdata_next[7] = intr_enable_tpm_rdfifo_drop_qs;
-      end
-
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
-        reg_rdata_next[4] = '0;
-        reg_rdata_next[5] = '0;
-        reg_rdata_next[6] = '0;
-        reg_rdata_next[7] = '0;
-      end
-
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[0] = '0;
-      end
-
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next[0] = control_flash_status_fifo_clr_qs;
-        reg_rdata_next[1] = control_flash_read_buffer_clr_qs;
-        reg_rdata_next[5:4] = control_mode_qs;
-      end
-
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next[2] = cfg_tx_order_qs;
-        reg_rdata_next[3] = cfg_rx_order_qs;
-        reg_rdata_next[24] = cfg_mailbox_en_qs;
-      end
-
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next[5] = status_csb_qs;
-        reg_rdata_next[6] = status_tpm_csb_qs;
-      end
-
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next[0] = intercept_en_status_qs;
-        reg_rdata_next[1] = intercept_en_jedec_qs;
-        reg_rdata_next[2] = intercept_en_sfdp_qs;
-        reg_rdata_next[3] = intercept_en_mbx_qs;
-      end
-
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next[0] = addr_mode_addr_4b_en_qs;
-        reg_rdata_next[31] = addr_mode_pending_qs;
-      end
-
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next[31:0] = last_read_addr_qs;
-      end
-
-      racl_addr_hit_read[10]: begin
-        reg_rdata_next[0] = flash_status_busy_qs;
-        reg_rdata_next[1] = flash_status_wel_qs;
-        reg_rdata_next[23:2] = flash_status_status_qs;
-      end
-
-      racl_addr_hit_read[11]: begin
-        reg_rdata_next[7:0] = jedec_cc_cc_qs;
-        reg_rdata_next[15:8] = jedec_cc_num_cc_qs;
-      end
-
-      racl_addr_hit_read[12]: begin
-        reg_rdata_next[15:0] = jedec_id_id_qs;
-        reg_rdata_next[23:16] = jedec_id_mf_qs;
-      end
-
-      racl_addr_hit_read[13]: begin
-        reg_rdata_next[9:0] = read_threshold_qs;
-      end
-
-      racl_addr_hit_read[14]: begin
-        reg_rdata_next[31:0] = mailbox_addr_qs;
-      end
-
-      racl_addr_hit_read[15]: begin
-        reg_rdata_next[4:0] = upload_status_cmdfifo_depth_qs;
-        reg_rdata_next[7] = upload_status_cmdfifo_notempty_qs;
-        reg_rdata_next[12:8] = upload_status_addrfifo_depth_qs;
-        reg_rdata_next[15] = upload_status_addrfifo_notempty_qs;
-      end
-
-      racl_addr_hit_read[16]: begin
-        reg_rdata_next[8:0] = upload_status2_payload_depth_qs;
-        reg_rdata_next[23:16] = upload_status2_payload_start_idx_qs;
-      end
-
-      racl_addr_hit_read[17]: begin
-        reg_rdata_next[7:0] = upload_cmdfifo_data_qs;
-        reg_rdata_next[13] = upload_cmdfifo_busy_qs;
-        reg_rdata_next[14] = upload_cmdfifo_wel_qs;
-        reg_rdata_next[15] = upload_cmdfifo_addr4b_mode_qs;
-      end
-
-      racl_addr_hit_read[18]: begin
-        reg_rdata_next[31:0] = upload_addrfifo_qs;
-      end
-
-      racl_addr_hit_read[19]: begin
-        reg_rdata_next[0] = cmd_filter_0_filter_0_qs;
-        reg_rdata_next[1] = cmd_filter_0_filter_1_qs;
-        reg_rdata_next[2] = cmd_filter_0_filter_2_qs;
-        reg_rdata_next[3] = cmd_filter_0_filter_3_qs;
-        reg_rdata_next[4] = cmd_filter_0_filter_4_qs;
-        reg_rdata_next[5] = cmd_filter_0_filter_5_qs;
-        reg_rdata_next[6] = cmd_filter_0_filter_6_qs;
-        reg_rdata_next[7] = cmd_filter_0_filter_7_qs;
-        reg_rdata_next[8] = cmd_filter_0_filter_8_qs;
-        reg_rdata_next[9] = cmd_filter_0_filter_9_qs;
-        reg_rdata_next[10] = cmd_filter_0_filter_10_qs;
-        reg_rdata_next[11] = cmd_filter_0_filter_11_qs;
-        reg_rdata_next[12] = cmd_filter_0_filter_12_qs;
-        reg_rdata_next[13] = cmd_filter_0_filter_13_qs;
-        reg_rdata_next[14] = cmd_filter_0_filter_14_qs;
-        reg_rdata_next[15] = cmd_filter_0_filter_15_qs;
-        reg_rdata_next[16] = cmd_filter_0_filter_16_qs;
-        reg_rdata_next[17] = cmd_filter_0_filter_17_qs;
-        reg_rdata_next[18] = cmd_filter_0_filter_18_qs;
-        reg_rdata_next[19] = cmd_filter_0_filter_19_qs;
-        reg_rdata_next[20] = cmd_filter_0_filter_20_qs;
-        reg_rdata_next[21] = cmd_filter_0_filter_21_qs;
-        reg_rdata_next[22] = cmd_filter_0_filter_22_qs;
-        reg_rdata_next[23] = cmd_filter_0_filter_23_qs;
-        reg_rdata_next[24] = cmd_filter_0_filter_24_qs;
-        reg_rdata_next[25] = cmd_filter_0_filter_25_qs;
-        reg_rdata_next[26] = cmd_filter_0_filter_26_qs;
-        reg_rdata_next[27] = cmd_filter_0_filter_27_qs;
-        reg_rdata_next[28] = cmd_filter_0_filter_28_qs;
-        reg_rdata_next[29] = cmd_filter_0_filter_29_qs;
-        reg_rdata_next[30] = cmd_filter_0_filter_30_qs;
-        reg_rdata_next[31] = cmd_filter_0_filter_31_qs;
-      end
-
-      racl_addr_hit_read[20]: begin
-        reg_rdata_next[0] = cmd_filter_1_filter_32_qs;
-        reg_rdata_next[1] = cmd_filter_1_filter_33_qs;
-        reg_rdata_next[2] = cmd_filter_1_filter_34_qs;
-        reg_rdata_next[3] = cmd_filter_1_filter_35_qs;
-        reg_rdata_next[4] = cmd_filter_1_filter_36_qs;
-        reg_rdata_next[5] = cmd_filter_1_filter_37_qs;
-        reg_rdata_next[6] = cmd_filter_1_filter_38_qs;
-        reg_rdata_next[7] = cmd_filter_1_filter_39_qs;
-        reg_rdata_next[8] = cmd_filter_1_filter_40_qs;
-        reg_rdata_next[9] = cmd_filter_1_filter_41_qs;
-        reg_rdata_next[10] = cmd_filter_1_filter_42_qs;
-        reg_rdata_next[11] = cmd_filter_1_filter_43_qs;
-        reg_rdata_next[12] = cmd_filter_1_filter_44_qs;
-        reg_rdata_next[13] = cmd_filter_1_filter_45_qs;
-        reg_rdata_next[14] = cmd_filter_1_filter_46_qs;
-        reg_rdata_next[15] = cmd_filter_1_filter_47_qs;
-        reg_rdata_next[16] = cmd_filter_1_filter_48_qs;
-        reg_rdata_next[17] = cmd_filter_1_filter_49_qs;
-        reg_rdata_next[18] = cmd_filter_1_filter_50_qs;
-        reg_rdata_next[19] = cmd_filter_1_filter_51_qs;
-        reg_rdata_next[20] = cmd_filter_1_filter_52_qs;
-        reg_rdata_next[21] = cmd_filter_1_filter_53_qs;
-        reg_rdata_next[22] = cmd_filter_1_filter_54_qs;
-        reg_rdata_next[23] = cmd_filter_1_filter_55_qs;
-        reg_rdata_next[24] = cmd_filter_1_filter_56_qs;
-        reg_rdata_next[25] = cmd_filter_1_filter_57_qs;
-        reg_rdata_next[26] = cmd_filter_1_filter_58_qs;
-        reg_rdata_next[27] = cmd_filter_1_filter_59_qs;
-        reg_rdata_next[28] = cmd_filter_1_filter_60_qs;
-        reg_rdata_next[29] = cmd_filter_1_filter_61_qs;
-        reg_rdata_next[30] = cmd_filter_1_filter_62_qs;
-        reg_rdata_next[31] = cmd_filter_1_filter_63_qs;
-      end
-
-      racl_addr_hit_read[21]: begin
-        reg_rdata_next[0] = cmd_filter_2_filter_64_qs;
-        reg_rdata_next[1] = cmd_filter_2_filter_65_qs;
-        reg_rdata_next[2] = cmd_filter_2_filter_66_qs;
-        reg_rdata_next[3] = cmd_filter_2_filter_67_qs;
-        reg_rdata_next[4] = cmd_filter_2_filter_68_qs;
-        reg_rdata_next[5] = cmd_filter_2_filter_69_qs;
-        reg_rdata_next[6] = cmd_filter_2_filter_70_qs;
-        reg_rdata_next[7] = cmd_filter_2_filter_71_qs;
-        reg_rdata_next[8] = cmd_filter_2_filter_72_qs;
-        reg_rdata_next[9] = cmd_filter_2_filter_73_qs;
-        reg_rdata_next[10] = cmd_filter_2_filter_74_qs;
-        reg_rdata_next[11] = cmd_filter_2_filter_75_qs;
-        reg_rdata_next[12] = cmd_filter_2_filter_76_qs;
-        reg_rdata_next[13] = cmd_filter_2_filter_77_qs;
-        reg_rdata_next[14] = cmd_filter_2_filter_78_qs;
-        reg_rdata_next[15] = cmd_filter_2_filter_79_qs;
-        reg_rdata_next[16] = cmd_filter_2_filter_80_qs;
-        reg_rdata_next[17] = cmd_filter_2_filter_81_qs;
-        reg_rdata_next[18] = cmd_filter_2_filter_82_qs;
-        reg_rdata_next[19] = cmd_filter_2_filter_83_qs;
-        reg_rdata_next[20] = cmd_filter_2_filter_84_qs;
-        reg_rdata_next[21] = cmd_filter_2_filter_85_qs;
-        reg_rdata_next[22] = cmd_filter_2_filter_86_qs;
-        reg_rdata_next[23] = cmd_filter_2_filter_87_qs;
-        reg_rdata_next[24] = cmd_filter_2_filter_88_qs;
-        reg_rdata_next[25] = cmd_filter_2_filter_89_qs;
-        reg_rdata_next[26] = cmd_filter_2_filter_90_qs;
-        reg_rdata_next[27] = cmd_filter_2_filter_91_qs;
-        reg_rdata_next[28] = cmd_filter_2_filter_92_qs;
-        reg_rdata_next[29] = cmd_filter_2_filter_93_qs;
-        reg_rdata_next[30] = cmd_filter_2_filter_94_qs;
-        reg_rdata_next[31] = cmd_filter_2_filter_95_qs;
-      end
-
-      racl_addr_hit_read[22]: begin
-        reg_rdata_next[0] = cmd_filter_3_filter_96_qs;
-        reg_rdata_next[1] = cmd_filter_3_filter_97_qs;
-        reg_rdata_next[2] = cmd_filter_3_filter_98_qs;
-        reg_rdata_next[3] = cmd_filter_3_filter_99_qs;
-        reg_rdata_next[4] = cmd_filter_3_filter_100_qs;
-        reg_rdata_next[5] = cmd_filter_3_filter_101_qs;
-        reg_rdata_next[6] = cmd_filter_3_filter_102_qs;
-        reg_rdata_next[7] = cmd_filter_3_filter_103_qs;
-        reg_rdata_next[8] = cmd_filter_3_filter_104_qs;
-        reg_rdata_next[9] = cmd_filter_3_filter_105_qs;
-        reg_rdata_next[10] = cmd_filter_3_filter_106_qs;
-        reg_rdata_next[11] = cmd_filter_3_filter_107_qs;
-        reg_rdata_next[12] = cmd_filter_3_filter_108_qs;
-        reg_rdata_next[13] = cmd_filter_3_filter_109_qs;
-        reg_rdata_next[14] = cmd_filter_3_filter_110_qs;
-        reg_rdata_next[15] = cmd_filter_3_filter_111_qs;
-        reg_rdata_next[16] = cmd_filter_3_filter_112_qs;
-        reg_rdata_next[17] = cmd_filter_3_filter_113_qs;
-        reg_rdata_next[18] = cmd_filter_3_filter_114_qs;
-        reg_rdata_next[19] = cmd_filter_3_filter_115_qs;
-        reg_rdata_next[20] = cmd_filter_3_filter_116_qs;
-        reg_rdata_next[21] = cmd_filter_3_filter_117_qs;
-        reg_rdata_next[22] = cmd_filter_3_filter_118_qs;
-        reg_rdata_next[23] = cmd_filter_3_filter_119_qs;
-        reg_rdata_next[24] = cmd_filter_3_filter_120_qs;
-        reg_rdata_next[25] = cmd_filter_3_filter_121_qs;
-        reg_rdata_next[26] = cmd_filter_3_filter_122_qs;
-        reg_rdata_next[27] = cmd_filter_3_filter_123_qs;
-        reg_rdata_next[28] = cmd_filter_3_filter_124_qs;
-        reg_rdata_next[29] = cmd_filter_3_filter_125_qs;
-        reg_rdata_next[30] = cmd_filter_3_filter_126_qs;
-        reg_rdata_next[31] = cmd_filter_3_filter_127_qs;
-      end
-
-      racl_addr_hit_read[23]: begin
-        reg_rdata_next[0] = cmd_filter_4_filter_128_qs;
-        reg_rdata_next[1] = cmd_filter_4_filter_129_qs;
-        reg_rdata_next[2] = cmd_filter_4_filter_130_qs;
-        reg_rdata_next[3] = cmd_filter_4_filter_131_qs;
-        reg_rdata_next[4] = cmd_filter_4_filter_132_qs;
-        reg_rdata_next[5] = cmd_filter_4_filter_133_qs;
-        reg_rdata_next[6] = cmd_filter_4_filter_134_qs;
-        reg_rdata_next[7] = cmd_filter_4_filter_135_qs;
-        reg_rdata_next[8] = cmd_filter_4_filter_136_qs;
-        reg_rdata_next[9] = cmd_filter_4_filter_137_qs;
-        reg_rdata_next[10] = cmd_filter_4_filter_138_qs;
-        reg_rdata_next[11] = cmd_filter_4_filter_139_qs;
-        reg_rdata_next[12] = cmd_filter_4_filter_140_qs;
-        reg_rdata_next[13] = cmd_filter_4_filter_141_qs;
-        reg_rdata_next[14] = cmd_filter_4_filter_142_qs;
-        reg_rdata_next[15] = cmd_filter_4_filter_143_qs;
-        reg_rdata_next[16] = cmd_filter_4_filter_144_qs;
-        reg_rdata_next[17] = cmd_filter_4_filter_145_qs;
-        reg_rdata_next[18] = cmd_filter_4_filter_146_qs;
-        reg_rdata_next[19] = cmd_filter_4_filter_147_qs;
-        reg_rdata_next[20] = cmd_filter_4_filter_148_qs;
-        reg_rdata_next[21] = cmd_filter_4_filter_149_qs;
-        reg_rdata_next[22] = cmd_filter_4_filter_150_qs;
-        reg_rdata_next[23] = cmd_filter_4_filter_151_qs;
-        reg_rdata_next[24] = cmd_filter_4_filter_152_qs;
-        reg_rdata_next[25] = cmd_filter_4_filter_153_qs;
-        reg_rdata_next[26] = cmd_filter_4_filter_154_qs;
-        reg_rdata_next[27] = cmd_filter_4_filter_155_qs;
-        reg_rdata_next[28] = cmd_filter_4_filter_156_qs;
-        reg_rdata_next[29] = cmd_filter_4_filter_157_qs;
-        reg_rdata_next[30] = cmd_filter_4_filter_158_qs;
-        reg_rdata_next[31] = cmd_filter_4_filter_159_qs;
-      end
-
-      racl_addr_hit_read[24]: begin
-        reg_rdata_next[0] = cmd_filter_5_filter_160_qs;
-        reg_rdata_next[1] = cmd_filter_5_filter_161_qs;
-        reg_rdata_next[2] = cmd_filter_5_filter_162_qs;
-        reg_rdata_next[3] = cmd_filter_5_filter_163_qs;
-        reg_rdata_next[4] = cmd_filter_5_filter_164_qs;
-        reg_rdata_next[5] = cmd_filter_5_filter_165_qs;
-        reg_rdata_next[6] = cmd_filter_5_filter_166_qs;
-        reg_rdata_next[7] = cmd_filter_5_filter_167_qs;
-        reg_rdata_next[8] = cmd_filter_5_filter_168_qs;
-        reg_rdata_next[9] = cmd_filter_5_filter_169_qs;
-        reg_rdata_next[10] = cmd_filter_5_filter_170_qs;
-        reg_rdata_next[11] = cmd_filter_5_filter_171_qs;
-        reg_rdata_next[12] = cmd_filter_5_filter_172_qs;
-        reg_rdata_next[13] = cmd_filter_5_filter_173_qs;
-        reg_rdata_next[14] = cmd_filter_5_filter_174_qs;
-        reg_rdata_next[15] = cmd_filter_5_filter_175_qs;
-        reg_rdata_next[16] = cmd_filter_5_filter_176_qs;
-        reg_rdata_next[17] = cmd_filter_5_filter_177_qs;
-        reg_rdata_next[18] = cmd_filter_5_filter_178_qs;
-        reg_rdata_next[19] = cmd_filter_5_filter_179_qs;
-        reg_rdata_next[20] = cmd_filter_5_filter_180_qs;
-        reg_rdata_next[21] = cmd_filter_5_filter_181_qs;
-        reg_rdata_next[22] = cmd_filter_5_filter_182_qs;
-        reg_rdata_next[23] = cmd_filter_5_filter_183_qs;
-        reg_rdata_next[24] = cmd_filter_5_filter_184_qs;
-        reg_rdata_next[25] = cmd_filter_5_filter_185_qs;
-        reg_rdata_next[26] = cmd_filter_5_filter_186_qs;
-        reg_rdata_next[27] = cmd_filter_5_filter_187_qs;
-        reg_rdata_next[28] = cmd_filter_5_filter_188_qs;
-        reg_rdata_next[29] = cmd_filter_5_filter_189_qs;
-        reg_rdata_next[30] = cmd_filter_5_filter_190_qs;
-        reg_rdata_next[31] = cmd_filter_5_filter_191_qs;
-      end
-
-      racl_addr_hit_read[25]: begin
-        reg_rdata_next[0] = cmd_filter_6_filter_192_qs;
-        reg_rdata_next[1] = cmd_filter_6_filter_193_qs;
-        reg_rdata_next[2] = cmd_filter_6_filter_194_qs;
-        reg_rdata_next[3] = cmd_filter_6_filter_195_qs;
-        reg_rdata_next[4] = cmd_filter_6_filter_196_qs;
-        reg_rdata_next[5] = cmd_filter_6_filter_197_qs;
-        reg_rdata_next[6] = cmd_filter_6_filter_198_qs;
-        reg_rdata_next[7] = cmd_filter_6_filter_199_qs;
-        reg_rdata_next[8] = cmd_filter_6_filter_200_qs;
-        reg_rdata_next[9] = cmd_filter_6_filter_201_qs;
-        reg_rdata_next[10] = cmd_filter_6_filter_202_qs;
-        reg_rdata_next[11] = cmd_filter_6_filter_203_qs;
-        reg_rdata_next[12] = cmd_filter_6_filter_204_qs;
-        reg_rdata_next[13] = cmd_filter_6_filter_205_qs;
-        reg_rdata_next[14] = cmd_filter_6_filter_206_qs;
-        reg_rdata_next[15] = cmd_filter_6_filter_207_qs;
-        reg_rdata_next[16] = cmd_filter_6_filter_208_qs;
-        reg_rdata_next[17] = cmd_filter_6_filter_209_qs;
-        reg_rdata_next[18] = cmd_filter_6_filter_210_qs;
-        reg_rdata_next[19] = cmd_filter_6_filter_211_qs;
-        reg_rdata_next[20] = cmd_filter_6_filter_212_qs;
-        reg_rdata_next[21] = cmd_filter_6_filter_213_qs;
-        reg_rdata_next[22] = cmd_filter_6_filter_214_qs;
-        reg_rdata_next[23] = cmd_filter_6_filter_215_qs;
-        reg_rdata_next[24] = cmd_filter_6_filter_216_qs;
-        reg_rdata_next[25] = cmd_filter_6_filter_217_qs;
-        reg_rdata_next[26] = cmd_filter_6_filter_218_qs;
-        reg_rdata_next[27] = cmd_filter_6_filter_219_qs;
-        reg_rdata_next[28] = cmd_filter_6_filter_220_qs;
-        reg_rdata_next[29] = cmd_filter_6_filter_221_qs;
-        reg_rdata_next[30] = cmd_filter_6_filter_222_qs;
-        reg_rdata_next[31] = cmd_filter_6_filter_223_qs;
-      end
-
-      racl_addr_hit_read[26]: begin
-        reg_rdata_next[0] = cmd_filter_7_filter_224_qs;
-        reg_rdata_next[1] = cmd_filter_7_filter_225_qs;
-        reg_rdata_next[2] = cmd_filter_7_filter_226_qs;
-        reg_rdata_next[3] = cmd_filter_7_filter_227_qs;
-        reg_rdata_next[4] = cmd_filter_7_filter_228_qs;
-        reg_rdata_next[5] = cmd_filter_7_filter_229_qs;
-        reg_rdata_next[6] = cmd_filter_7_filter_230_qs;
-        reg_rdata_next[7] = cmd_filter_7_filter_231_qs;
-        reg_rdata_next[8] = cmd_filter_7_filter_232_qs;
-        reg_rdata_next[9] = cmd_filter_7_filter_233_qs;
-        reg_rdata_next[10] = cmd_filter_7_filter_234_qs;
-        reg_rdata_next[11] = cmd_filter_7_filter_235_qs;
-        reg_rdata_next[12] = cmd_filter_7_filter_236_qs;
-        reg_rdata_next[13] = cmd_filter_7_filter_237_qs;
-        reg_rdata_next[14] = cmd_filter_7_filter_238_qs;
-        reg_rdata_next[15] = cmd_filter_7_filter_239_qs;
-        reg_rdata_next[16] = cmd_filter_7_filter_240_qs;
-        reg_rdata_next[17] = cmd_filter_7_filter_241_qs;
-        reg_rdata_next[18] = cmd_filter_7_filter_242_qs;
-        reg_rdata_next[19] = cmd_filter_7_filter_243_qs;
-        reg_rdata_next[20] = cmd_filter_7_filter_244_qs;
-        reg_rdata_next[21] = cmd_filter_7_filter_245_qs;
-        reg_rdata_next[22] = cmd_filter_7_filter_246_qs;
-        reg_rdata_next[23] = cmd_filter_7_filter_247_qs;
-        reg_rdata_next[24] = cmd_filter_7_filter_248_qs;
-        reg_rdata_next[25] = cmd_filter_7_filter_249_qs;
-        reg_rdata_next[26] = cmd_filter_7_filter_250_qs;
-        reg_rdata_next[27] = cmd_filter_7_filter_251_qs;
-        reg_rdata_next[28] = cmd_filter_7_filter_252_qs;
-        reg_rdata_next[29] = cmd_filter_7_filter_253_qs;
-        reg_rdata_next[30] = cmd_filter_7_filter_254_qs;
-        reg_rdata_next[31] = cmd_filter_7_filter_255_qs;
-      end
-
-      racl_addr_hit_read[27]: begin
-        reg_rdata_next[31:0] = addr_swap_mask_qs;
-      end
-
-      racl_addr_hit_read[28]: begin
-        reg_rdata_next[31:0] = addr_swap_data_qs;
-      end
-
-      racl_addr_hit_read[29]: begin
-        reg_rdata_next[31:0] = payload_swap_mask_qs;
-      end
-
-      racl_addr_hit_read[30]: begin
-        reg_rdata_next[31:0] = payload_swap_data_qs;
-      end
-
-      racl_addr_hit_read[31]: begin
-        reg_rdata_next[7:0] = cmd_info_0_opcode_0_qs;
-        reg_rdata_next[9:8] = cmd_info_0_addr_mode_0_qs;
-        reg_rdata_next[10] = cmd_info_0_addr_swap_en_0_qs;
-        reg_rdata_next[11] = cmd_info_0_mbyte_en_0_qs;
-        reg_rdata_next[14:12] = cmd_info_0_dummy_size_0_qs;
-        reg_rdata_next[15] = cmd_info_0_dummy_en_0_qs;
-        reg_rdata_next[19:16] = cmd_info_0_payload_en_0_qs;
-        reg_rdata_next[20] = cmd_info_0_payload_dir_0_qs;
-        reg_rdata_next[21] = cmd_info_0_payload_swap_en_0_qs;
-        reg_rdata_next[23:22] = cmd_info_0_read_pipeline_mode_0_qs;
-        reg_rdata_next[24] = cmd_info_0_upload_0_qs;
-        reg_rdata_next[25] = cmd_info_0_busy_0_qs;
-        reg_rdata_next[31] = cmd_info_0_valid_0_qs;
-      end
-
-      racl_addr_hit_read[32]: begin
-        reg_rdata_next[7:0] = cmd_info_1_opcode_1_qs;
-        reg_rdata_next[9:8] = cmd_info_1_addr_mode_1_qs;
-        reg_rdata_next[10] = cmd_info_1_addr_swap_en_1_qs;
-        reg_rdata_next[11] = cmd_info_1_mbyte_en_1_qs;
-        reg_rdata_next[14:12] = cmd_info_1_dummy_size_1_qs;
-        reg_rdata_next[15] = cmd_info_1_dummy_en_1_qs;
-        reg_rdata_next[19:16] = cmd_info_1_payload_en_1_qs;
-        reg_rdata_next[20] = cmd_info_1_payload_dir_1_qs;
-        reg_rdata_next[21] = cmd_info_1_payload_swap_en_1_qs;
-        reg_rdata_next[23:22] = cmd_info_1_read_pipeline_mode_1_qs;
-        reg_rdata_next[24] = cmd_info_1_upload_1_qs;
-        reg_rdata_next[25] = cmd_info_1_busy_1_qs;
-        reg_rdata_next[31] = cmd_info_1_valid_1_qs;
-      end
-
-      racl_addr_hit_read[33]: begin
-        reg_rdata_next[7:0] = cmd_info_2_opcode_2_qs;
-        reg_rdata_next[9:8] = cmd_info_2_addr_mode_2_qs;
-        reg_rdata_next[10] = cmd_info_2_addr_swap_en_2_qs;
-        reg_rdata_next[11] = cmd_info_2_mbyte_en_2_qs;
-        reg_rdata_next[14:12] = cmd_info_2_dummy_size_2_qs;
-        reg_rdata_next[15] = cmd_info_2_dummy_en_2_qs;
-        reg_rdata_next[19:16] = cmd_info_2_payload_en_2_qs;
-        reg_rdata_next[20] = cmd_info_2_payload_dir_2_qs;
-        reg_rdata_next[21] = cmd_info_2_payload_swap_en_2_qs;
-        reg_rdata_next[23:22] = cmd_info_2_read_pipeline_mode_2_qs;
-        reg_rdata_next[24] = cmd_info_2_upload_2_qs;
-        reg_rdata_next[25] = cmd_info_2_busy_2_qs;
-        reg_rdata_next[31] = cmd_info_2_valid_2_qs;
-      end
-
-      racl_addr_hit_read[34]: begin
-        reg_rdata_next[7:0] = cmd_info_3_opcode_3_qs;
-        reg_rdata_next[9:8] = cmd_info_3_addr_mode_3_qs;
-        reg_rdata_next[10] = cmd_info_3_addr_swap_en_3_qs;
-        reg_rdata_next[11] = cmd_info_3_mbyte_en_3_qs;
-        reg_rdata_next[14:12] = cmd_info_3_dummy_size_3_qs;
-        reg_rdata_next[15] = cmd_info_3_dummy_en_3_qs;
-        reg_rdata_next[19:16] = cmd_info_3_payload_en_3_qs;
-        reg_rdata_next[20] = cmd_info_3_payload_dir_3_qs;
-        reg_rdata_next[21] = cmd_info_3_payload_swap_en_3_qs;
-        reg_rdata_next[23:22] = cmd_info_3_read_pipeline_mode_3_qs;
-        reg_rdata_next[24] = cmd_info_3_upload_3_qs;
-        reg_rdata_next[25] = cmd_info_3_busy_3_qs;
-        reg_rdata_next[31] = cmd_info_3_valid_3_qs;
-      end
-
-      racl_addr_hit_read[35]: begin
-        reg_rdata_next[7:0] = cmd_info_4_opcode_4_qs;
-        reg_rdata_next[9:8] = cmd_info_4_addr_mode_4_qs;
-        reg_rdata_next[10] = cmd_info_4_addr_swap_en_4_qs;
-        reg_rdata_next[11] = cmd_info_4_mbyte_en_4_qs;
-        reg_rdata_next[14:12] = cmd_info_4_dummy_size_4_qs;
-        reg_rdata_next[15] = cmd_info_4_dummy_en_4_qs;
-        reg_rdata_next[19:16] = cmd_info_4_payload_en_4_qs;
-        reg_rdata_next[20] = cmd_info_4_payload_dir_4_qs;
-        reg_rdata_next[21] = cmd_info_4_payload_swap_en_4_qs;
-        reg_rdata_next[23:22] = cmd_info_4_read_pipeline_mode_4_qs;
-        reg_rdata_next[24] = cmd_info_4_upload_4_qs;
-        reg_rdata_next[25] = cmd_info_4_busy_4_qs;
-        reg_rdata_next[31] = cmd_info_4_valid_4_qs;
-      end
-
-      racl_addr_hit_read[36]: begin
-        reg_rdata_next[7:0] = cmd_info_5_opcode_5_qs;
-        reg_rdata_next[9:8] = cmd_info_5_addr_mode_5_qs;
-        reg_rdata_next[10] = cmd_info_5_addr_swap_en_5_qs;
-        reg_rdata_next[11] = cmd_info_5_mbyte_en_5_qs;
-        reg_rdata_next[14:12] = cmd_info_5_dummy_size_5_qs;
-        reg_rdata_next[15] = cmd_info_5_dummy_en_5_qs;
-        reg_rdata_next[19:16] = cmd_info_5_payload_en_5_qs;
-        reg_rdata_next[20] = cmd_info_5_payload_dir_5_qs;
-        reg_rdata_next[21] = cmd_info_5_payload_swap_en_5_qs;
-        reg_rdata_next[23:22] = cmd_info_5_read_pipeline_mode_5_qs;
-        reg_rdata_next[24] = cmd_info_5_upload_5_qs;
-        reg_rdata_next[25] = cmd_info_5_busy_5_qs;
-        reg_rdata_next[31] = cmd_info_5_valid_5_qs;
-      end
-
-      racl_addr_hit_read[37]: begin
-        reg_rdata_next[7:0] = cmd_info_6_opcode_6_qs;
-        reg_rdata_next[9:8] = cmd_info_6_addr_mode_6_qs;
-        reg_rdata_next[10] = cmd_info_6_addr_swap_en_6_qs;
-        reg_rdata_next[11] = cmd_info_6_mbyte_en_6_qs;
-        reg_rdata_next[14:12] = cmd_info_6_dummy_size_6_qs;
-        reg_rdata_next[15] = cmd_info_6_dummy_en_6_qs;
-        reg_rdata_next[19:16] = cmd_info_6_payload_en_6_qs;
-        reg_rdata_next[20] = cmd_info_6_payload_dir_6_qs;
-        reg_rdata_next[21] = cmd_info_6_payload_swap_en_6_qs;
-        reg_rdata_next[23:22] = cmd_info_6_read_pipeline_mode_6_qs;
-        reg_rdata_next[24] = cmd_info_6_upload_6_qs;
-        reg_rdata_next[25] = cmd_info_6_busy_6_qs;
-        reg_rdata_next[31] = cmd_info_6_valid_6_qs;
-      end
-
-      racl_addr_hit_read[38]: begin
-        reg_rdata_next[7:0] = cmd_info_7_opcode_7_qs;
-        reg_rdata_next[9:8] = cmd_info_7_addr_mode_7_qs;
-        reg_rdata_next[10] = cmd_info_7_addr_swap_en_7_qs;
-        reg_rdata_next[11] = cmd_info_7_mbyte_en_7_qs;
-        reg_rdata_next[14:12] = cmd_info_7_dummy_size_7_qs;
-        reg_rdata_next[15] = cmd_info_7_dummy_en_7_qs;
-        reg_rdata_next[19:16] = cmd_info_7_payload_en_7_qs;
-        reg_rdata_next[20] = cmd_info_7_payload_dir_7_qs;
-        reg_rdata_next[21] = cmd_info_7_payload_swap_en_7_qs;
-        reg_rdata_next[23:22] = cmd_info_7_read_pipeline_mode_7_qs;
-        reg_rdata_next[24] = cmd_info_7_upload_7_qs;
-        reg_rdata_next[25] = cmd_info_7_busy_7_qs;
-        reg_rdata_next[31] = cmd_info_7_valid_7_qs;
-      end
-
-      racl_addr_hit_read[39]: begin
-        reg_rdata_next[7:0] = cmd_info_8_opcode_8_qs;
-        reg_rdata_next[9:8] = cmd_info_8_addr_mode_8_qs;
-        reg_rdata_next[10] = cmd_info_8_addr_swap_en_8_qs;
-        reg_rdata_next[11] = cmd_info_8_mbyte_en_8_qs;
-        reg_rdata_next[14:12] = cmd_info_8_dummy_size_8_qs;
-        reg_rdata_next[15] = cmd_info_8_dummy_en_8_qs;
-        reg_rdata_next[19:16] = cmd_info_8_payload_en_8_qs;
-        reg_rdata_next[20] = cmd_info_8_payload_dir_8_qs;
-        reg_rdata_next[21] = cmd_info_8_payload_swap_en_8_qs;
-        reg_rdata_next[23:22] = cmd_info_8_read_pipeline_mode_8_qs;
-        reg_rdata_next[24] = cmd_info_8_upload_8_qs;
-        reg_rdata_next[25] = cmd_info_8_busy_8_qs;
-        reg_rdata_next[31] = cmd_info_8_valid_8_qs;
-      end
-
-      racl_addr_hit_read[40]: begin
-        reg_rdata_next[7:0] = cmd_info_9_opcode_9_qs;
-        reg_rdata_next[9:8] = cmd_info_9_addr_mode_9_qs;
-        reg_rdata_next[10] = cmd_info_9_addr_swap_en_9_qs;
-        reg_rdata_next[11] = cmd_info_9_mbyte_en_9_qs;
-        reg_rdata_next[14:12] = cmd_info_9_dummy_size_9_qs;
-        reg_rdata_next[15] = cmd_info_9_dummy_en_9_qs;
-        reg_rdata_next[19:16] = cmd_info_9_payload_en_9_qs;
-        reg_rdata_next[20] = cmd_info_9_payload_dir_9_qs;
-        reg_rdata_next[21] = cmd_info_9_payload_swap_en_9_qs;
-        reg_rdata_next[23:22] = cmd_info_9_read_pipeline_mode_9_qs;
-        reg_rdata_next[24] = cmd_info_9_upload_9_qs;
-        reg_rdata_next[25] = cmd_info_9_busy_9_qs;
-        reg_rdata_next[31] = cmd_info_9_valid_9_qs;
-      end
-
-      racl_addr_hit_read[41]: begin
-        reg_rdata_next[7:0] = cmd_info_10_opcode_10_qs;
-        reg_rdata_next[9:8] = cmd_info_10_addr_mode_10_qs;
-        reg_rdata_next[10] = cmd_info_10_addr_swap_en_10_qs;
-        reg_rdata_next[11] = cmd_info_10_mbyte_en_10_qs;
-        reg_rdata_next[14:12] = cmd_info_10_dummy_size_10_qs;
-        reg_rdata_next[15] = cmd_info_10_dummy_en_10_qs;
-        reg_rdata_next[19:16] = cmd_info_10_payload_en_10_qs;
-        reg_rdata_next[20] = cmd_info_10_payload_dir_10_qs;
-        reg_rdata_next[21] = cmd_info_10_payload_swap_en_10_qs;
-        reg_rdata_next[23:22] = cmd_info_10_read_pipeline_mode_10_qs;
-        reg_rdata_next[24] = cmd_info_10_upload_10_qs;
-        reg_rdata_next[25] = cmd_info_10_busy_10_qs;
-        reg_rdata_next[31] = cmd_info_10_valid_10_qs;
-      end
-
-      racl_addr_hit_read[42]: begin
-        reg_rdata_next[7:0] = cmd_info_11_opcode_11_qs;
-        reg_rdata_next[9:8] = cmd_info_11_addr_mode_11_qs;
-        reg_rdata_next[10] = cmd_info_11_addr_swap_en_11_qs;
-        reg_rdata_next[11] = cmd_info_11_mbyte_en_11_qs;
-        reg_rdata_next[14:12] = cmd_info_11_dummy_size_11_qs;
-        reg_rdata_next[15] = cmd_info_11_dummy_en_11_qs;
-        reg_rdata_next[19:16] = cmd_info_11_payload_en_11_qs;
-        reg_rdata_next[20] = cmd_info_11_payload_dir_11_qs;
-        reg_rdata_next[21] = cmd_info_11_payload_swap_en_11_qs;
-        reg_rdata_next[23:22] = cmd_info_11_read_pipeline_mode_11_qs;
-        reg_rdata_next[24] = cmd_info_11_upload_11_qs;
-        reg_rdata_next[25] = cmd_info_11_busy_11_qs;
-        reg_rdata_next[31] = cmd_info_11_valid_11_qs;
-      end
-
-      racl_addr_hit_read[43]: begin
-        reg_rdata_next[7:0] = cmd_info_12_opcode_12_qs;
-        reg_rdata_next[9:8] = cmd_info_12_addr_mode_12_qs;
-        reg_rdata_next[10] = cmd_info_12_addr_swap_en_12_qs;
-        reg_rdata_next[11] = cmd_info_12_mbyte_en_12_qs;
-        reg_rdata_next[14:12] = cmd_info_12_dummy_size_12_qs;
-        reg_rdata_next[15] = cmd_info_12_dummy_en_12_qs;
-        reg_rdata_next[19:16] = cmd_info_12_payload_en_12_qs;
-        reg_rdata_next[20] = cmd_info_12_payload_dir_12_qs;
-        reg_rdata_next[21] = cmd_info_12_payload_swap_en_12_qs;
-        reg_rdata_next[23:22] = cmd_info_12_read_pipeline_mode_12_qs;
-        reg_rdata_next[24] = cmd_info_12_upload_12_qs;
-        reg_rdata_next[25] = cmd_info_12_busy_12_qs;
-        reg_rdata_next[31] = cmd_info_12_valid_12_qs;
-      end
-
-      racl_addr_hit_read[44]: begin
-        reg_rdata_next[7:0] = cmd_info_13_opcode_13_qs;
-        reg_rdata_next[9:8] = cmd_info_13_addr_mode_13_qs;
-        reg_rdata_next[10] = cmd_info_13_addr_swap_en_13_qs;
-        reg_rdata_next[11] = cmd_info_13_mbyte_en_13_qs;
-        reg_rdata_next[14:12] = cmd_info_13_dummy_size_13_qs;
-        reg_rdata_next[15] = cmd_info_13_dummy_en_13_qs;
-        reg_rdata_next[19:16] = cmd_info_13_payload_en_13_qs;
-        reg_rdata_next[20] = cmd_info_13_payload_dir_13_qs;
-        reg_rdata_next[21] = cmd_info_13_payload_swap_en_13_qs;
-        reg_rdata_next[23:22] = cmd_info_13_read_pipeline_mode_13_qs;
-        reg_rdata_next[24] = cmd_info_13_upload_13_qs;
-        reg_rdata_next[25] = cmd_info_13_busy_13_qs;
-        reg_rdata_next[31] = cmd_info_13_valid_13_qs;
-      end
-
-      racl_addr_hit_read[45]: begin
-        reg_rdata_next[7:0] = cmd_info_14_opcode_14_qs;
-        reg_rdata_next[9:8] = cmd_info_14_addr_mode_14_qs;
-        reg_rdata_next[10] = cmd_info_14_addr_swap_en_14_qs;
-        reg_rdata_next[11] = cmd_info_14_mbyte_en_14_qs;
-        reg_rdata_next[14:12] = cmd_info_14_dummy_size_14_qs;
-        reg_rdata_next[15] = cmd_info_14_dummy_en_14_qs;
-        reg_rdata_next[19:16] = cmd_info_14_payload_en_14_qs;
-        reg_rdata_next[20] = cmd_info_14_payload_dir_14_qs;
-        reg_rdata_next[21] = cmd_info_14_payload_swap_en_14_qs;
-        reg_rdata_next[23:22] = cmd_info_14_read_pipeline_mode_14_qs;
-        reg_rdata_next[24] = cmd_info_14_upload_14_qs;
-        reg_rdata_next[25] = cmd_info_14_busy_14_qs;
-        reg_rdata_next[31] = cmd_info_14_valid_14_qs;
-      end
-
-      racl_addr_hit_read[46]: begin
-        reg_rdata_next[7:0] = cmd_info_15_opcode_15_qs;
-        reg_rdata_next[9:8] = cmd_info_15_addr_mode_15_qs;
-        reg_rdata_next[10] = cmd_info_15_addr_swap_en_15_qs;
-        reg_rdata_next[11] = cmd_info_15_mbyte_en_15_qs;
-        reg_rdata_next[14:12] = cmd_info_15_dummy_size_15_qs;
-        reg_rdata_next[15] = cmd_info_15_dummy_en_15_qs;
-        reg_rdata_next[19:16] = cmd_info_15_payload_en_15_qs;
-        reg_rdata_next[20] = cmd_info_15_payload_dir_15_qs;
-        reg_rdata_next[21] = cmd_info_15_payload_swap_en_15_qs;
-        reg_rdata_next[23:22] = cmd_info_15_read_pipeline_mode_15_qs;
-        reg_rdata_next[24] = cmd_info_15_upload_15_qs;
-        reg_rdata_next[25] = cmd_info_15_busy_15_qs;
-        reg_rdata_next[31] = cmd_info_15_valid_15_qs;
-      end
-
-      racl_addr_hit_read[47]: begin
-        reg_rdata_next[7:0] = cmd_info_16_opcode_16_qs;
-        reg_rdata_next[9:8] = cmd_info_16_addr_mode_16_qs;
-        reg_rdata_next[10] = cmd_info_16_addr_swap_en_16_qs;
-        reg_rdata_next[11] = cmd_info_16_mbyte_en_16_qs;
-        reg_rdata_next[14:12] = cmd_info_16_dummy_size_16_qs;
-        reg_rdata_next[15] = cmd_info_16_dummy_en_16_qs;
-        reg_rdata_next[19:16] = cmd_info_16_payload_en_16_qs;
-        reg_rdata_next[20] = cmd_info_16_payload_dir_16_qs;
-        reg_rdata_next[21] = cmd_info_16_payload_swap_en_16_qs;
-        reg_rdata_next[23:22] = cmd_info_16_read_pipeline_mode_16_qs;
-        reg_rdata_next[24] = cmd_info_16_upload_16_qs;
-        reg_rdata_next[25] = cmd_info_16_busy_16_qs;
-        reg_rdata_next[31] = cmd_info_16_valid_16_qs;
-      end
-
-      racl_addr_hit_read[48]: begin
-        reg_rdata_next[7:0] = cmd_info_17_opcode_17_qs;
-        reg_rdata_next[9:8] = cmd_info_17_addr_mode_17_qs;
-        reg_rdata_next[10] = cmd_info_17_addr_swap_en_17_qs;
-        reg_rdata_next[11] = cmd_info_17_mbyte_en_17_qs;
-        reg_rdata_next[14:12] = cmd_info_17_dummy_size_17_qs;
-        reg_rdata_next[15] = cmd_info_17_dummy_en_17_qs;
-        reg_rdata_next[19:16] = cmd_info_17_payload_en_17_qs;
-        reg_rdata_next[20] = cmd_info_17_payload_dir_17_qs;
-        reg_rdata_next[21] = cmd_info_17_payload_swap_en_17_qs;
-        reg_rdata_next[23:22] = cmd_info_17_read_pipeline_mode_17_qs;
-        reg_rdata_next[24] = cmd_info_17_upload_17_qs;
-        reg_rdata_next[25] = cmd_info_17_busy_17_qs;
-        reg_rdata_next[31] = cmd_info_17_valid_17_qs;
-      end
-
-      racl_addr_hit_read[49]: begin
-        reg_rdata_next[7:0] = cmd_info_18_opcode_18_qs;
-        reg_rdata_next[9:8] = cmd_info_18_addr_mode_18_qs;
-        reg_rdata_next[10] = cmd_info_18_addr_swap_en_18_qs;
-        reg_rdata_next[11] = cmd_info_18_mbyte_en_18_qs;
-        reg_rdata_next[14:12] = cmd_info_18_dummy_size_18_qs;
-        reg_rdata_next[15] = cmd_info_18_dummy_en_18_qs;
-        reg_rdata_next[19:16] = cmd_info_18_payload_en_18_qs;
-        reg_rdata_next[20] = cmd_info_18_payload_dir_18_qs;
-        reg_rdata_next[21] = cmd_info_18_payload_swap_en_18_qs;
-        reg_rdata_next[23:22] = cmd_info_18_read_pipeline_mode_18_qs;
-        reg_rdata_next[24] = cmd_info_18_upload_18_qs;
-        reg_rdata_next[25] = cmd_info_18_busy_18_qs;
-        reg_rdata_next[31] = cmd_info_18_valid_18_qs;
-      end
-
-      racl_addr_hit_read[50]: begin
-        reg_rdata_next[7:0] = cmd_info_19_opcode_19_qs;
-        reg_rdata_next[9:8] = cmd_info_19_addr_mode_19_qs;
-        reg_rdata_next[10] = cmd_info_19_addr_swap_en_19_qs;
-        reg_rdata_next[11] = cmd_info_19_mbyte_en_19_qs;
-        reg_rdata_next[14:12] = cmd_info_19_dummy_size_19_qs;
-        reg_rdata_next[15] = cmd_info_19_dummy_en_19_qs;
-        reg_rdata_next[19:16] = cmd_info_19_payload_en_19_qs;
-        reg_rdata_next[20] = cmd_info_19_payload_dir_19_qs;
-        reg_rdata_next[21] = cmd_info_19_payload_swap_en_19_qs;
-        reg_rdata_next[23:22] = cmd_info_19_read_pipeline_mode_19_qs;
-        reg_rdata_next[24] = cmd_info_19_upload_19_qs;
-        reg_rdata_next[25] = cmd_info_19_busy_19_qs;
-        reg_rdata_next[31] = cmd_info_19_valid_19_qs;
-      end
-
-      racl_addr_hit_read[51]: begin
-        reg_rdata_next[7:0] = cmd_info_20_opcode_20_qs;
-        reg_rdata_next[9:8] = cmd_info_20_addr_mode_20_qs;
-        reg_rdata_next[10] = cmd_info_20_addr_swap_en_20_qs;
-        reg_rdata_next[11] = cmd_info_20_mbyte_en_20_qs;
-        reg_rdata_next[14:12] = cmd_info_20_dummy_size_20_qs;
-        reg_rdata_next[15] = cmd_info_20_dummy_en_20_qs;
-        reg_rdata_next[19:16] = cmd_info_20_payload_en_20_qs;
-        reg_rdata_next[20] = cmd_info_20_payload_dir_20_qs;
-        reg_rdata_next[21] = cmd_info_20_payload_swap_en_20_qs;
-        reg_rdata_next[23:22] = cmd_info_20_read_pipeline_mode_20_qs;
-        reg_rdata_next[24] = cmd_info_20_upload_20_qs;
-        reg_rdata_next[25] = cmd_info_20_busy_20_qs;
-        reg_rdata_next[31] = cmd_info_20_valid_20_qs;
-      end
-
-      racl_addr_hit_read[52]: begin
-        reg_rdata_next[7:0] = cmd_info_21_opcode_21_qs;
-        reg_rdata_next[9:8] = cmd_info_21_addr_mode_21_qs;
-        reg_rdata_next[10] = cmd_info_21_addr_swap_en_21_qs;
-        reg_rdata_next[11] = cmd_info_21_mbyte_en_21_qs;
-        reg_rdata_next[14:12] = cmd_info_21_dummy_size_21_qs;
-        reg_rdata_next[15] = cmd_info_21_dummy_en_21_qs;
-        reg_rdata_next[19:16] = cmd_info_21_payload_en_21_qs;
-        reg_rdata_next[20] = cmd_info_21_payload_dir_21_qs;
-        reg_rdata_next[21] = cmd_info_21_payload_swap_en_21_qs;
-        reg_rdata_next[23:22] = cmd_info_21_read_pipeline_mode_21_qs;
-        reg_rdata_next[24] = cmd_info_21_upload_21_qs;
-        reg_rdata_next[25] = cmd_info_21_busy_21_qs;
-        reg_rdata_next[31] = cmd_info_21_valid_21_qs;
-      end
-
-      racl_addr_hit_read[53]: begin
-        reg_rdata_next[7:0] = cmd_info_22_opcode_22_qs;
-        reg_rdata_next[9:8] = cmd_info_22_addr_mode_22_qs;
-        reg_rdata_next[10] = cmd_info_22_addr_swap_en_22_qs;
-        reg_rdata_next[11] = cmd_info_22_mbyte_en_22_qs;
-        reg_rdata_next[14:12] = cmd_info_22_dummy_size_22_qs;
-        reg_rdata_next[15] = cmd_info_22_dummy_en_22_qs;
-        reg_rdata_next[19:16] = cmd_info_22_payload_en_22_qs;
-        reg_rdata_next[20] = cmd_info_22_payload_dir_22_qs;
-        reg_rdata_next[21] = cmd_info_22_payload_swap_en_22_qs;
-        reg_rdata_next[23:22] = cmd_info_22_read_pipeline_mode_22_qs;
-        reg_rdata_next[24] = cmd_info_22_upload_22_qs;
-        reg_rdata_next[25] = cmd_info_22_busy_22_qs;
-        reg_rdata_next[31] = cmd_info_22_valid_22_qs;
-      end
-
-      racl_addr_hit_read[54]: begin
-        reg_rdata_next[7:0] = cmd_info_23_opcode_23_qs;
-        reg_rdata_next[9:8] = cmd_info_23_addr_mode_23_qs;
-        reg_rdata_next[10] = cmd_info_23_addr_swap_en_23_qs;
-        reg_rdata_next[11] = cmd_info_23_mbyte_en_23_qs;
-        reg_rdata_next[14:12] = cmd_info_23_dummy_size_23_qs;
-        reg_rdata_next[15] = cmd_info_23_dummy_en_23_qs;
-        reg_rdata_next[19:16] = cmd_info_23_payload_en_23_qs;
-        reg_rdata_next[20] = cmd_info_23_payload_dir_23_qs;
-        reg_rdata_next[21] = cmd_info_23_payload_swap_en_23_qs;
-        reg_rdata_next[23:22] = cmd_info_23_read_pipeline_mode_23_qs;
-        reg_rdata_next[24] = cmd_info_23_upload_23_qs;
-        reg_rdata_next[25] = cmd_info_23_busy_23_qs;
-        reg_rdata_next[31] = cmd_info_23_valid_23_qs;
-      end
-
-      racl_addr_hit_read[55]: begin
-        reg_rdata_next[7:0] = cmd_info_en4b_opcode_qs;
-        reg_rdata_next[31] = cmd_info_en4b_valid_qs;
-      end
-
-      racl_addr_hit_read[56]: begin
-        reg_rdata_next[7:0] = cmd_info_ex4b_opcode_qs;
-        reg_rdata_next[31] = cmd_info_ex4b_valid_qs;
-      end
-
-      racl_addr_hit_read[57]: begin
-        reg_rdata_next[7:0] = cmd_info_wren_opcode_qs;
-        reg_rdata_next[31] = cmd_info_wren_valid_qs;
-      end
-
-      racl_addr_hit_read[58]: begin
-        reg_rdata_next[7:0] = cmd_info_wrdi_opcode_qs;
-        reg_rdata_next[31] = cmd_info_wrdi_valid_qs;
-      end
-
-      racl_addr_hit_read[59]: begin
-        reg_rdata_next[7:0] = tpm_cap_rev_qs;
-        reg_rdata_next[8] = tpm_cap_locality_qs;
-        reg_rdata_next[18:16] = tpm_cap_max_wr_size_qs;
-        reg_rdata_next[22:20] = tpm_cap_max_rd_size_qs;
-      end
-
-      racl_addr_hit_read[60]: begin
-        reg_rdata_next[0] = tpm_cfg_en_qs;
-        reg_rdata_next[1] = tpm_cfg_tpm_mode_qs;
-        reg_rdata_next[2] = tpm_cfg_hw_reg_dis_qs;
-        reg_rdata_next[3] = tpm_cfg_tpm_reg_chk_dis_qs;
-        reg_rdata_next[4] = tpm_cfg_invalid_locality_qs;
-      end
-
-      racl_addr_hit_read[61]: begin
-        reg_rdata_next[0] = tpm_status_cmdaddr_notempty_qs;
-        reg_rdata_next[1] = tpm_status_wrfifo_pending_qs;
-        reg_rdata_next[2] = tpm_status_rdfifo_aborted_qs;
-      end
-
-      racl_addr_hit_read[62]: begin
-        reg_rdata_next[7:0] = tpm_access_0_access_0_qs;
-        reg_rdata_next[15:8] = tpm_access_0_access_1_qs;
-        reg_rdata_next[23:16] = tpm_access_0_access_2_qs;
-        reg_rdata_next[31:24] = tpm_access_0_access_3_qs;
-      end
-
-      racl_addr_hit_read[63]: begin
-        reg_rdata_next[7:0] = tpm_access_1_qs;
-      end
-
-      racl_addr_hit_read[64]: begin
-        reg_rdata_next[31:0] = tpm_sts_qs;
-      end
-
-      racl_addr_hit_read[65]: begin
-        reg_rdata_next[31:0] = tpm_intf_capability_qs;
-      end
-
-      racl_addr_hit_read[66]: begin
-        reg_rdata_next[31:0] = tpm_int_enable_qs;
-      end
-
-      racl_addr_hit_read[67]: begin
-        reg_rdata_next[7:0] = tpm_int_vector_qs;
-      end
-
-      racl_addr_hit_read[68]: begin
-        reg_rdata_next[31:0] = tpm_int_status_qs;
-      end
-
-      racl_addr_hit_read[69]: begin
-        reg_rdata_next[15:0] = tpm_did_vid_vid_qs;
-        reg_rdata_next[31:16] = tpm_did_vid_did_qs;
-      end
-
-      racl_addr_hit_read[70]: begin
-        reg_rdata_next[7:0] = tpm_rid_qs;
-      end
-
-      racl_addr_hit_read[71]: begin
-        reg_rdata_next[23:0] = tpm_cmd_addr_addr_qs;
-        reg_rdata_next[31:24] = tpm_cmd_addr_cmd_qs;
-      end
-
-      racl_addr_hit_read[72]: begin
-        reg_rdata_next[31:0] = '0;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_upload_cmdfifo_not_empty_qs;
+          reg_rdata_next[1] = intr_state_upload_payload_not_empty_qs;
+          reg_rdata_next[2] = intr_state_upload_payload_overflow_qs;
+          reg_rdata_next[3] = intr_state_readbuf_watermark_qs;
+          reg_rdata_next[4] = intr_state_readbuf_flip_qs;
+          reg_rdata_next[5] = intr_state_tpm_header_not_empty_qs;
+          reg_rdata_next[6] = intr_state_tpm_rdfifo_cmd_end_qs;
+          reg_rdata_next[7] = intr_state_tpm_rdfifo_drop_qs;
+        end
+
+        1: begin
+          reg_rdata_next[0] = intr_enable_upload_cmdfifo_not_empty_qs;
+          reg_rdata_next[1] = intr_enable_upload_payload_not_empty_qs;
+          reg_rdata_next[2] = intr_enable_upload_payload_overflow_qs;
+          reg_rdata_next[3] = intr_enable_readbuf_watermark_qs;
+          reg_rdata_next[4] = intr_enable_readbuf_flip_qs;
+          reg_rdata_next[5] = intr_enable_tpm_header_not_empty_qs;
+          reg_rdata_next[6] = intr_enable_tpm_rdfifo_cmd_end_qs;
+          reg_rdata_next[7] = intr_enable_tpm_rdfifo_drop_qs;
+        end
+
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+          reg_rdata_next[3] = '0;
+          reg_rdata_next[4] = '0;
+          reg_rdata_next[5] = '0;
+          reg_rdata_next[6] = '0;
+          reg_rdata_next[7] = '0;
+        end
+
+        3: begin
+          reg_rdata_next[0] = '0;
+        end
+
+        4: begin
+          reg_rdata_next[0] = control_flash_status_fifo_clr_qs;
+          reg_rdata_next[1] = control_flash_read_buffer_clr_qs;
+          reg_rdata_next[5:4] = control_mode_qs;
+        end
+
+        5: begin
+          reg_rdata_next[2] = cfg_tx_order_qs;
+          reg_rdata_next[3] = cfg_rx_order_qs;
+          reg_rdata_next[24] = cfg_mailbox_en_qs;
+        end
+
+        6: begin
+          reg_rdata_next[5] = status_csb_qs;
+          reg_rdata_next[6] = status_tpm_csb_qs;
+        end
+
+        7: begin
+          reg_rdata_next[0] = intercept_en_status_qs;
+          reg_rdata_next[1] = intercept_en_jedec_qs;
+          reg_rdata_next[2] = intercept_en_sfdp_qs;
+          reg_rdata_next[3] = intercept_en_mbx_qs;
+        end
+
+        8: begin
+          reg_rdata_next[0] = addr_mode_addr_4b_en_qs;
+          reg_rdata_next[31] = addr_mode_pending_qs;
+        end
+
+        9: begin
+          reg_rdata_next[31:0] = last_read_addr_qs;
+        end
+
+        10: begin
+          reg_rdata_next[0] = flash_status_busy_qs;
+          reg_rdata_next[1] = flash_status_wel_qs;
+          reg_rdata_next[23:2] = flash_status_status_qs;
+        end
+
+        11: begin
+          reg_rdata_next[7:0] = jedec_cc_cc_qs;
+          reg_rdata_next[15:8] = jedec_cc_num_cc_qs;
+        end
+
+        12: begin
+          reg_rdata_next[15:0] = jedec_id_id_qs;
+          reg_rdata_next[23:16] = jedec_id_mf_qs;
+        end
+
+        13: begin
+          reg_rdata_next[9:0] = read_threshold_qs;
+        end
+
+        14: begin
+          reg_rdata_next[31:0] = mailbox_addr_qs;
+        end
+
+        15: begin
+          reg_rdata_next[4:0] = upload_status_cmdfifo_depth_qs;
+          reg_rdata_next[7] = upload_status_cmdfifo_notempty_qs;
+          reg_rdata_next[12:8] = upload_status_addrfifo_depth_qs;
+          reg_rdata_next[15] = upload_status_addrfifo_notempty_qs;
+        end
+
+        16: begin
+          reg_rdata_next[8:0] = upload_status2_payload_depth_qs;
+          reg_rdata_next[23:16] = upload_status2_payload_start_idx_qs;
+        end
+
+        17: begin
+          reg_rdata_next[7:0] = upload_cmdfifo_data_qs;
+          reg_rdata_next[13] = upload_cmdfifo_busy_qs;
+          reg_rdata_next[14] = upload_cmdfifo_wel_qs;
+          reg_rdata_next[15] = upload_cmdfifo_addr4b_mode_qs;
+        end
+
+        18: begin
+          reg_rdata_next[31:0] = upload_addrfifo_qs;
+        end
+
+        19: begin
+          reg_rdata_next[0] = cmd_filter_0_filter_0_qs;
+          reg_rdata_next[1] = cmd_filter_0_filter_1_qs;
+          reg_rdata_next[2] = cmd_filter_0_filter_2_qs;
+          reg_rdata_next[3] = cmd_filter_0_filter_3_qs;
+          reg_rdata_next[4] = cmd_filter_0_filter_4_qs;
+          reg_rdata_next[5] = cmd_filter_0_filter_5_qs;
+          reg_rdata_next[6] = cmd_filter_0_filter_6_qs;
+          reg_rdata_next[7] = cmd_filter_0_filter_7_qs;
+          reg_rdata_next[8] = cmd_filter_0_filter_8_qs;
+          reg_rdata_next[9] = cmd_filter_0_filter_9_qs;
+          reg_rdata_next[10] = cmd_filter_0_filter_10_qs;
+          reg_rdata_next[11] = cmd_filter_0_filter_11_qs;
+          reg_rdata_next[12] = cmd_filter_0_filter_12_qs;
+          reg_rdata_next[13] = cmd_filter_0_filter_13_qs;
+          reg_rdata_next[14] = cmd_filter_0_filter_14_qs;
+          reg_rdata_next[15] = cmd_filter_0_filter_15_qs;
+          reg_rdata_next[16] = cmd_filter_0_filter_16_qs;
+          reg_rdata_next[17] = cmd_filter_0_filter_17_qs;
+          reg_rdata_next[18] = cmd_filter_0_filter_18_qs;
+          reg_rdata_next[19] = cmd_filter_0_filter_19_qs;
+          reg_rdata_next[20] = cmd_filter_0_filter_20_qs;
+          reg_rdata_next[21] = cmd_filter_0_filter_21_qs;
+          reg_rdata_next[22] = cmd_filter_0_filter_22_qs;
+          reg_rdata_next[23] = cmd_filter_0_filter_23_qs;
+          reg_rdata_next[24] = cmd_filter_0_filter_24_qs;
+          reg_rdata_next[25] = cmd_filter_0_filter_25_qs;
+          reg_rdata_next[26] = cmd_filter_0_filter_26_qs;
+          reg_rdata_next[27] = cmd_filter_0_filter_27_qs;
+          reg_rdata_next[28] = cmd_filter_0_filter_28_qs;
+          reg_rdata_next[29] = cmd_filter_0_filter_29_qs;
+          reg_rdata_next[30] = cmd_filter_0_filter_30_qs;
+          reg_rdata_next[31] = cmd_filter_0_filter_31_qs;
+        end
+
+        20: begin
+          reg_rdata_next[0] = cmd_filter_1_filter_32_qs;
+          reg_rdata_next[1] = cmd_filter_1_filter_33_qs;
+          reg_rdata_next[2] = cmd_filter_1_filter_34_qs;
+          reg_rdata_next[3] = cmd_filter_1_filter_35_qs;
+          reg_rdata_next[4] = cmd_filter_1_filter_36_qs;
+          reg_rdata_next[5] = cmd_filter_1_filter_37_qs;
+          reg_rdata_next[6] = cmd_filter_1_filter_38_qs;
+          reg_rdata_next[7] = cmd_filter_1_filter_39_qs;
+          reg_rdata_next[8] = cmd_filter_1_filter_40_qs;
+          reg_rdata_next[9] = cmd_filter_1_filter_41_qs;
+          reg_rdata_next[10] = cmd_filter_1_filter_42_qs;
+          reg_rdata_next[11] = cmd_filter_1_filter_43_qs;
+          reg_rdata_next[12] = cmd_filter_1_filter_44_qs;
+          reg_rdata_next[13] = cmd_filter_1_filter_45_qs;
+          reg_rdata_next[14] = cmd_filter_1_filter_46_qs;
+          reg_rdata_next[15] = cmd_filter_1_filter_47_qs;
+          reg_rdata_next[16] = cmd_filter_1_filter_48_qs;
+          reg_rdata_next[17] = cmd_filter_1_filter_49_qs;
+          reg_rdata_next[18] = cmd_filter_1_filter_50_qs;
+          reg_rdata_next[19] = cmd_filter_1_filter_51_qs;
+          reg_rdata_next[20] = cmd_filter_1_filter_52_qs;
+          reg_rdata_next[21] = cmd_filter_1_filter_53_qs;
+          reg_rdata_next[22] = cmd_filter_1_filter_54_qs;
+          reg_rdata_next[23] = cmd_filter_1_filter_55_qs;
+          reg_rdata_next[24] = cmd_filter_1_filter_56_qs;
+          reg_rdata_next[25] = cmd_filter_1_filter_57_qs;
+          reg_rdata_next[26] = cmd_filter_1_filter_58_qs;
+          reg_rdata_next[27] = cmd_filter_1_filter_59_qs;
+          reg_rdata_next[28] = cmd_filter_1_filter_60_qs;
+          reg_rdata_next[29] = cmd_filter_1_filter_61_qs;
+          reg_rdata_next[30] = cmd_filter_1_filter_62_qs;
+          reg_rdata_next[31] = cmd_filter_1_filter_63_qs;
+        end
+
+        21: begin
+          reg_rdata_next[0] = cmd_filter_2_filter_64_qs;
+          reg_rdata_next[1] = cmd_filter_2_filter_65_qs;
+          reg_rdata_next[2] = cmd_filter_2_filter_66_qs;
+          reg_rdata_next[3] = cmd_filter_2_filter_67_qs;
+          reg_rdata_next[4] = cmd_filter_2_filter_68_qs;
+          reg_rdata_next[5] = cmd_filter_2_filter_69_qs;
+          reg_rdata_next[6] = cmd_filter_2_filter_70_qs;
+          reg_rdata_next[7] = cmd_filter_2_filter_71_qs;
+          reg_rdata_next[8] = cmd_filter_2_filter_72_qs;
+          reg_rdata_next[9] = cmd_filter_2_filter_73_qs;
+          reg_rdata_next[10] = cmd_filter_2_filter_74_qs;
+          reg_rdata_next[11] = cmd_filter_2_filter_75_qs;
+          reg_rdata_next[12] = cmd_filter_2_filter_76_qs;
+          reg_rdata_next[13] = cmd_filter_2_filter_77_qs;
+          reg_rdata_next[14] = cmd_filter_2_filter_78_qs;
+          reg_rdata_next[15] = cmd_filter_2_filter_79_qs;
+          reg_rdata_next[16] = cmd_filter_2_filter_80_qs;
+          reg_rdata_next[17] = cmd_filter_2_filter_81_qs;
+          reg_rdata_next[18] = cmd_filter_2_filter_82_qs;
+          reg_rdata_next[19] = cmd_filter_2_filter_83_qs;
+          reg_rdata_next[20] = cmd_filter_2_filter_84_qs;
+          reg_rdata_next[21] = cmd_filter_2_filter_85_qs;
+          reg_rdata_next[22] = cmd_filter_2_filter_86_qs;
+          reg_rdata_next[23] = cmd_filter_2_filter_87_qs;
+          reg_rdata_next[24] = cmd_filter_2_filter_88_qs;
+          reg_rdata_next[25] = cmd_filter_2_filter_89_qs;
+          reg_rdata_next[26] = cmd_filter_2_filter_90_qs;
+          reg_rdata_next[27] = cmd_filter_2_filter_91_qs;
+          reg_rdata_next[28] = cmd_filter_2_filter_92_qs;
+          reg_rdata_next[29] = cmd_filter_2_filter_93_qs;
+          reg_rdata_next[30] = cmd_filter_2_filter_94_qs;
+          reg_rdata_next[31] = cmd_filter_2_filter_95_qs;
+        end
+
+        22: begin
+          reg_rdata_next[0] = cmd_filter_3_filter_96_qs;
+          reg_rdata_next[1] = cmd_filter_3_filter_97_qs;
+          reg_rdata_next[2] = cmd_filter_3_filter_98_qs;
+          reg_rdata_next[3] = cmd_filter_3_filter_99_qs;
+          reg_rdata_next[4] = cmd_filter_3_filter_100_qs;
+          reg_rdata_next[5] = cmd_filter_3_filter_101_qs;
+          reg_rdata_next[6] = cmd_filter_3_filter_102_qs;
+          reg_rdata_next[7] = cmd_filter_3_filter_103_qs;
+          reg_rdata_next[8] = cmd_filter_3_filter_104_qs;
+          reg_rdata_next[9] = cmd_filter_3_filter_105_qs;
+          reg_rdata_next[10] = cmd_filter_3_filter_106_qs;
+          reg_rdata_next[11] = cmd_filter_3_filter_107_qs;
+          reg_rdata_next[12] = cmd_filter_3_filter_108_qs;
+          reg_rdata_next[13] = cmd_filter_3_filter_109_qs;
+          reg_rdata_next[14] = cmd_filter_3_filter_110_qs;
+          reg_rdata_next[15] = cmd_filter_3_filter_111_qs;
+          reg_rdata_next[16] = cmd_filter_3_filter_112_qs;
+          reg_rdata_next[17] = cmd_filter_3_filter_113_qs;
+          reg_rdata_next[18] = cmd_filter_3_filter_114_qs;
+          reg_rdata_next[19] = cmd_filter_3_filter_115_qs;
+          reg_rdata_next[20] = cmd_filter_3_filter_116_qs;
+          reg_rdata_next[21] = cmd_filter_3_filter_117_qs;
+          reg_rdata_next[22] = cmd_filter_3_filter_118_qs;
+          reg_rdata_next[23] = cmd_filter_3_filter_119_qs;
+          reg_rdata_next[24] = cmd_filter_3_filter_120_qs;
+          reg_rdata_next[25] = cmd_filter_3_filter_121_qs;
+          reg_rdata_next[26] = cmd_filter_3_filter_122_qs;
+          reg_rdata_next[27] = cmd_filter_3_filter_123_qs;
+          reg_rdata_next[28] = cmd_filter_3_filter_124_qs;
+          reg_rdata_next[29] = cmd_filter_3_filter_125_qs;
+          reg_rdata_next[30] = cmd_filter_3_filter_126_qs;
+          reg_rdata_next[31] = cmd_filter_3_filter_127_qs;
+        end
+
+        23: begin
+          reg_rdata_next[0] = cmd_filter_4_filter_128_qs;
+          reg_rdata_next[1] = cmd_filter_4_filter_129_qs;
+          reg_rdata_next[2] = cmd_filter_4_filter_130_qs;
+          reg_rdata_next[3] = cmd_filter_4_filter_131_qs;
+          reg_rdata_next[4] = cmd_filter_4_filter_132_qs;
+          reg_rdata_next[5] = cmd_filter_4_filter_133_qs;
+          reg_rdata_next[6] = cmd_filter_4_filter_134_qs;
+          reg_rdata_next[7] = cmd_filter_4_filter_135_qs;
+          reg_rdata_next[8] = cmd_filter_4_filter_136_qs;
+          reg_rdata_next[9] = cmd_filter_4_filter_137_qs;
+          reg_rdata_next[10] = cmd_filter_4_filter_138_qs;
+          reg_rdata_next[11] = cmd_filter_4_filter_139_qs;
+          reg_rdata_next[12] = cmd_filter_4_filter_140_qs;
+          reg_rdata_next[13] = cmd_filter_4_filter_141_qs;
+          reg_rdata_next[14] = cmd_filter_4_filter_142_qs;
+          reg_rdata_next[15] = cmd_filter_4_filter_143_qs;
+          reg_rdata_next[16] = cmd_filter_4_filter_144_qs;
+          reg_rdata_next[17] = cmd_filter_4_filter_145_qs;
+          reg_rdata_next[18] = cmd_filter_4_filter_146_qs;
+          reg_rdata_next[19] = cmd_filter_4_filter_147_qs;
+          reg_rdata_next[20] = cmd_filter_4_filter_148_qs;
+          reg_rdata_next[21] = cmd_filter_4_filter_149_qs;
+          reg_rdata_next[22] = cmd_filter_4_filter_150_qs;
+          reg_rdata_next[23] = cmd_filter_4_filter_151_qs;
+          reg_rdata_next[24] = cmd_filter_4_filter_152_qs;
+          reg_rdata_next[25] = cmd_filter_4_filter_153_qs;
+          reg_rdata_next[26] = cmd_filter_4_filter_154_qs;
+          reg_rdata_next[27] = cmd_filter_4_filter_155_qs;
+          reg_rdata_next[28] = cmd_filter_4_filter_156_qs;
+          reg_rdata_next[29] = cmd_filter_4_filter_157_qs;
+          reg_rdata_next[30] = cmd_filter_4_filter_158_qs;
+          reg_rdata_next[31] = cmd_filter_4_filter_159_qs;
+        end
+
+        24: begin
+          reg_rdata_next[0] = cmd_filter_5_filter_160_qs;
+          reg_rdata_next[1] = cmd_filter_5_filter_161_qs;
+          reg_rdata_next[2] = cmd_filter_5_filter_162_qs;
+          reg_rdata_next[3] = cmd_filter_5_filter_163_qs;
+          reg_rdata_next[4] = cmd_filter_5_filter_164_qs;
+          reg_rdata_next[5] = cmd_filter_5_filter_165_qs;
+          reg_rdata_next[6] = cmd_filter_5_filter_166_qs;
+          reg_rdata_next[7] = cmd_filter_5_filter_167_qs;
+          reg_rdata_next[8] = cmd_filter_5_filter_168_qs;
+          reg_rdata_next[9] = cmd_filter_5_filter_169_qs;
+          reg_rdata_next[10] = cmd_filter_5_filter_170_qs;
+          reg_rdata_next[11] = cmd_filter_5_filter_171_qs;
+          reg_rdata_next[12] = cmd_filter_5_filter_172_qs;
+          reg_rdata_next[13] = cmd_filter_5_filter_173_qs;
+          reg_rdata_next[14] = cmd_filter_5_filter_174_qs;
+          reg_rdata_next[15] = cmd_filter_5_filter_175_qs;
+          reg_rdata_next[16] = cmd_filter_5_filter_176_qs;
+          reg_rdata_next[17] = cmd_filter_5_filter_177_qs;
+          reg_rdata_next[18] = cmd_filter_5_filter_178_qs;
+          reg_rdata_next[19] = cmd_filter_5_filter_179_qs;
+          reg_rdata_next[20] = cmd_filter_5_filter_180_qs;
+          reg_rdata_next[21] = cmd_filter_5_filter_181_qs;
+          reg_rdata_next[22] = cmd_filter_5_filter_182_qs;
+          reg_rdata_next[23] = cmd_filter_5_filter_183_qs;
+          reg_rdata_next[24] = cmd_filter_5_filter_184_qs;
+          reg_rdata_next[25] = cmd_filter_5_filter_185_qs;
+          reg_rdata_next[26] = cmd_filter_5_filter_186_qs;
+          reg_rdata_next[27] = cmd_filter_5_filter_187_qs;
+          reg_rdata_next[28] = cmd_filter_5_filter_188_qs;
+          reg_rdata_next[29] = cmd_filter_5_filter_189_qs;
+          reg_rdata_next[30] = cmd_filter_5_filter_190_qs;
+          reg_rdata_next[31] = cmd_filter_5_filter_191_qs;
+        end
+
+        25: begin
+          reg_rdata_next[0] = cmd_filter_6_filter_192_qs;
+          reg_rdata_next[1] = cmd_filter_6_filter_193_qs;
+          reg_rdata_next[2] = cmd_filter_6_filter_194_qs;
+          reg_rdata_next[3] = cmd_filter_6_filter_195_qs;
+          reg_rdata_next[4] = cmd_filter_6_filter_196_qs;
+          reg_rdata_next[5] = cmd_filter_6_filter_197_qs;
+          reg_rdata_next[6] = cmd_filter_6_filter_198_qs;
+          reg_rdata_next[7] = cmd_filter_6_filter_199_qs;
+          reg_rdata_next[8] = cmd_filter_6_filter_200_qs;
+          reg_rdata_next[9] = cmd_filter_6_filter_201_qs;
+          reg_rdata_next[10] = cmd_filter_6_filter_202_qs;
+          reg_rdata_next[11] = cmd_filter_6_filter_203_qs;
+          reg_rdata_next[12] = cmd_filter_6_filter_204_qs;
+          reg_rdata_next[13] = cmd_filter_6_filter_205_qs;
+          reg_rdata_next[14] = cmd_filter_6_filter_206_qs;
+          reg_rdata_next[15] = cmd_filter_6_filter_207_qs;
+          reg_rdata_next[16] = cmd_filter_6_filter_208_qs;
+          reg_rdata_next[17] = cmd_filter_6_filter_209_qs;
+          reg_rdata_next[18] = cmd_filter_6_filter_210_qs;
+          reg_rdata_next[19] = cmd_filter_6_filter_211_qs;
+          reg_rdata_next[20] = cmd_filter_6_filter_212_qs;
+          reg_rdata_next[21] = cmd_filter_6_filter_213_qs;
+          reg_rdata_next[22] = cmd_filter_6_filter_214_qs;
+          reg_rdata_next[23] = cmd_filter_6_filter_215_qs;
+          reg_rdata_next[24] = cmd_filter_6_filter_216_qs;
+          reg_rdata_next[25] = cmd_filter_6_filter_217_qs;
+          reg_rdata_next[26] = cmd_filter_6_filter_218_qs;
+          reg_rdata_next[27] = cmd_filter_6_filter_219_qs;
+          reg_rdata_next[28] = cmd_filter_6_filter_220_qs;
+          reg_rdata_next[29] = cmd_filter_6_filter_221_qs;
+          reg_rdata_next[30] = cmd_filter_6_filter_222_qs;
+          reg_rdata_next[31] = cmd_filter_6_filter_223_qs;
+        end
+
+        26: begin
+          reg_rdata_next[0] = cmd_filter_7_filter_224_qs;
+          reg_rdata_next[1] = cmd_filter_7_filter_225_qs;
+          reg_rdata_next[2] = cmd_filter_7_filter_226_qs;
+          reg_rdata_next[3] = cmd_filter_7_filter_227_qs;
+          reg_rdata_next[4] = cmd_filter_7_filter_228_qs;
+          reg_rdata_next[5] = cmd_filter_7_filter_229_qs;
+          reg_rdata_next[6] = cmd_filter_7_filter_230_qs;
+          reg_rdata_next[7] = cmd_filter_7_filter_231_qs;
+          reg_rdata_next[8] = cmd_filter_7_filter_232_qs;
+          reg_rdata_next[9] = cmd_filter_7_filter_233_qs;
+          reg_rdata_next[10] = cmd_filter_7_filter_234_qs;
+          reg_rdata_next[11] = cmd_filter_7_filter_235_qs;
+          reg_rdata_next[12] = cmd_filter_7_filter_236_qs;
+          reg_rdata_next[13] = cmd_filter_7_filter_237_qs;
+          reg_rdata_next[14] = cmd_filter_7_filter_238_qs;
+          reg_rdata_next[15] = cmd_filter_7_filter_239_qs;
+          reg_rdata_next[16] = cmd_filter_7_filter_240_qs;
+          reg_rdata_next[17] = cmd_filter_7_filter_241_qs;
+          reg_rdata_next[18] = cmd_filter_7_filter_242_qs;
+          reg_rdata_next[19] = cmd_filter_7_filter_243_qs;
+          reg_rdata_next[20] = cmd_filter_7_filter_244_qs;
+          reg_rdata_next[21] = cmd_filter_7_filter_245_qs;
+          reg_rdata_next[22] = cmd_filter_7_filter_246_qs;
+          reg_rdata_next[23] = cmd_filter_7_filter_247_qs;
+          reg_rdata_next[24] = cmd_filter_7_filter_248_qs;
+          reg_rdata_next[25] = cmd_filter_7_filter_249_qs;
+          reg_rdata_next[26] = cmd_filter_7_filter_250_qs;
+          reg_rdata_next[27] = cmd_filter_7_filter_251_qs;
+          reg_rdata_next[28] = cmd_filter_7_filter_252_qs;
+          reg_rdata_next[29] = cmd_filter_7_filter_253_qs;
+          reg_rdata_next[30] = cmd_filter_7_filter_254_qs;
+          reg_rdata_next[31] = cmd_filter_7_filter_255_qs;
+        end
+
+        27: begin
+          reg_rdata_next[31:0] = addr_swap_mask_qs;
+        end
+
+        28: begin
+          reg_rdata_next[31:0] = addr_swap_data_qs;
+        end
+
+        29: begin
+          reg_rdata_next[31:0] = payload_swap_mask_qs;
+        end
+
+        30: begin
+          reg_rdata_next[31:0] = payload_swap_data_qs;
+        end
+
+        31: begin
+          reg_rdata_next[7:0] = cmd_info_0_opcode_0_qs;
+          reg_rdata_next[9:8] = cmd_info_0_addr_mode_0_qs;
+          reg_rdata_next[10] = cmd_info_0_addr_swap_en_0_qs;
+          reg_rdata_next[11] = cmd_info_0_mbyte_en_0_qs;
+          reg_rdata_next[14:12] = cmd_info_0_dummy_size_0_qs;
+          reg_rdata_next[15] = cmd_info_0_dummy_en_0_qs;
+          reg_rdata_next[19:16] = cmd_info_0_payload_en_0_qs;
+          reg_rdata_next[20] = cmd_info_0_payload_dir_0_qs;
+          reg_rdata_next[21] = cmd_info_0_payload_swap_en_0_qs;
+          reg_rdata_next[23:22] = cmd_info_0_read_pipeline_mode_0_qs;
+          reg_rdata_next[24] = cmd_info_0_upload_0_qs;
+          reg_rdata_next[25] = cmd_info_0_busy_0_qs;
+          reg_rdata_next[31] = cmd_info_0_valid_0_qs;
+        end
+
+        32: begin
+          reg_rdata_next[7:0] = cmd_info_1_opcode_1_qs;
+          reg_rdata_next[9:8] = cmd_info_1_addr_mode_1_qs;
+          reg_rdata_next[10] = cmd_info_1_addr_swap_en_1_qs;
+          reg_rdata_next[11] = cmd_info_1_mbyte_en_1_qs;
+          reg_rdata_next[14:12] = cmd_info_1_dummy_size_1_qs;
+          reg_rdata_next[15] = cmd_info_1_dummy_en_1_qs;
+          reg_rdata_next[19:16] = cmd_info_1_payload_en_1_qs;
+          reg_rdata_next[20] = cmd_info_1_payload_dir_1_qs;
+          reg_rdata_next[21] = cmd_info_1_payload_swap_en_1_qs;
+          reg_rdata_next[23:22] = cmd_info_1_read_pipeline_mode_1_qs;
+          reg_rdata_next[24] = cmd_info_1_upload_1_qs;
+          reg_rdata_next[25] = cmd_info_1_busy_1_qs;
+          reg_rdata_next[31] = cmd_info_1_valid_1_qs;
+        end
+
+        33: begin
+          reg_rdata_next[7:0] = cmd_info_2_opcode_2_qs;
+          reg_rdata_next[9:8] = cmd_info_2_addr_mode_2_qs;
+          reg_rdata_next[10] = cmd_info_2_addr_swap_en_2_qs;
+          reg_rdata_next[11] = cmd_info_2_mbyte_en_2_qs;
+          reg_rdata_next[14:12] = cmd_info_2_dummy_size_2_qs;
+          reg_rdata_next[15] = cmd_info_2_dummy_en_2_qs;
+          reg_rdata_next[19:16] = cmd_info_2_payload_en_2_qs;
+          reg_rdata_next[20] = cmd_info_2_payload_dir_2_qs;
+          reg_rdata_next[21] = cmd_info_2_payload_swap_en_2_qs;
+          reg_rdata_next[23:22] = cmd_info_2_read_pipeline_mode_2_qs;
+          reg_rdata_next[24] = cmd_info_2_upload_2_qs;
+          reg_rdata_next[25] = cmd_info_2_busy_2_qs;
+          reg_rdata_next[31] = cmd_info_2_valid_2_qs;
+        end
+
+        34: begin
+          reg_rdata_next[7:0] = cmd_info_3_opcode_3_qs;
+          reg_rdata_next[9:8] = cmd_info_3_addr_mode_3_qs;
+          reg_rdata_next[10] = cmd_info_3_addr_swap_en_3_qs;
+          reg_rdata_next[11] = cmd_info_3_mbyte_en_3_qs;
+          reg_rdata_next[14:12] = cmd_info_3_dummy_size_3_qs;
+          reg_rdata_next[15] = cmd_info_3_dummy_en_3_qs;
+          reg_rdata_next[19:16] = cmd_info_3_payload_en_3_qs;
+          reg_rdata_next[20] = cmd_info_3_payload_dir_3_qs;
+          reg_rdata_next[21] = cmd_info_3_payload_swap_en_3_qs;
+          reg_rdata_next[23:22] = cmd_info_3_read_pipeline_mode_3_qs;
+          reg_rdata_next[24] = cmd_info_3_upload_3_qs;
+          reg_rdata_next[25] = cmd_info_3_busy_3_qs;
+          reg_rdata_next[31] = cmd_info_3_valid_3_qs;
+        end
+
+        35: begin
+          reg_rdata_next[7:0] = cmd_info_4_opcode_4_qs;
+          reg_rdata_next[9:8] = cmd_info_4_addr_mode_4_qs;
+          reg_rdata_next[10] = cmd_info_4_addr_swap_en_4_qs;
+          reg_rdata_next[11] = cmd_info_4_mbyte_en_4_qs;
+          reg_rdata_next[14:12] = cmd_info_4_dummy_size_4_qs;
+          reg_rdata_next[15] = cmd_info_4_dummy_en_4_qs;
+          reg_rdata_next[19:16] = cmd_info_4_payload_en_4_qs;
+          reg_rdata_next[20] = cmd_info_4_payload_dir_4_qs;
+          reg_rdata_next[21] = cmd_info_4_payload_swap_en_4_qs;
+          reg_rdata_next[23:22] = cmd_info_4_read_pipeline_mode_4_qs;
+          reg_rdata_next[24] = cmd_info_4_upload_4_qs;
+          reg_rdata_next[25] = cmd_info_4_busy_4_qs;
+          reg_rdata_next[31] = cmd_info_4_valid_4_qs;
+        end
+
+        36: begin
+          reg_rdata_next[7:0] = cmd_info_5_opcode_5_qs;
+          reg_rdata_next[9:8] = cmd_info_5_addr_mode_5_qs;
+          reg_rdata_next[10] = cmd_info_5_addr_swap_en_5_qs;
+          reg_rdata_next[11] = cmd_info_5_mbyte_en_5_qs;
+          reg_rdata_next[14:12] = cmd_info_5_dummy_size_5_qs;
+          reg_rdata_next[15] = cmd_info_5_dummy_en_5_qs;
+          reg_rdata_next[19:16] = cmd_info_5_payload_en_5_qs;
+          reg_rdata_next[20] = cmd_info_5_payload_dir_5_qs;
+          reg_rdata_next[21] = cmd_info_5_payload_swap_en_5_qs;
+          reg_rdata_next[23:22] = cmd_info_5_read_pipeline_mode_5_qs;
+          reg_rdata_next[24] = cmd_info_5_upload_5_qs;
+          reg_rdata_next[25] = cmd_info_5_busy_5_qs;
+          reg_rdata_next[31] = cmd_info_5_valid_5_qs;
+        end
+
+        37: begin
+          reg_rdata_next[7:0] = cmd_info_6_opcode_6_qs;
+          reg_rdata_next[9:8] = cmd_info_6_addr_mode_6_qs;
+          reg_rdata_next[10] = cmd_info_6_addr_swap_en_6_qs;
+          reg_rdata_next[11] = cmd_info_6_mbyte_en_6_qs;
+          reg_rdata_next[14:12] = cmd_info_6_dummy_size_6_qs;
+          reg_rdata_next[15] = cmd_info_6_dummy_en_6_qs;
+          reg_rdata_next[19:16] = cmd_info_6_payload_en_6_qs;
+          reg_rdata_next[20] = cmd_info_6_payload_dir_6_qs;
+          reg_rdata_next[21] = cmd_info_6_payload_swap_en_6_qs;
+          reg_rdata_next[23:22] = cmd_info_6_read_pipeline_mode_6_qs;
+          reg_rdata_next[24] = cmd_info_6_upload_6_qs;
+          reg_rdata_next[25] = cmd_info_6_busy_6_qs;
+          reg_rdata_next[31] = cmd_info_6_valid_6_qs;
+        end
+
+        38: begin
+          reg_rdata_next[7:0] = cmd_info_7_opcode_7_qs;
+          reg_rdata_next[9:8] = cmd_info_7_addr_mode_7_qs;
+          reg_rdata_next[10] = cmd_info_7_addr_swap_en_7_qs;
+          reg_rdata_next[11] = cmd_info_7_mbyte_en_7_qs;
+          reg_rdata_next[14:12] = cmd_info_7_dummy_size_7_qs;
+          reg_rdata_next[15] = cmd_info_7_dummy_en_7_qs;
+          reg_rdata_next[19:16] = cmd_info_7_payload_en_7_qs;
+          reg_rdata_next[20] = cmd_info_7_payload_dir_7_qs;
+          reg_rdata_next[21] = cmd_info_7_payload_swap_en_7_qs;
+          reg_rdata_next[23:22] = cmd_info_7_read_pipeline_mode_7_qs;
+          reg_rdata_next[24] = cmd_info_7_upload_7_qs;
+          reg_rdata_next[25] = cmd_info_7_busy_7_qs;
+          reg_rdata_next[31] = cmd_info_7_valid_7_qs;
+        end
+
+        39: begin
+          reg_rdata_next[7:0] = cmd_info_8_opcode_8_qs;
+          reg_rdata_next[9:8] = cmd_info_8_addr_mode_8_qs;
+          reg_rdata_next[10] = cmd_info_8_addr_swap_en_8_qs;
+          reg_rdata_next[11] = cmd_info_8_mbyte_en_8_qs;
+          reg_rdata_next[14:12] = cmd_info_8_dummy_size_8_qs;
+          reg_rdata_next[15] = cmd_info_8_dummy_en_8_qs;
+          reg_rdata_next[19:16] = cmd_info_8_payload_en_8_qs;
+          reg_rdata_next[20] = cmd_info_8_payload_dir_8_qs;
+          reg_rdata_next[21] = cmd_info_8_payload_swap_en_8_qs;
+          reg_rdata_next[23:22] = cmd_info_8_read_pipeline_mode_8_qs;
+          reg_rdata_next[24] = cmd_info_8_upload_8_qs;
+          reg_rdata_next[25] = cmd_info_8_busy_8_qs;
+          reg_rdata_next[31] = cmd_info_8_valid_8_qs;
+        end
+
+        40: begin
+          reg_rdata_next[7:0] = cmd_info_9_opcode_9_qs;
+          reg_rdata_next[9:8] = cmd_info_9_addr_mode_9_qs;
+          reg_rdata_next[10] = cmd_info_9_addr_swap_en_9_qs;
+          reg_rdata_next[11] = cmd_info_9_mbyte_en_9_qs;
+          reg_rdata_next[14:12] = cmd_info_9_dummy_size_9_qs;
+          reg_rdata_next[15] = cmd_info_9_dummy_en_9_qs;
+          reg_rdata_next[19:16] = cmd_info_9_payload_en_9_qs;
+          reg_rdata_next[20] = cmd_info_9_payload_dir_9_qs;
+          reg_rdata_next[21] = cmd_info_9_payload_swap_en_9_qs;
+          reg_rdata_next[23:22] = cmd_info_9_read_pipeline_mode_9_qs;
+          reg_rdata_next[24] = cmd_info_9_upload_9_qs;
+          reg_rdata_next[25] = cmd_info_9_busy_9_qs;
+          reg_rdata_next[31] = cmd_info_9_valid_9_qs;
+        end
+
+        41: begin
+          reg_rdata_next[7:0] = cmd_info_10_opcode_10_qs;
+          reg_rdata_next[9:8] = cmd_info_10_addr_mode_10_qs;
+          reg_rdata_next[10] = cmd_info_10_addr_swap_en_10_qs;
+          reg_rdata_next[11] = cmd_info_10_mbyte_en_10_qs;
+          reg_rdata_next[14:12] = cmd_info_10_dummy_size_10_qs;
+          reg_rdata_next[15] = cmd_info_10_dummy_en_10_qs;
+          reg_rdata_next[19:16] = cmd_info_10_payload_en_10_qs;
+          reg_rdata_next[20] = cmd_info_10_payload_dir_10_qs;
+          reg_rdata_next[21] = cmd_info_10_payload_swap_en_10_qs;
+          reg_rdata_next[23:22] = cmd_info_10_read_pipeline_mode_10_qs;
+          reg_rdata_next[24] = cmd_info_10_upload_10_qs;
+          reg_rdata_next[25] = cmd_info_10_busy_10_qs;
+          reg_rdata_next[31] = cmd_info_10_valid_10_qs;
+        end
+
+        42: begin
+          reg_rdata_next[7:0] = cmd_info_11_opcode_11_qs;
+          reg_rdata_next[9:8] = cmd_info_11_addr_mode_11_qs;
+          reg_rdata_next[10] = cmd_info_11_addr_swap_en_11_qs;
+          reg_rdata_next[11] = cmd_info_11_mbyte_en_11_qs;
+          reg_rdata_next[14:12] = cmd_info_11_dummy_size_11_qs;
+          reg_rdata_next[15] = cmd_info_11_dummy_en_11_qs;
+          reg_rdata_next[19:16] = cmd_info_11_payload_en_11_qs;
+          reg_rdata_next[20] = cmd_info_11_payload_dir_11_qs;
+          reg_rdata_next[21] = cmd_info_11_payload_swap_en_11_qs;
+          reg_rdata_next[23:22] = cmd_info_11_read_pipeline_mode_11_qs;
+          reg_rdata_next[24] = cmd_info_11_upload_11_qs;
+          reg_rdata_next[25] = cmd_info_11_busy_11_qs;
+          reg_rdata_next[31] = cmd_info_11_valid_11_qs;
+        end
+
+        43: begin
+          reg_rdata_next[7:0] = cmd_info_12_opcode_12_qs;
+          reg_rdata_next[9:8] = cmd_info_12_addr_mode_12_qs;
+          reg_rdata_next[10] = cmd_info_12_addr_swap_en_12_qs;
+          reg_rdata_next[11] = cmd_info_12_mbyte_en_12_qs;
+          reg_rdata_next[14:12] = cmd_info_12_dummy_size_12_qs;
+          reg_rdata_next[15] = cmd_info_12_dummy_en_12_qs;
+          reg_rdata_next[19:16] = cmd_info_12_payload_en_12_qs;
+          reg_rdata_next[20] = cmd_info_12_payload_dir_12_qs;
+          reg_rdata_next[21] = cmd_info_12_payload_swap_en_12_qs;
+          reg_rdata_next[23:22] = cmd_info_12_read_pipeline_mode_12_qs;
+          reg_rdata_next[24] = cmd_info_12_upload_12_qs;
+          reg_rdata_next[25] = cmd_info_12_busy_12_qs;
+          reg_rdata_next[31] = cmd_info_12_valid_12_qs;
+        end
+
+        44: begin
+          reg_rdata_next[7:0] = cmd_info_13_opcode_13_qs;
+          reg_rdata_next[9:8] = cmd_info_13_addr_mode_13_qs;
+          reg_rdata_next[10] = cmd_info_13_addr_swap_en_13_qs;
+          reg_rdata_next[11] = cmd_info_13_mbyte_en_13_qs;
+          reg_rdata_next[14:12] = cmd_info_13_dummy_size_13_qs;
+          reg_rdata_next[15] = cmd_info_13_dummy_en_13_qs;
+          reg_rdata_next[19:16] = cmd_info_13_payload_en_13_qs;
+          reg_rdata_next[20] = cmd_info_13_payload_dir_13_qs;
+          reg_rdata_next[21] = cmd_info_13_payload_swap_en_13_qs;
+          reg_rdata_next[23:22] = cmd_info_13_read_pipeline_mode_13_qs;
+          reg_rdata_next[24] = cmd_info_13_upload_13_qs;
+          reg_rdata_next[25] = cmd_info_13_busy_13_qs;
+          reg_rdata_next[31] = cmd_info_13_valid_13_qs;
+        end
+
+        45: begin
+          reg_rdata_next[7:0] = cmd_info_14_opcode_14_qs;
+          reg_rdata_next[9:8] = cmd_info_14_addr_mode_14_qs;
+          reg_rdata_next[10] = cmd_info_14_addr_swap_en_14_qs;
+          reg_rdata_next[11] = cmd_info_14_mbyte_en_14_qs;
+          reg_rdata_next[14:12] = cmd_info_14_dummy_size_14_qs;
+          reg_rdata_next[15] = cmd_info_14_dummy_en_14_qs;
+          reg_rdata_next[19:16] = cmd_info_14_payload_en_14_qs;
+          reg_rdata_next[20] = cmd_info_14_payload_dir_14_qs;
+          reg_rdata_next[21] = cmd_info_14_payload_swap_en_14_qs;
+          reg_rdata_next[23:22] = cmd_info_14_read_pipeline_mode_14_qs;
+          reg_rdata_next[24] = cmd_info_14_upload_14_qs;
+          reg_rdata_next[25] = cmd_info_14_busy_14_qs;
+          reg_rdata_next[31] = cmd_info_14_valid_14_qs;
+        end
+
+        46: begin
+          reg_rdata_next[7:0] = cmd_info_15_opcode_15_qs;
+          reg_rdata_next[9:8] = cmd_info_15_addr_mode_15_qs;
+          reg_rdata_next[10] = cmd_info_15_addr_swap_en_15_qs;
+          reg_rdata_next[11] = cmd_info_15_mbyte_en_15_qs;
+          reg_rdata_next[14:12] = cmd_info_15_dummy_size_15_qs;
+          reg_rdata_next[15] = cmd_info_15_dummy_en_15_qs;
+          reg_rdata_next[19:16] = cmd_info_15_payload_en_15_qs;
+          reg_rdata_next[20] = cmd_info_15_payload_dir_15_qs;
+          reg_rdata_next[21] = cmd_info_15_payload_swap_en_15_qs;
+          reg_rdata_next[23:22] = cmd_info_15_read_pipeline_mode_15_qs;
+          reg_rdata_next[24] = cmd_info_15_upload_15_qs;
+          reg_rdata_next[25] = cmd_info_15_busy_15_qs;
+          reg_rdata_next[31] = cmd_info_15_valid_15_qs;
+        end
+
+        47: begin
+          reg_rdata_next[7:0] = cmd_info_16_opcode_16_qs;
+          reg_rdata_next[9:8] = cmd_info_16_addr_mode_16_qs;
+          reg_rdata_next[10] = cmd_info_16_addr_swap_en_16_qs;
+          reg_rdata_next[11] = cmd_info_16_mbyte_en_16_qs;
+          reg_rdata_next[14:12] = cmd_info_16_dummy_size_16_qs;
+          reg_rdata_next[15] = cmd_info_16_dummy_en_16_qs;
+          reg_rdata_next[19:16] = cmd_info_16_payload_en_16_qs;
+          reg_rdata_next[20] = cmd_info_16_payload_dir_16_qs;
+          reg_rdata_next[21] = cmd_info_16_payload_swap_en_16_qs;
+          reg_rdata_next[23:22] = cmd_info_16_read_pipeline_mode_16_qs;
+          reg_rdata_next[24] = cmd_info_16_upload_16_qs;
+          reg_rdata_next[25] = cmd_info_16_busy_16_qs;
+          reg_rdata_next[31] = cmd_info_16_valid_16_qs;
+        end
+
+        48: begin
+          reg_rdata_next[7:0] = cmd_info_17_opcode_17_qs;
+          reg_rdata_next[9:8] = cmd_info_17_addr_mode_17_qs;
+          reg_rdata_next[10] = cmd_info_17_addr_swap_en_17_qs;
+          reg_rdata_next[11] = cmd_info_17_mbyte_en_17_qs;
+          reg_rdata_next[14:12] = cmd_info_17_dummy_size_17_qs;
+          reg_rdata_next[15] = cmd_info_17_dummy_en_17_qs;
+          reg_rdata_next[19:16] = cmd_info_17_payload_en_17_qs;
+          reg_rdata_next[20] = cmd_info_17_payload_dir_17_qs;
+          reg_rdata_next[21] = cmd_info_17_payload_swap_en_17_qs;
+          reg_rdata_next[23:22] = cmd_info_17_read_pipeline_mode_17_qs;
+          reg_rdata_next[24] = cmd_info_17_upload_17_qs;
+          reg_rdata_next[25] = cmd_info_17_busy_17_qs;
+          reg_rdata_next[31] = cmd_info_17_valid_17_qs;
+        end
+
+        49: begin
+          reg_rdata_next[7:0] = cmd_info_18_opcode_18_qs;
+          reg_rdata_next[9:8] = cmd_info_18_addr_mode_18_qs;
+          reg_rdata_next[10] = cmd_info_18_addr_swap_en_18_qs;
+          reg_rdata_next[11] = cmd_info_18_mbyte_en_18_qs;
+          reg_rdata_next[14:12] = cmd_info_18_dummy_size_18_qs;
+          reg_rdata_next[15] = cmd_info_18_dummy_en_18_qs;
+          reg_rdata_next[19:16] = cmd_info_18_payload_en_18_qs;
+          reg_rdata_next[20] = cmd_info_18_payload_dir_18_qs;
+          reg_rdata_next[21] = cmd_info_18_payload_swap_en_18_qs;
+          reg_rdata_next[23:22] = cmd_info_18_read_pipeline_mode_18_qs;
+          reg_rdata_next[24] = cmd_info_18_upload_18_qs;
+          reg_rdata_next[25] = cmd_info_18_busy_18_qs;
+          reg_rdata_next[31] = cmd_info_18_valid_18_qs;
+        end
+
+        50: begin
+          reg_rdata_next[7:0] = cmd_info_19_opcode_19_qs;
+          reg_rdata_next[9:8] = cmd_info_19_addr_mode_19_qs;
+          reg_rdata_next[10] = cmd_info_19_addr_swap_en_19_qs;
+          reg_rdata_next[11] = cmd_info_19_mbyte_en_19_qs;
+          reg_rdata_next[14:12] = cmd_info_19_dummy_size_19_qs;
+          reg_rdata_next[15] = cmd_info_19_dummy_en_19_qs;
+          reg_rdata_next[19:16] = cmd_info_19_payload_en_19_qs;
+          reg_rdata_next[20] = cmd_info_19_payload_dir_19_qs;
+          reg_rdata_next[21] = cmd_info_19_payload_swap_en_19_qs;
+          reg_rdata_next[23:22] = cmd_info_19_read_pipeline_mode_19_qs;
+          reg_rdata_next[24] = cmd_info_19_upload_19_qs;
+          reg_rdata_next[25] = cmd_info_19_busy_19_qs;
+          reg_rdata_next[31] = cmd_info_19_valid_19_qs;
+        end
+
+        51: begin
+          reg_rdata_next[7:0] = cmd_info_20_opcode_20_qs;
+          reg_rdata_next[9:8] = cmd_info_20_addr_mode_20_qs;
+          reg_rdata_next[10] = cmd_info_20_addr_swap_en_20_qs;
+          reg_rdata_next[11] = cmd_info_20_mbyte_en_20_qs;
+          reg_rdata_next[14:12] = cmd_info_20_dummy_size_20_qs;
+          reg_rdata_next[15] = cmd_info_20_dummy_en_20_qs;
+          reg_rdata_next[19:16] = cmd_info_20_payload_en_20_qs;
+          reg_rdata_next[20] = cmd_info_20_payload_dir_20_qs;
+          reg_rdata_next[21] = cmd_info_20_payload_swap_en_20_qs;
+          reg_rdata_next[23:22] = cmd_info_20_read_pipeline_mode_20_qs;
+          reg_rdata_next[24] = cmd_info_20_upload_20_qs;
+          reg_rdata_next[25] = cmd_info_20_busy_20_qs;
+          reg_rdata_next[31] = cmd_info_20_valid_20_qs;
+        end
+
+        52: begin
+          reg_rdata_next[7:0] = cmd_info_21_opcode_21_qs;
+          reg_rdata_next[9:8] = cmd_info_21_addr_mode_21_qs;
+          reg_rdata_next[10] = cmd_info_21_addr_swap_en_21_qs;
+          reg_rdata_next[11] = cmd_info_21_mbyte_en_21_qs;
+          reg_rdata_next[14:12] = cmd_info_21_dummy_size_21_qs;
+          reg_rdata_next[15] = cmd_info_21_dummy_en_21_qs;
+          reg_rdata_next[19:16] = cmd_info_21_payload_en_21_qs;
+          reg_rdata_next[20] = cmd_info_21_payload_dir_21_qs;
+          reg_rdata_next[21] = cmd_info_21_payload_swap_en_21_qs;
+          reg_rdata_next[23:22] = cmd_info_21_read_pipeline_mode_21_qs;
+          reg_rdata_next[24] = cmd_info_21_upload_21_qs;
+          reg_rdata_next[25] = cmd_info_21_busy_21_qs;
+          reg_rdata_next[31] = cmd_info_21_valid_21_qs;
+        end
+
+        53: begin
+          reg_rdata_next[7:0] = cmd_info_22_opcode_22_qs;
+          reg_rdata_next[9:8] = cmd_info_22_addr_mode_22_qs;
+          reg_rdata_next[10] = cmd_info_22_addr_swap_en_22_qs;
+          reg_rdata_next[11] = cmd_info_22_mbyte_en_22_qs;
+          reg_rdata_next[14:12] = cmd_info_22_dummy_size_22_qs;
+          reg_rdata_next[15] = cmd_info_22_dummy_en_22_qs;
+          reg_rdata_next[19:16] = cmd_info_22_payload_en_22_qs;
+          reg_rdata_next[20] = cmd_info_22_payload_dir_22_qs;
+          reg_rdata_next[21] = cmd_info_22_payload_swap_en_22_qs;
+          reg_rdata_next[23:22] = cmd_info_22_read_pipeline_mode_22_qs;
+          reg_rdata_next[24] = cmd_info_22_upload_22_qs;
+          reg_rdata_next[25] = cmd_info_22_busy_22_qs;
+          reg_rdata_next[31] = cmd_info_22_valid_22_qs;
+        end
+
+        54: begin
+          reg_rdata_next[7:0] = cmd_info_23_opcode_23_qs;
+          reg_rdata_next[9:8] = cmd_info_23_addr_mode_23_qs;
+          reg_rdata_next[10] = cmd_info_23_addr_swap_en_23_qs;
+          reg_rdata_next[11] = cmd_info_23_mbyte_en_23_qs;
+          reg_rdata_next[14:12] = cmd_info_23_dummy_size_23_qs;
+          reg_rdata_next[15] = cmd_info_23_dummy_en_23_qs;
+          reg_rdata_next[19:16] = cmd_info_23_payload_en_23_qs;
+          reg_rdata_next[20] = cmd_info_23_payload_dir_23_qs;
+          reg_rdata_next[21] = cmd_info_23_payload_swap_en_23_qs;
+          reg_rdata_next[23:22] = cmd_info_23_read_pipeline_mode_23_qs;
+          reg_rdata_next[24] = cmd_info_23_upload_23_qs;
+          reg_rdata_next[25] = cmd_info_23_busy_23_qs;
+          reg_rdata_next[31] = cmd_info_23_valid_23_qs;
+        end
+
+        55: begin
+          reg_rdata_next[7:0] = cmd_info_en4b_opcode_qs;
+          reg_rdata_next[31] = cmd_info_en4b_valid_qs;
+        end
+
+        56: begin
+          reg_rdata_next[7:0] = cmd_info_ex4b_opcode_qs;
+          reg_rdata_next[31] = cmd_info_ex4b_valid_qs;
+        end
+
+        57: begin
+          reg_rdata_next[7:0] = cmd_info_wren_opcode_qs;
+          reg_rdata_next[31] = cmd_info_wren_valid_qs;
+        end
+
+        58: begin
+          reg_rdata_next[7:0] = cmd_info_wrdi_opcode_qs;
+          reg_rdata_next[31] = cmd_info_wrdi_valid_qs;
+        end
+
+        59: begin
+          reg_rdata_next[7:0] = tpm_cap_rev_qs;
+          reg_rdata_next[8] = tpm_cap_locality_qs;
+          reg_rdata_next[18:16] = tpm_cap_max_wr_size_qs;
+          reg_rdata_next[22:20] = tpm_cap_max_rd_size_qs;
+        end
+
+        60: begin
+          reg_rdata_next[0] = tpm_cfg_en_qs;
+          reg_rdata_next[1] = tpm_cfg_tpm_mode_qs;
+          reg_rdata_next[2] = tpm_cfg_hw_reg_dis_qs;
+          reg_rdata_next[3] = tpm_cfg_tpm_reg_chk_dis_qs;
+          reg_rdata_next[4] = tpm_cfg_invalid_locality_qs;
+        end
+
+        61: begin
+          reg_rdata_next[0] = tpm_status_cmdaddr_notempty_qs;
+          reg_rdata_next[1] = tpm_status_wrfifo_pending_qs;
+          reg_rdata_next[2] = tpm_status_rdfifo_aborted_qs;
+        end
+
+        62: begin
+          reg_rdata_next[7:0] = tpm_access_0_access_0_qs;
+          reg_rdata_next[15:8] = tpm_access_0_access_1_qs;
+          reg_rdata_next[23:16] = tpm_access_0_access_2_qs;
+          reg_rdata_next[31:24] = tpm_access_0_access_3_qs;
+        end
+
+        63: begin
+          reg_rdata_next[7:0] = tpm_access_1_qs;
+        end
+
+        64: begin
+          reg_rdata_next[31:0] = tpm_sts_qs;
+        end
+
+        65: begin
+          reg_rdata_next[31:0] = tpm_intf_capability_qs;
+        end
+
+        66: begin
+          reg_rdata_next[31:0] = tpm_int_enable_qs;
+        end
+
+        67: begin
+          reg_rdata_next[7:0] = tpm_int_vector_qs;
+        end
+
+        68: begin
+          reg_rdata_next[31:0] = tpm_int_status_qs;
+        end
+
+        69: begin
+          reg_rdata_next[15:0] = tpm_did_vid_vid_qs;
+          reg_rdata_next[31:16] = tpm_did_vid_did_qs;
+        end
+
+        70: begin
+          reg_rdata_next[7:0] = tpm_rid_qs;
+        end
+
+        71: begin
+          reg_rdata_next[23:0] = tpm_cmd_addr_addr_qs;
+          reg_rdata_next[31:24] = tpm_cmd_addr_cmd_qs;
+        end
+
+        72: begin
+          reg_rdata_next[31:0] = '0;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -22040,7 +21557,7 @@ module spi_device_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

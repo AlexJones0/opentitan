@@ -993,106 +993,128 @@ module pwrmgr_reg_top (
 
 
 
-  logic [16:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == PWRMGR_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == PWRMGR_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == PWRMGR_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == PWRMGR_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == PWRMGR_CTRL_CFG_REGWEN_OFFSET);
-    addr_hit[ 5] = (reg_addr == PWRMGR_CONTROL_OFFSET);
-    addr_hit[ 6] = (reg_addr == PWRMGR_CFG_CDC_SYNC_OFFSET);
-    addr_hit[ 7] = (reg_addr == PWRMGR_WAKEUP_EN_REGWEN_OFFSET);
-    addr_hit[ 8] = (reg_addr == PWRMGR_WAKEUP_EN_OFFSET);
-    addr_hit[ 9] = (reg_addr == PWRMGR_WAKE_STATUS_OFFSET);
-    addr_hit[10] = (reg_addr == PWRMGR_RESET_EN_REGWEN_OFFSET);
-    addr_hit[11] = (reg_addr == PWRMGR_RESET_EN_OFFSET);
-    addr_hit[12] = (reg_addr == PWRMGR_RESET_STATUS_OFFSET);
-    addr_hit[13] = (reg_addr == PWRMGR_ESCALATE_RESET_STATUS_OFFSET);
-    addr_hit[14] = (reg_addr == PWRMGR_WAKE_INFO_CAPTURE_DIS_OFFSET);
-    addr_hit[15] = (reg_addr == PWRMGR_WAKE_INFO_OFFSET);
-    addr_hit[16] = (reg_addr == PWRMGR_FAULT_STATUS_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      PWRMGR_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      PWRMGR_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      PWRMGR_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      PWRMGR_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      PWRMGR_CTRL_CFG_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      PWRMGR_CONTROL_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      PWRMGR_CFG_CDC_SYNC_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      PWRMGR_WAKEUP_EN_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      PWRMGR_WAKEUP_EN_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      PWRMGR_WAKE_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      PWRMGR_RESET_EN_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      PWRMGR_RESET_EN_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      PWRMGR_RESET_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      PWRMGR_ESCALATE_RESET_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      PWRMGR_WAKE_INFO_CAPTURE_DIS_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      PWRMGR_WAKE_INFO_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      PWRMGR_FAULT_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(PWRMGR_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(PWRMGR_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(PWRMGR_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(PWRMGR_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(PWRMGR_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(PWRMGR_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(PWRMGR_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(PWRMGR_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(PWRMGR_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(PWRMGR_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(PWRMGR_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(PWRMGR_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(PWRMGR_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(PWRMGR_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(PWRMGR_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(PWRMGR_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(PWRMGR_PERMIT[16] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(PWRMGR_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(PWRMGR_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(PWRMGR_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(PWRMGR_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(PWRMGR_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(PWRMGR_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(PWRMGR_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(PWRMGR_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(PWRMGR_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(PWRMGR_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(PWRMGR_PERMIT[10] & ~reg_be);
+        11: wr_err = |(PWRMGR_PERMIT[11] & ~reg_be);
+        12: wr_err = |(PWRMGR_PERMIT[12] & ~reg_be);
+        13: wr_err = |(PWRMGR_PERMIT[13] & ~reg_be);
+        14: wr_err = |(PWRMGR_PERMIT[14] & ~reg_be);
+        15: wr_err = |(PWRMGR_PERMIT[15] & ~reg_be);
+        16: wr_err = |(PWRMGR_PERMIT[16] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_wd = reg_wdata[0];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_wd = reg_wdata[0];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_wd = reg_wdata[0];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign ctrl_cfg_regwen_re = addr_hit[4] & reg_re & !reg_error;
-  assign control_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign ctrl_cfg_regwen_re = addr_valid & (addr_idx == 4) & reg_re & !reg_error;
+
+  assign control_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign control_low_power_hint_wd = reg_wdata[0];
-
   assign control_core_clk_en_wd = reg_wdata[4];
-
   assign control_io_clk_en_wd = reg_wdata[5];
-
   assign control_main_pd_n_wd = reg_wdata[6];
-  assign cfg_cdc_sync_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign cfg_cdc_sync_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign cfg_cdc_sync_wd = reg_wdata[0];
-  assign wakeup_en_regwen_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign wakeup_en_regwen_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign wakeup_en_regwen_wd = reg_wdata[0];
-  assign wakeup_en_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign wakeup_en_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign wakeup_en_en_0_wd = reg_wdata[0];
-
   assign wakeup_en_en_1_wd = reg_wdata[1];
-
   assign wakeup_en_en_2_wd = reg_wdata[2];
-  assign reset_en_regwen_we = addr_hit[10] & reg_we & !reg_error;
+
+
+  assign reset_en_regwen_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign reset_en_regwen_wd = reg_wdata[0];
-  assign reset_en_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign reset_en_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign reset_en_en_0_wd = reg_wdata[0];
-
   assign reset_en_en_1_wd = reg_wdata[1];
-  assign wake_info_capture_dis_we = addr_hit[14] & reg_we & !reg_error;
+
+
+
+  assign wake_info_capture_dis_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign wake_info_capture_dis_wd = reg_wdata[0];
-  assign wake_info_re = addr_hit[15] & reg_re & !reg_error;
-  assign wake_info_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign wake_info_re = addr_valid & (addr_idx == 15) & reg_re & !reg_error;
+  assign wake_info_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign wake_info_reasons_wd = reg_wdata[2:0];
-
   assign wake_info_fall_through_wd = reg_wdata[3];
-
   assign wake_info_abort_wd = reg_wdata[4];
+
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -1117,93 +1139,94 @@ module pwrmgr_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-      end
+        2,3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        4: begin
+          reg_rdata_next[0] = ctrl_cfg_regwen_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = ctrl_cfg_regwen_qs;
-      end
+        5: begin
+          reg_rdata_next[0] = control_low_power_hint_qs;
+          reg_rdata_next[4] = control_core_clk_en_qs;
+          reg_rdata_next[5] = control_io_clk_en_qs;
+          reg_rdata_next[6] = control_main_pd_n_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[0] = control_low_power_hint_qs;
-        reg_rdata_next[4] = control_core_clk_en_qs;
-        reg_rdata_next[5] = control_io_clk_en_qs;
-        reg_rdata_next[6] = control_main_pd_n_qs;
-      end
+        6: begin
+          reg_rdata_next[0] = cfg_cdc_sync_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[0] = cfg_cdc_sync_qs;
-      end
+        7: begin
+          reg_rdata_next[0] = wakeup_en_regwen_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[0] = wakeup_en_regwen_qs;
-      end
+        8: begin
+          reg_rdata_next[0] = wakeup_en_en_0_qs;
+          reg_rdata_next[1] = wakeup_en_en_1_qs;
+          reg_rdata_next[2] = wakeup_en_en_2_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[0] = wakeup_en_en_0_qs;
-        reg_rdata_next[1] = wakeup_en_en_1_qs;
-        reg_rdata_next[2] = wakeup_en_en_2_qs;
-      end
+        9: begin
+          reg_rdata_next[0] = wake_status_val_0_qs;
+          reg_rdata_next[1] = wake_status_val_1_qs;
+          reg_rdata_next[2] = wake_status_val_2_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[0] = wake_status_val_0_qs;
-        reg_rdata_next[1] = wake_status_val_1_qs;
-        reg_rdata_next[2] = wake_status_val_2_qs;
-      end
+        10: begin
+          reg_rdata_next[0] = reset_en_regwen_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[0] = reset_en_regwen_qs;
-      end
+        11: begin
+          reg_rdata_next[0] = reset_en_en_0_qs;
+          reg_rdata_next[1] = reset_en_en_1_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[0] = reset_en_en_0_qs;
-        reg_rdata_next[1] = reset_en_en_1_qs;
-      end
+        12: begin
+          reg_rdata_next[0] = reset_status_val_0_qs;
+          reg_rdata_next[1] = reset_status_val_1_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[0] = reset_status_val_0_qs;
-        reg_rdata_next[1] = reset_status_val_1_qs;
-      end
+        13: begin
+          reg_rdata_next[0] = escalate_reset_status_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[0] = escalate_reset_status_qs;
-      end
+        14: begin
+          reg_rdata_next[0] = wake_info_capture_dis_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[0] = wake_info_capture_dis_qs;
-      end
+        15: begin
+          reg_rdata_next[2:0] = wake_info_reasons_qs;
+          reg_rdata_next[3] = wake_info_fall_through_qs;
+          reg_rdata_next[4] = wake_info_abort_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[2:0] = wake_info_reasons_qs;
-        reg_rdata_next[3] = wake_info_fall_through_qs;
-        reg_rdata_next[4] = wake_info_abort_qs;
-      end
-
-      addr_hit[16]: begin
-        reg_rdata_next[0] = fault_status_reg_intg_err_qs;
-        reg_rdata_next[1] = fault_status_esc_timeout_qs;
-        reg_rdata_next[2] = fault_status_main_pd_glitch_qs;
-      end
+        16: begin
+          reg_rdata_next[0] = fault_status_reg_intg_err_qs;
+          reg_rdata_next[1] = fault_status_esc_timeout_qs;
+          reg_rdata_next[2] = fault_status_main_pd_glitch_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -1228,7 +1251,7 @@ module pwrmgr_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

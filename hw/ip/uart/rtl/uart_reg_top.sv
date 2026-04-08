@@ -1571,12 +1571,15 @@ module uart_reg_top
 
 
 
-  logic [12:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [12:0] racl_addr_hit_read;
-  logic [12:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -1595,41 +1598,51 @@ module uart_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[ 0] = (reg_addr == UART_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == UART_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == UART_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == UART_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == UART_CTRL_OFFSET);
-    addr_hit[ 5] = (reg_addr == UART_STATUS_OFFSET);
-    addr_hit[ 6] = (reg_addr == UART_RDATA_OFFSET);
-    addr_hit[ 7] = (reg_addr == UART_WDATA_OFFSET);
-    addr_hit[ 8] = (reg_addr == UART_FIFO_CTRL_OFFSET);
-    addr_hit[ 9] = (reg_addr == UART_FIFO_STATUS_OFFSET);
-    addr_hit[10] = (reg_addr == UART_OVRD_OFFSET);
-    addr_hit[11] = (reg_addr == UART_VAL_OFFSET);
-    addr_hit[12] = (reg_addr == UART_TIMEOUT_CTRL_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      UART_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      UART_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      UART_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      UART_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      UART_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      UART_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      UART_RDATA_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      UART_WDATA_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      UART_FIFO_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      UART_FIFO_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      UART_OVRD_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      UART_VAL_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      UART_TIMEOUT_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 13; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -1644,122 +1657,106 @@ module uart_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[ 0] & (|(UART_PERMIT[ 0] & ~reg_be))) |
-               (racl_addr_hit_write[ 1] & (|(UART_PERMIT[ 1] & ~reg_be))) |
-               (racl_addr_hit_write[ 2] & (|(UART_PERMIT[ 2] & ~reg_be))) |
-               (racl_addr_hit_write[ 3] & (|(UART_PERMIT[ 3] & ~reg_be))) |
-               (racl_addr_hit_write[ 4] & (|(UART_PERMIT[ 4] & ~reg_be))) |
-               (racl_addr_hit_write[ 5] & (|(UART_PERMIT[ 5] & ~reg_be))) |
-               (racl_addr_hit_write[ 6] & (|(UART_PERMIT[ 6] & ~reg_be))) |
-               (racl_addr_hit_write[ 7] & (|(UART_PERMIT[ 7] & ~reg_be))) |
-               (racl_addr_hit_write[ 8] & (|(UART_PERMIT[ 8] & ~reg_be))) |
-               (racl_addr_hit_write[ 9] & (|(UART_PERMIT[ 9] & ~reg_be))) |
-               (racl_addr_hit_write[10] & (|(UART_PERMIT[10] & ~reg_be))) |
-               (racl_addr_hit_write[11] & (|(UART_PERMIT[11] & ~reg_be))) |
-               (racl_addr_hit_write[12] & (|(UART_PERMIT[12] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(UART_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(UART_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(UART_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(UART_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(UART_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(UART_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(UART_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(UART_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(UART_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(UART_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(UART_PERMIT[10] & ~reg_be);
+        11: wr_err = |(UART_PERMIT[11] & ~reg_be);
+        12: wr_err = |(UART_PERMIT[12] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = racl_addr_hit_write[0] & reg_we & !reg_error;
-
+  assign intr_state_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
   assign intr_state_tx_done_wd = reg_wdata[2];
-
   assign intr_state_rx_overflow_wd = reg_wdata[3];
-
   assign intr_state_rx_frame_err_wd = reg_wdata[4];
-
   assign intr_state_rx_break_err_wd = reg_wdata[5];
-
   assign intr_state_rx_timeout_wd = reg_wdata[6];
-
   assign intr_state_rx_parity_err_wd = reg_wdata[7];
-  assign intr_enable_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_tx_watermark_wd = reg_wdata[0];
-
   assign intr_enable_rx_watermark_wd = reg_wdata[1];
-
   assign intr_enable_tx_done_wd = reg_wdata[2];
-
   assign intr_enable_rx_overflow_wd = reg_wdata[3];
-
   assign intr_enable_rx_frame_err_wd = reg_wdata[4];
-
   assign intr_enable_rx_break_err_wd = reg_wdata[5];
-
   assign intr_enable_rx_timeout_wd = reg_wdata[6];
-
   assign intr_enable_rx_parity_err_wd = reg_wdata[7];
-
   assign intr_enable_tx_empty_wd = reg_wdata[8];
-  assign intr_test_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign intr_test_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_tx_watermark_wd = reg_wdata[0];
-
   assign intr_test_rx_watermark_wd = reg_wdata[1];
-
   assign intr_test_tx_done_wd = reg_wdata[2];
-
   assign intr_test_rx_overflow_wd = reg_wdata[3];
-
   assign intr_test_rx_frame_err_wd = reg_wdata[4];
-
   assign intr_test_rx_break_err_wd = reg_wdata[5];
-
   assign intr_test_rx_timeout_wd = reg_wdata[6];
-
   assign intr_test_rx_parity_err_wd = reg_wdata[7];
-
   assign intr_test_tx_empty_wd = reg_wdata[8];
-  assign alert_test_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign ctrl_we = racl_addr_hit_write[4] & reg_we & !reg_error;
+
+  assign ctrl_we = racl_addr_write_valid & (racl_addr_write_idx == 4) & reg_we & !reg_error;
 
   assign ctrl_tx_wd = reg_wdata[0];
-
   assign ctrl_rx_wd = reg_wdata[1];
-
   assign ctrl_nf_wd = reg_wdata[2];
-
   assign ctrl_slpbk_wd = reg_wdata[4];
-
   assign ctrl_llpbk_wd = reg_wdata[5];
-
   assign ctrl_parity_en_wd = reg_wdata[6];
-
   assign ctrl_parity_odd_wd = reg_wdata[7];
-
   assign ctrl_rxblvl_wd = reg_wdata[9:8];
-
   assign ctrl_nco_wd = reg_wdata[31:16];
-  assign status_re = racl_addr_hit_read[5] & reg_re & !reg_error;
-  assign rdata_re = racl_addr_hit_read[6] & reg_re & !reg_error;
-  assign wdata_we = racl_addr_hit_write[7] & reg_we & !reg_error;
+
+  assign status_re = racl_addr_read_valid & (racl_addr_read_idx == 5) & reg_re & !reg_error;
+
+  assign rdata_re = racl_addr_read_valid & (racl_addr_read_idx == 6) & reg_re & !reg_error;
+
+  assign wdata_we = racl_addr_write_valid & (racl_addr_write_idx == 7) & reg_we & !reg_error;
 
   assign wdata_wd = reg_wdata[7:0];
-  assign fifo_ctrl_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+
+  assign fifo_ctrl_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
   assign fifo_ctrl_rxrst_wd = reg_wdata[0];
-
   assign fifo_ctrl_txrst_wd = reg_wdata[1];
-
   assign fifo_ctrl_rxilvl_wd = reg_wdata[4:2];
-
   assign fifo_ctrl_txilvl_wd = reg_wdata[7:5];
-  assign fifo_status_re = racl_addr_hit_read[9] & reg_re & !reg_error;
-  assign ovrd_we = racl_addr_hit_write[10] & reg_we & !reg_error;
+
+  assign fifo_status_re = racl_addr_read_valid & (racl_addr_read_idx == 9) & reg_re & !reg_error;
+
+  assign ovrd_we = racl_addr_write_valid & (racl_addr_write_idx == 10) & reg_we & !reg_error;
 
   assign ovrd_txen_wd = reg_wdata[0];
-
   assign ovrd_txval_wd = reg_wdata[1];
-  assign val_re = racl_addr_hit_read[11] & reg_re & !reg_error;
-  assign timeout_ctrl_we = racl_addr_hit_write[12] & reg_we & !reg_error;
+
+  assign val_re = racl_addr_read_valid & (racl_addr_read_idx == 11) & reg_re & !reg_error;
+
+  assign timeout_ctrl_we = racl_addr_write_valid & (racl_addr_write_idx == 12) & reg_we & !reg_error;
 
   assign timeout_ctrl_val_wd = reg_wdata[23:0];
-
   assign timeout_ctrl_en_wd = reg_wdata[31];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -1780,107 +1777,112 @@ module uart_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = intr_state_tx_watermark_qs;
-        reg_rdata_next[1] = intr_state_rx_watermark_qs;
-        reg_rdata_next[2] = intr_state_tx_done_qs;
-        reg_rdata_next[3] = intr_state_rx_overflow_qs;
-        reg_rdata_next[4] = intr_state_rx_frame_err_qs;
-        reg_rdata_next[5] = intr_state_rx_break_err_qs;
-        reg_rdata_next[6] = intr_state_rx_timeout_qs;
-        reg_rdata_next[7] = intr_state_rx_parity_err_qs;
-        reg_rdata_next[8] = intr_state_tx_empty_qs;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_tx_watermark_qs;
+          reg_rdata_next[1] = intr_state_rx_watermark_qs;
+          reg_rdata_next[2] = intr_state_tx_done_qs;
+          reg_rdata_next[3] = intr_state_rx_overflow_qs;
+          reg_rdata_next[4] = intr_state_rx_frame_err_qs;
+          reg_rdata_next[5] = intr_state_rx_break_err_qs;
+          reg_rdata_next[6] = intr_state_rx_timeout_qs;
+          reg_rdata_next[7] = intr_state_rx_parity_err_qs;
+          reg_rdata_next[8] = intr_state_tx_empty_qs;
+        end
 
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = intr_enable_tx_watermark_qs;
-        reg_rdata_next[1] = intr_enable_rx_watermark_qs;
-        reg_rdata_next[2] = intr_enable_tx_done_qs;
-        reg_rdata_next[3] = intr_enable_rx_overflow_qs;
-        reg_rdata_next[4] = intr_enable_rx_frame_err_qs;
-        reg_rdata_next[5] = intr_enable_rx_break_err_qs;
-        reg_rdata_next[6] = intr_enable_rx_timeout_qs;
-        reg_rdata_next[7] = intr_enable_rx_parity_err_qs;
-        reg_rdata_next[8] = intr_enable_tx_empty_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_tx_watermark_qs;
+          reg_rdata_next[1] = intr_enable_rx_watermark_qs;
+          reg_rdata_next[2] = intr_enable_tx_done_qs;
+          reg_rdata_next[3] = intr_enable_rx_overflow_qs;
+          reg_rdata_next[4] = intr_enable_rx_frame_err_qs;
+          reg_rdata_next[5] = intr_enable_rx_break_err_qs;
+          reg_rdata_next[6] = intr_enable_rx_timeout_qs;
+          reg_rdata_next[7] = intr_enable_rx_parity_err_qs;
+          reg_rdata_next[8] = intr_enable_tx_empty_qs;
+        end
 
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
-        reg_rdata_next[4] = '0;
-        reg_rdata_next[5] = '0;
-        reg_rdata_next[6] = '0;
-        reg_rdata_next[7] = '0;
-        reg_rdata_next[8] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+          reg_rdata_next[3] = '0;
+          reg_rdata_next[4] = '0;
+          reg_rdata_next[5] = '0;
+          reg_rdata_next[6] = '0;
+          reg_rdata_next[7] = '0;
+          reg_rdata_next[8] = '0;
+        end
 
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next[0] = ctrl_tx_qs;
-        reg_rdata_next[1] = ctrl_rx_qs;
-        reg_rdata_next[2] = ctrl_nf_qs;
-        reg_rdata_next[4] = ctrl_slpbk_qs;
-        reg_rdata_next[5] = ctrl_llpbk_qs;
-        reg_rdata_next[6] = ctrl_parity_en_qs;
-        reg_rdata_next[7] = ctrl_parity_odd_qs;
-        reg_rdata_next[9:8] = ctrl_rxblvl_qs;
-        reg_rdata_next[31:16] = ctrl_nco_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = ctrl_tx_qs;
+          reg_rdata_next[1] = ctrl_rx_qs;
+          reg_rdata_next[2] = ctrl_nf_qs;
+          reg_rdata_next[4] = ctrl_slpbk_qs;
+          reg_rdata_next[5] = ctrl_llpbk_qs;
+          reg_rdata_next[6] = ctrl_parity_en_qs;
+          reg_rdata_next[7] = ctrl_parity_odd_qs;
+          reg_rdata_next[9:8] = ctrl_rxblvl_qs;
+          reg_rdata_next[31:16] = ctrl_nco_qs;
+        end
 
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next[0] = status_txfull_qs;
-        reg_rdata_next[1] = status_rxfull_qs;
-        reg_rdata_next[2] = status_txempty_qs;
-        reg_rdata_next[3] = status_txidle_qs;
-        reg_rdata_next[4] = status_rxidle_qs;
-        reg_rdata_next[5] = status_rxempty_qs;
-      end
+        5: begin
+          reg_rdata_next[0] = status_txfull_qs;
+          reg_rdata_next[1] = status_rxfull_qs;
+          reg_rdata_next[2] = status_txempty_qs;
+          reg_rdata_next[3] = status_txidle_qs;
+          reg_rdata_next[4] = status_rxidle_qs;
+          reg_rdata_next[5] = status_rxempty_qs;
+        end
 
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next[7:0] = rdata_qs;
-      end
+        6: begin
+          reg_rdata_next[7:0] = rdata_qs;
+        end
 
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next[7:0] = '0;
-      end
+        7: begin
+          reg_rdata_next[7:0] = '0;
+        end
 
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[4:2] = fifo_ctrl_rxilvl_qs;
-        reg_rdata_next[7:5] = fifo_ctrl_txilvl_qs;
-      end
+        8: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[4:2] = fifo_ctrl_rxilvl_qs;
+          reg_rdata_next[7:5] = fifo_ctrl_txilvl_qs;
+        end
 
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next[7:0] = fifo_status_txlvl_qs;
-        reg_rdata_next[23:16] = fifo_status_rxlvl_qs;
-      end
+        9: begin
+          reg_rdata_next[7:0] = fifo_status_txlvl_qs;
+          reg_rdata_next[23:16] = fifo_status_rxlvl_qs;
+        end
 
-      racl_addr_hit_read[10]: begin
-        reg_rdata_next[0] = ovrd_txen_qs;
-        reg_rdata_next[1] = ovrd_txval_qs;
-      end
+        10: begin
+          reg_rdata_next[0] = ovrd_txen_qs;
+          reg_rdata_next[1] = ovrd_txval_qs;
+        end
 
-      racl_addr_hit_read[11]: begin
-        reg_rdata_next[15:0] = val_qs;
-      end
+        11: begin
+          reg_rdata_next[15:0] = val_qs;
+        end
 
-      racl_addr_hit_read[12]: begin
-        reg_rdata_next[23:0] = timeout_ctrl_val_qs;
-        reg_rdata_next[31] = timeout_ctrl_en_qs;
-      end
+        12: begin
+          reg_rdata_next[23:0] = timeout_ctrl_val_qs;
+          reg_rdata_next[31] = timeout_ctrl_en_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -1907,7 +1909,7 @@ module uart_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

@@ -8606,598 +8606,892 @@ module rv_dm_mem_reg_top (
 
 
 
-  logic [280:0] addr_hit;
+  logic [$clog2(NumRegsMem)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[  0] = (reg_addr == RV_DM_HALTED_OFFSET);
-    addr_hit[  1] = (reg_addr == RV_DM_GOING_OFFSET);
-    addr_hit[  2] = (reg_addr == RV_DM_RESUMING_OFFSET);
-    addr_hit[  3] = (reg_addr == RV_DM_EXCEPTION_OFFSET);
-    addr_hit[  4] = (reg_addr == RV_DM_WHERETO_OFFSET);
-    addr_hit[  5] = (reg_addr == RV_DM_ABSTRACTCMD_0_OFFSET);
-    addr_hit[  6] = (reg_addr == RV_DM_ABSTRACTCMD_1_OFFSET);
-    addr_hit[  7] = (reg_addr == RV_DM_ABSTRACTCMD_2_OFFSET);
-    addr_hit[  8] = (reg_addr == RV_DM_ABSTRACTCMD_3_OFFSET);
-    addr_hit[  9] = (reg_addr == RV_DM_ABSTRACTCMD_4_OFFSET);
-    addr_hit[ 10] = (reg_addr == RV_DM_ABSTRACTCMD_5_OFFSET);
-    addr_hit[ 11] = (reg_addr == RV_DM_ABSTRACTCMD_6_OFFSET);
-    addr_hit[ 12] = (reg_addr == RV_DM_ABSTRACTCMD_7_OFFSET);
-    addr_hit[ 13] = (reg_addr == RV_DM_ABSTRACTCMD_8_OFFSET);
-    addr_hit[ 14] = (reg_addr == RV_DM_ABSTRACTCMD_9_OFFSET);
-    addr_hit[ 15] = (reg_addr == RV_DM_PROGRAM_BUFFER_0_OFFSET);
-    addr_hit[ 16] = (reg_addr == RV_DM_PROGRAM_BUFFER_1_OFFSET);
-    addr_hit[ 17] = (reg_addr == RV_DM_PROGRAM_BUFFER_2_OFFSET);
-    addr_hit[ 18] = (reg_addr == RV_DM_PROGRAM_BUFFER_3_OFFSET);
-    addr_hit[ 19] = (reg_addr == RV_DM_PROGRAM_BUFFER_4_OFFSET);
-    addr_hit[ 20] = (reg_addr == RV_DM_PROGRAM_BUFFER_5_OFFSET);
-    addr_hit[ 21] = (reg_addr == RV_DM_PROGRAM_BUFFER_6_OFFSET);
-    addr_hit[ 22] = (reg_addr == RV_DM_PROGRAM_BUFFER_7_OFFSET);
-    addr_hit[ 23] = (reg_addr == RV_DM_DATAADDR_0_OFFSET);
-    addr_hit[ 24] = (reg_addr == RV_DM_DATAADDR_1_OFFSET);
-    addr_hit[ 25] = (reg_addr == RV_DM_FLAGS_0_OFFSET);
-    addr_hit[ 26] = (reg_addr == RV_DM_FLAGS_1_OFFSET);
-    addr_hit[ 27] = (reg_addr == RV_DM_FLAGS_2_OFFSET);
-    addr_hit[ 28] = (reg_addr == RV_DM_FLAGS_3_OFFSET);
-    addr_hit[ 29] = (reg_addr == RV_DM_FLAGS_4_OFFSET);
-    addr_hit[ 30] = (reg_addr == RV_DM_FLAGS_5_OFFSET);
-    addr_hit[ 31] = (reg_addr == RV_DM_FLAGS_6_OFFSET);
-    addr_hit[ 32] = (reg_addr == RV_DM_FLAGS_7_OFFSET);
-    addr_hit[ 33] = (reg_addr == RV_DM_FLAGS_8_OFFSET);
-    addr_hit[ 34] = (reg_addr == RV_DM_FLAGS_9_OFFSET);
-    addr_hit[ 35] = (reg_addr == RV_DM_FLAGS_10_OFFSET);
-    addr_hit[ 36] = (reg_addr == RV_DM_FLAGS_11_OFFSET);
-    addr_hit[ 37] = (reg_addr == RV_DM_FLAGS_12_OFFSET);
-    addr_hit[ 38] = (reg_addr == RV_DM_FLAGS_13_OFFSET);
-    addr_hit[ 39] = (reg_addr == RV_DM_FLAGS_14_OFFSET);
-    addr_hit[ 40] = (reg_addr == RV_DM_FLAGS_15_OFFSET);
-    addr_hit[ 41] = (reg_addr == RV_DM_FLAGS_16_OFFSET);
-    addr_hit[ 42] = (reg_addr == RV_DM_FLAGS_17_OFFSET);
-    addr_hit[ 43] = (reg_addr == RV_DM_FLAGS_18_OFFSET);
-    addr_hit[ 44] = (reg_addr == RV_DM_FLAGS_19_OFFSET);
-    addr_hit[ 45] = (reg_addr == RV_DM_FLAGS_20_OFFSET);
-    addr_hit[ 46] = (reg_addr == RV_DM_FLAGS_21_OFFSET);
-    addr_hit[ 47] = (reg_addr == RV_DM_FLAGS_22_OFFSET);
-    addr_hit[ 48] = (reg_addr == RV_DM_FLAGS_23_OFFSET);
-    addr_hit[ 49] = (reg_addr == RV_DM_FLAGS_24_OFFSET);
-    addr_hit[ 50] = (reg_addr == RV_DM_FLAGS_25_OFFSET);
-    addr_hit[ 51] = (reg_addr == RV_DM_FLAGS_26_OFFSET);
-    addr_hit[ 52] = (reg_addr == RV_DM_FLAGS_27_OFFSET);
-    addr_hit[ 53] = (reg_addr == RV_DM_FLAGS_28_OFFSET);
-    addr_hit[ 54] = (reg_addr == RV_DM_FLAGS_29_OFFSET);
-    addr_hit[ 55] = (reg_addr == RV_DM_FLAGS_30_OFFSET);
-    addr_hit[ 56] = (reg_addr == RV_DM_FLAGS_31_OFFSET);
-    addr_hit[ 57] = (reg_addr == RV_DM_FLAGS_32_OFFSET);
-    addr_hit[ 58] = (reg_addr == RV_DM_FLAGS_33_OFFSET);
-    addr_hit[ 59] = (reg_addr == RV_DM_FLAGS_34_OFFSET);
-    addr_hit[ 60] = (reg_addr == RV_DM_FLAGS_35_OFFSET);
-    addr_hit[ 61] = (reg_addr == RV_DM_FLAGS_36_OFFSET);
-    addr_hit[ 62] = (reg_addr == RV_DM_FLAGS_37_OFFSET);
-    addr_hit[ 63] = (reg_addr == RV_DM_FLAGS_38_OFFSET);
-    addr_hit[ 64] = (reg_addr == RV_DM_FLAGS_39_OFFSET);
-    addr_hit[ 65] = (reg_addr == RV_DM_FLAGS_40_OFFSET);
-    addr_hit[ 66] = (reg_addr == RV_DM_FLAGS_41_OFFSET);
-    addr_hit[ 67] = (reg_addr == RV_DM_FLAGS_42_OFFSET);
-    addr_hit[ 68] = (reg_addr == RV_DM_FLAGS_43_OFFSET);
-    addr_hit[ 69] = (reg_addr == RV_DM_FLAGS_44_OFFSET);
-    addr_hit[ 70] = (reg_addr == RV_DM_FLAGS_45_OFFSET);
-    addr_hit[ 71] = (reg_addr == RV_DM_FLAGS_46_OFFSET);
-    addr_hit[ 72] = (reg_addr == RV_DM_FLAGS_47_OFFSET);
-    addr_hit[ 73] = (reg_addr == RV_DM_FLAGS_48_OFFSET);
-    addr_hit[ 74] = (reg_addr == RV_DM_FLAGS_49_OFFSET);
-    addr_hit[ 75] = (reg_addr == RV_DM_FLAGS_50_OFFSET);
-    addr_hit[ 76] = (reg_addr == RV_DM_FLAGS_51_OFFSET);
-    addr_hit[ 77] = (reg_addr == RV_DM_FLAGS_52_OFFSET);
-    addr_hit[ 78] = (reg_addr == RV_DM_FLAGS_53_OFFSET);
-    addr_hit[ 79] = (reg_addr == RV_DM_FLAGS_54_OFFSET);
-    addr_hit[ 80] = (reg_addr == RV_DM_FLAGS_55_OFFSET);
-    addr_hit[ 81] = (reg_addr == RV_DM_FLAGS_56_OFFSET);
-    addr_hit[ 82] = (reg_addr == RV_DM_FLAGS_57_OFFSET);
-    addr_hit[ 83] = (reg_addr == RV_DM_FLAGS_58_OFFSET);
-    addr_hit[ 84] = (reg_addr == RV_DM_FLAGS_59_OFFSET);
-    addr_hit[ 85] = (reg_addr == RV_DM_FLAGS_60_OFFSET);
-    addr_hit[ 86] = (reg_addr == RV_DM_FLAGS_61_OFFSET);
-    addr_hit[ 87] = (reg_addr == RV_DM_FLAGS_62_OFFSET);
-    addr_hit[ 88] = (reg_addr == RV_DM_FLAGS_63_OFFSET);
-    addr_hit[ 89] = (reg_addr == RV_DM_FLAGS_64_OFFSET);
-    addr_hit[ 90] = (reg_addr == RV_DM_FLAGS_65_OFFSET);
-    addr_hit[ 91] = (reg_addr == RV_DM_FLAGS_66_OFFSET);
-    addr_hit[ 92] = (reg_addr == RV_DM_FLAGS_67_OFFSET);
-    addr_hit[ 93] = (reg_addr == RV_DM_FLAGS_68_OFFSET);
-    addr_hit[ 94] = (reg_addr == RV_DM_FLAGS_69_OFFSET);
-    addr_hit[ 95] = (reg_addr == RV_DM_FLAGS_70_OFFSET);
-    addr_hit[ 96] = (reg_addr == RV_DM_FLAGS_71_OFFSET);
-    addr_hit[ 97] = (reg_addr == RV_DM_FLAGS_72_OFFSET);
-    addr_hit[ 98] = (reg_addr == RV_DM_FLAGS_73_OFFSET);
-    addr_hit[ 99] = (reg_addr == RV_DM_FLAGS_74_OFFSET);
-    addr_hit[100] = (reg_addr == RV_DM_FLAGS_75_OFFSET);
-    addr_hit[101] = (reg_addr == RV_DM_FLAGS_76_OFFSET);
-    addr_hit[102] = (reg_addr == RV_DM_FLAGS_77_OFFSET);
-    addr_hit[103] = (reg_addr == RV_DM_FLAGS_78_OFFSET);
-    addr_hit[104] = (reg_addr == RV_DM_FLAGS_79_OFFSET);
-    addr_hit[105] = (reg_addr == RV_DM_FLAGS_80_OFFSET);
-    addr_hit[106] = (reg_addr == RV_DM_FLAGS_81_OFFSET);
-    addr_hit[107] = (reg_addr == RV_DM_FLAGS_82_OFFSET);
-    addr_hit[108] = (reg_addr == RV_DM_FLAGS_83_OFFSET);
-    addr_hit[109] = (reg_addr == RV_DM_FLAGS_84_OFFSET);
-    addr_hit[110] = (reg_addr == RV_DM_FLAGS_85_OFFSET);
-    addr_hit[111] = (reg_addr == RV_DM_FLAGS_86_OFFSET);
-    addr_hit[112] = (reg_addr == RV_DM_FLAGS_87_OFFSET);
-    addr_hit[113] = (reg_addr == RV_DM_FLAGS_88_OFFSET);
-    addr_hit[114] = (reg_addr == RV_DM_FLAGS_89_OFFSET);
-    addr_hit[115] = (reg_addr == RV_DM_FLAGS_90_OFFSET);
-    addr_hit[116] = (reg_addr == RV_DM_FLAGS_91_OFFSET);
-    addr_hit[117] = (reg_addr == RV_DM_FLAGS_92_OFFSET);
-    addr_hit[118] = (reg_addr == RV_DM_FLAGS_93_OFFSET);
-    addr_hit[119] = (reg_addr == RV_DM_FLAGS_94_OFFSET);
-    addr_hit[120] = (reg_addr == RV_DM_FLAGS_95_OFFSET);
-    addr_hit[121] = (reg_addr == RV_DM_FLAGS_96_OFFSET);
-    addr_hit[122] = (reg_addr == RV_DM_FLAGS_97_OFFSET);
-    addr_hit[123] = (reg_addr == RV_DM_FLAGS_98_OFFSET);
-    addr_hit[124] = (reg_addr == RV_DM_FLAGS_99_OFFSET);
-    addr_hit[125] = (reg_addr == RV_DM_FLAGS_100_OFFSET);
-    addr_hit[126] = (reg_addr == RV_DM_FLAGS_101_OFFSET);
-    addr_hit[127] = (reg_addr == RV_DM_FLAGS_102_OFFSET);
-    addr_hit[128] = (reg_addr == RV_DM_FLAGS_103_OFFSET);
-    addr_hit[129] = (reg_addr == RV_DM_FLAGS_104_OFFSET);
-    addr_hit[130] = (reg_addr == RV_DM_FLAGS_105_OFFSET);
-    addr_hit[131] = (reg_addr == RV_DM_FLAGS_106_OFFSET);
-    addr_hit[132] = (reg_addr == RV_DM_FLAGS_107_OFFSET);
-    addr_hit[133] = (reg_addr == RV_DM_FLAGS_108_OFFSET);
-    addr_hit[134] = (reg_addr == RV_DM_FLAGS_109_OFFSET);
-    addr_hit[135] = (reg_addr == RV_DM_FLAGS_110_OFFSET);
-    addr_hit[136] = (reg_addr == RV_DM_FLAGS_111_OFFSET);
-    addr_hit[137] = (reg_addr == RV_DM_FLAGS_112_OFFSET);
-    addr_hit[138] = (reg_addr == RV_DM_FLAGS_113_OFFSET);
-    addr_hit[139] = (reg_addr == RV_DM_FLAGS_114_OFFSET);
-    addr_hit[140] = (reg_addr == RV_DM_FLAGS_115_OFFSET);
-    addr_hit[141] = (reg_addr == RV_DM_FLAGS_116_OFFSET);
-    addr_hit[142] = (reg_addr == RV_DM_FLAGS_117_OFFSET);
-    addr_hit[143] = (reg_addr == RV_DM_FLAGS_118_OFFSET);
-    addr_hit[144] = (reg_addr == RV_DM_FLAGS_119_OFFSET);
-    addr_hit[145] = (reg_addr == RV_DM_FLAGS_120_OFFSET);
-    addr_hit[146] = (reg_addr == RV_DM_FLAGS_121_OFFSET);
-    addr_hit[147] = (reg_addr == RV_DM_FLAGS_122_OFFSET);
-    addr_hit[148] = (reg_addr == RV_DM_FLAGS_123_OFFSET);
-    addr_hit[149] = (reg_addr == RV_DM_FLAGS_124_OFFSET);
-    addr_hit[150] = (reg_addr == RV_DM_FLAGS_125_OFFSET);
-    addr_hit[151] = (reg_addr == RV_DM_FLAGS_126_OFFSET);
-    addr_hit[152] = (reg_addr == RV_DM_FLAGS_127_OFFSET);
-    addr_hit[153] = (reg_addr == RV_DM_FLAGS_128_OFFSET);
-    addr_hit[154] = (reg_addr == RV_DM_FLAGS_129_OFFSET);
-    addr_hit[155] = (reg_addr == RV_DM_FLAGS_130_OFFSET);
-    addr_hit[156] = (reg_addr == RV_DM_FLAGS_131_OFFSET);
-    addr_hit[157] = (reg_addr == RV_DM_FLAGS_132_OFFSET);
-    addr_hit[158] = (reg_addr == RV_DM_FLAGS_133_OFFSET);
-    addr_hit[159] = (reg_addr == RV_DM_FLAGS_134_OFFSET);
-    addr_hit[160] = (reg_addr == RV_DM_FLAGS_135_OFFSET);
-    addr_hit[161] = (reg_addr == RV_DM_FLAGS_136_OFFSET);
-    addr_hit[162] = (reg_addr == RV_DM_FLAGS_137_OFFSET);
-    addr_hit[163] = (reg_addr == RV_DM_FLAGS_138_OFFSET);
-    addr_hit[164] = (reg_addr == RV_DM_FLAGS_139_OFFSET);
-    addr_hit[165] = (reg_addr == RV_DM_FLAGS_140_OFFSET);
-    addr_hit[166] = (reg_addr == RV_DM_FLAGS_141_OFFSET);
-    addr_hit[167] = (reg_addr == RV_DM_FLAGS_142_OFFSET);
-    addr_hit[168] = (reg_addr == RV_DM_FLAGS_143_OFFSET);
-    addr_hit[169] = (reg_addr == RV_DM_FLAGS_144_OFFSET);
-    addr_hit[170] = (reg_addr == RV_DM_FLAGS_145_OFFSET);
-    addr_hit[171] = (reg_addr == RV_DM_FLAGS_146_OFFSET);
-    addr_hit[172] = (reg_addr == RV_DM_FLAGS_147_OFFSET);
-    addr_hit[173] = (reg_addr == RV_DM_FLAGS_148_OFFSET);
-    addr_hit[174] = (reg_addr == RV_DM_FLAGS_149_OFFSET);
-    addr_hit[175] = (reg_addr == RV_DM_FLAGS_150_OFFSET);
-    addr_hit[176] = (reg_addr == RV_DM_FLAGS_151_OFFSET);
-    addr_hit[177] = (reg_addr == RV_DM_FLAGS_152_OFFSET);
-    addr_hit[178] = (reg_addr == RV_DM_FLAGS_153_OFFSET);
-    addr_hit[179] = (reg_addr == RV_DM_FLAGS_154_OFFSET);
-    addr_hit[180] = (reg_addr == RV_DM_FLAGS_155_OFFSET);
-    addr_hit[181] = (reg_addr == RV_DM_FLAGS_156_OFFSET);
-    addr_hit[182] = (reg_addr == RV_DM_FLAGS_157_OFFSET);
-    addr_hit[183] = (reg_addr == RV_DM_FLAGS_158_OFFSET);
-    addr_hit[184] = (reg_addr == RV_DM_FLAGS_159_OFFSET);
-    addr_hit[185] = (reg_addr == RV_DM_FLAGS_160_OFFSET);
-    addr_hit[186] = (reg_addr == RV_DM_FLAGS_161_OFFSET);
-    addr_hit[187] = (reg_addr == RV_DM_FLAGS_162_OFFSET);
-    addr_hit[188] = (reg_addr == RV_DM_FLAGS_163_OFFSET);
-    addr_hit[189] = (reg_addr == RV_DM_FLAGS_164_OFFSET);
-    addr_hit[190] = (reg_addr == RV_DM_FLAGS_165_OFFSET);
-    addr_hit[191] = (reg_addr == RV_DM_FLAGS_166_OFFSET);
-    addr_hit[192] = (reg_addr == RV_DM_FLAGS_167_OFFSET);
-    addr_hit[193] = (reg_addr == RV_DM_FLAGS_168_OFFSET);
-    addr_hit[194] = (reg_addr == RV_DM_FLAGS_169_OFFSET);
-    addr_hit[195] = (reg_addr == RV_DM_FLAGS_170_OFFSET);
-    addr_hit[196] = (reg_addr == RV_DM_FLAGS_171_OFFSET);
-    addr_hit[197] = (reg_addr == RV_DM_FLAGS_172_OFFSET);
-    addr_hit[198] = (reg_addr == RV_DM_FLAGS_173_OFFSET);
-    addr_hit[199] = (reg_addr == RV_DM_FLAGS_174_OFFSET);
-    addr_hit[200] = (reg_addr == RV_DM_FLAGS_175_OFFSET);
-    addr_hit[201] = (reg_addr == RV_DM_FLAGS_176_OFFSET);
-    addr_hit[202] = (reg_addr == RV_DM_FLAGS_177_OFFSET);
-    addr_hit[203] = (reg_addr == RV_DM_FLAGS_178_OFFSET);
-    addr_hit[204] = (reg_addr == RV_DM_FLAGS_179_OFFSET);
-    addr_hit[205] = (reg_addr == RV_DM_FLAGS_180_OFFSET);
-    addr_hit[206] = (reg_addr == RV_DM_FLAGS_181_OFFSET);
-    addr_hit[207] = (reg_addr == RV_DM_FLAGS_182_OFFSET);
-    addr_hit[208] = (reg_addr == RV_DM_FLAGS_183_OFFSET);
-    addr_hit[209] = (reg_addr == RV_DM_FLAGS_184_OFFSET);
-    addr_hit[210] = (reg_addr == RV_DM_FLAGS_185_OFFSET);
-    addr_hit[211] = (reg_addr == RV_DM_FLAGS_186_OFFSET);
-    addr_hit[212] = (reg_addr == RV_DM_FLAGS_187_OFFSET);
-    addr_hit[213] = (reg_addr == RV_DM_FLAGS_188_OFFSET);
-    addr_hit[214] = (reg_addr == RV_DM_FLAGS_189_OFFSET);
-    addr_hit[215] = (reg_addr == RV_DM_FLAGS_190_OFFSET);
-    addr_hit[216] = (reg_addr == RV_DM_FLAGS_191_OFFSET);
-    addr_hit[217] = (reg_addr == RV_DM_FLAGS_192_OFFSET);
-    addr_hit[218] = (reg_addr == RV_DM_FLAGS_193_OFFSET);
-    addr_hit[219] = (reg_addr == RV_DM_FLAGS_194_OFFSET);
-    addr_hit[220] = (reg_addr == RV_DM_FLAGS_195_OFFSET);
-    addr_hit[221] = (reg_addr == RV_DM_FLAGS_196_OFFSET);
-    addr_hit[222] = (reg_addr == RV_DM_FLAGS_197_OFFSET);
-    addr_hit[223] = (reg_addr == RV_DM_FLAGS_198_OFFSET);
-    addr_hit[224] = (reg_addr == RV_DM_FLAGS_199_OFFSET);
-    addr_hit[225] = (reg_addr == RV_DM_FLAGS_200_OFFSET);
-    addr_hit[226] = (reg_addr == RV_DM_FLAGS_201_OFFSET);
-    addr_hit[227] = (reg_addr == RV_DM_FLAGS_202_OFFSET);
-    addr_hit[228] = (reg_addr == RV_DM_FLAGS_203_OFFSET);
-    addr_hit[229] = (reg_addr == RV_DM_FLAGS_204_OFFSET);
-    addr_hit[230] = (reg_addr == RV_DM_FLAGS_205_OFFSET);
-    addr_hit[231] = (reg_addr == RV_DM_FLAGS_206_OFFSET);
-    addr_hit[232] = (reg_addr == RV_DM_FLAGS_207_OFFSET);
-    addr_hit[233] = (reg_addr == RV_DM_FLAGS_208_OFFSET);
-    addr_hit[234] = (reg_addr == RV_DM_FLAGS_209_OFFSET);
-    addr_hit[235] = (reg_addr == RV_DM_FLAGS_210_OFFSET);
-    addr_hit[236] = (reg_addr == RV_DM_FLAGS_211_OFFSET);
-    addr_hit[237] = (reg_addr == RV_DM_FLAGS_212_OFFSET);
-    addr_hit[238] = (reg_addr == RV_DM_FLAGS_213_OFFSET);
-    addr_hit[239] = (reg_addr == RV_DM_FLAGS_214_OFFSET);
-    addr_hit[240] = (reg_addr == RV_DM_FLAGS_215_OFFSET);
-    addr_hit[241] = (reg_addr == RV_DM_FLAGS_216_OFFSET);
-    addr_hit[242] = (reg_addr == RV_DM_FLAGS_217_OFFSET);
-    addr_hit[243] = (reg_addr == RV_DM_FLAGS_218_OFFSET);
-    addr_hit[244] = (reg_addr == RV_DM_FLAGS_219_OFFSET);
-    addr_hit[245] = (reg_addr == RV_DM_FLAGS_220_OFFSET);
-    addr_hit[246] = (reg_addr == RV_DM_FLAGS_221_OFFSET);
-    addr_hit[247] = (reg_addr == RV_DM_FLAGS_222_OFFSET);
-    addr_hit[248] = (reg_addr == RV_DM_FLAGS_223_OFFSET);
-    addr_hit[249] = (reg_addr == RV_DM_FLAGS_224_OFFSET);
-    addr_hit[250] = (reg_addr == RV_DM_FLAGS_225_OFFSET);
-    addr_hit[251] = (reg_addr == RV_DM_FLAGS_226_OFFSET);
-    addr_hit[252] = (reg_addr == RV_DM_FLAGS_227_OFFSET);
-    addr_hit[253] = (reg_addr == RV_DM_FLAGS_228_OFFSET);
-    addr_hit[254] = (reg_addr == RV_DM_FLAGS_229_OFFSET);
-    addr_hit[255] = (reg_addr == RV_DM_FLAGS_230_OFFSET);
-    addr_hit[256] = (reg_addr == RV_DM_FLAGS_231_OFFSET);
-    addr_hit[257] = (reg_addr == RV_DM_FLAGS_232_OFFSET);
-    addr_hit[258] = (reg_addr == RV_DM_FLAGS_233_OFFSET);
-    addr_hit[259] = (reg_addr == RV_DM_FLAGS_234_OFFSET);
-    addr_hit[260] = (reg_addr == RV_DM_FLAGS_235_OFFSET);
-    addr_hit[261] = (reg_addr == RV_DM_FLAGS_236_OFFSET);
-    addr_hit[262] = (reg_addr == RV_DM_FLAGS_237_OFFSET);
-    addr_hit[263] = (reg_addr == RV_DM_FLAGS_238_OFFSET);
-    addr_hit[264] = (reg_addr == RV_DM_FLAGS_239_OFFSET);
-    addr_hit[265] = (reg_addr == RV_DM_FLAGS_240_OFFSET);
-    addr_hit[266] = (reg_addr == RV_DM_FLAGS_241_OFFSET);
-    addr_hit[267] = (reg_addr == RV_DM_FLAGS_242_OFFSET);
-    addr_hit[268] = (reg_addr == RV_DM_FLAGS_243_OFFSET);
-    addr_hit[269] = (reg_addr == RV_DM_FLAGS_244_OFFSET);
-    addr_hit[270] = (reg_addr == RV_DM_FLAGS_245_OFFSET);
-    addr_hit[271] = (reg_addr == RV_DM_FLAGS_246_OFFSET);
-    addr_hit[272] = (reg_addr == RV_DM_FLAGS_247_OFFSET);
-    addr_hit[273] = (reg_addr == RV_DM_FLAGS_248_OFFSET);
-    addr_hit[274] = (reg_addr == RV_DM_FLAGS_249_OFFSET);
-    addr_hit[275] = (reg_addr == RV_DM_FLAGS_250_OFFSET);
-    addr_hit[276] = (reg_addr == RV_DM_FLAGS_251_OFFSET);
-    addr_hit[277] = (reg_addr == RV_DM_FLAGS_252_OFFSET);
-    addr_hit[278] = (reg_addr == RV_DM_FLAGS_253_OFFSET);
-    addr_hit[279] = (reg_addr == RV_DM_FLAGS_254_OFFSET);
-    addr_hit[280] = (reg_addr == RV_DM_FLAGS_255_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      RV_DM_HALTED_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      RV_DM_GOING_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      RV_DM_RESUMING_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      RV_DM_EXCEPTION_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      RV_DM_WHERETO_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      RV_DM_ABSTRACTCMD_0_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      RV_DM_ABSTRACTCMD_1_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      RV_DM_ABSTRACTCMD_2_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      RV_DM_ABSTRACTCMD_3_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      RV_DM_ABSTRACTCMD_4_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      RV_DM_ABSTRACTCMD_5_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      RV_DM_ABSTRACTCMD_6_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      RV_DM_ABSTRACTCMD_7_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      RV_DM_ABSTRACTCMD_8_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      RV_DM_ABSTRACTCMD_9_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      RV_DM_PROGRAM_BUFFER_0_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      RV_DM_PROGRAM_BUFFER_1_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      RV_DM_PROGRAM_BUFFER_2_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      RV_DM_PROGRAM_BUFFER_3_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      RV_DM_PROGRAM_BUFFER_4_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      RV_DM_PROGRAM_BUFFER_5_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      RV_DM_PROGRAM_BUFFER_6_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      RV_DM_PROGRAM_BUFFER_7_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      RV_DM_DATAADDR_0_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      RV_DM_DATAADDR_1_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      RV_DM_FLAGS_0_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      RV_DM_FLAGS_1_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      RV_DM_FLAGS_2_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      RV_DM_FLAGS_3_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      RV_DM_FLAGS_4_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      RV_DM_FLAGS_5_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      RV_DM_FLAGS_6_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      RV_DM_FLAGS_7_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      RV_DM_FLAGS_8_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      RV_DM_FLAGS_9_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      RV_DM_FLAGS_10_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      RV_DM_FLAGS_11_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      RV_DM_FLAGS_12_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      RV_DM_FLAGS_13_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      RV_DM_FLAGS_14_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      RV_DM_FLAGS_15_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      RV_DM_FLAGS_16_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      RV_DM_FLAGS_17_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      RV_DM_FLAGS_18_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      RV_DM_FLAGS_19_OFFSET: begin addr_valid = 1; addr_idx = 44; end
+      RV_DM_FLAGS_20_OFFSET: begin addr_valid = 1; addr_idx = 45; end
+      RV_DM_FLAGS_21_OFFSET: begin addr_valid = 1; addr_idx = 46; end
+      RV_DM_FLAGS_22_OFFSET: begin addr_valid = 1; addr_idx = 47; end
+      RV_DM_FLAGS_23_OFFSET: begin addr_valid = 1; addr_idx = 48; end
+      RV_DM_FLAGS_24_OFFSET: begin addr_valid = 1; addr_idx = 49; end
+      RV_DM_FLAGS_25_OFFSET: begin addr_valid = 1; addr_idx = 50; end
+      RV_DM_FLAGS_26_OFFSET: begin addr_valid = 1; addr_idx = 51; end
+      RV_DM_FLAGS_27_OFFSET: begin addr_valid = 1; addr_idx = 52; end
+      RV_DM_FLAGS_28_OFFSET: begin addr_valid = 1; addr_idx = 53; end
+      RV_DM_FLAGS_29_OFFSET: begin addr_valid = 1; addr_idx = 54; end
+      RV_DM_FLAGS_30_OFFSET: begin addr_valid = 1; addr_idx = 55; end
+      RV_DM_FLAGS_31_OFFSET: begin addr_valid = 1; addr_idx = 56; end
+      RV_DM_FLAGS_32_OFFSET: begin addr_valid = 1; addr_idx = 57; end
+      RV_DM_FLAGS_33_OFFSET: begin addr_valid = 1; addr_idx = 58; end
+      RV_DM_FLAGS_34_OFFSET: begin addr_valid = 1; addr_idx = 59; end
+      RV_DM_FLAGS_35_OFFSET: begin addr_valid = 1; addr_idx = 60; end
+      RV_DM_FLAGS_36_OFFSET: begin addr_valid = 1; addr_idx = 61; end
+      RV_DM_FLAGS_37_OFFSET: begin addr_valid = 1; addr_idx = 62; end
+      RV_DM_FLAGS_38_OFFSET: begin addr_valid = 1; addr_idx = 63; end
+      RV_DM_FLAGS_39_OFFSET: begin addr_valid = 1; addr_idx = 64; end
+      RV_DM_FLAGS_40_OFFSET: begin addr_valid = 1; addr_idx = 65; end
+      RV_DM_FLAGS_41_OFFSET: begin addr_valid = 1; addr_idx = 66; end
+      RV_DM_FLAGS_42_OFFSET: begin addr_valid = 1; addr_idx = 67; end
+      RV_DM_FLAGS_43_OFFSET: begin addr_valid = 1; addr_idx = 68; end
+      RV_DM_FLAGS_44_OFFSET: begin addr_valid = 1; addr_idx = 69; end
+      RV_DM_FLAGS_45_OFFSET: begin addr_valid = 1; addr_idx = 70; end
+      RV_DM_FLAGS_46_OFFSET: begin addr_valid = 1; addr_idx = 71; end
+      RV_DM_FLAGS_47_OFFSET: begin addr_valid = 1; addr_idx = 72; end
+      RV_DM_FLAGS_48_OFFSET: begin addr_valid = 1; addr_idx = 73; end
+      RV_DM_FLAGS_49_OFFSET: begin addr_valid = 1; addr_idx = 74; end
+      RV_DM_FLAGS_50_OFFSET: begin addr_valid = 1; addr_idx = 75; end
+      RV_DM_FLAGS_51_OFFSET: begin addr_valid = 1; addr_idx = 76; end
+      RV_DM_FLAGS_52_OFFSET: begin addr_valid = 1; addr_idx = 77; end
+      RV_DM_FLAGS_53_OFFSET: begin addr_valid = 1; addr_idx = 78; end
+      RV_DM_FLAGS_54_OFFSET: begin addr_valid = 1; addr_idx = 79; end
+      RV_DM_FLAGS_55_OFFSET: begin addr_valid = 1; addr_idx = 80; end
+      RV_DM_FLAGS_56_OFFSET: begin addr_valid = 1; addr_idx = 81; end
+      RV_DM_FLAGS_57_OFFSET: begin addr_valid = 1; addr_idx = 82; end
+      RV_DM_FLAGS_58_OFFSET: begin addr_valid = 1; addr_idx = 83; end
+      RV_DM_FLAGS_59_OFFSET: begin addr_valid = 1; addr_idx = 84; end
+      RV_DM_FLAGS_60_OFFSET: begin addr_valid = 1; addr_idx = 85; end
+      RV_DM_FLAGS_61_OFFSET: begin addr_valid = 1; addr_idx = 86; end
+      RV_DM_FLAGS_62_OFFSET: begin addr_valid = 1; addr_idx = 87; end
+      RV_DM_FLAGS_63_OFFSET: begin addr_valid = 1; addr_idx = 88; end
+      RV_DM_FLAGS_64_OFFSET: begin addr_valid = 1; addr_idx = 89; end
+      RV_DM_FLAGS_65_OFFSET: begin addr_valid = 1; addr_idx = 90; end
+      RV_DM_FLAGS_66_OFFSET: begin addr_valid = 1; addr_idx = 91; end
+      RV_DM_FLAGS_67_OFFSET: begin addr_valid = 1; addr_idx = 92; end
+      RV_DM_FLAGS_68_OFFSET: begin addr_valid = 1; addr_idx = 93; end
+      RV_DM_FLAGS_69_OFFSET: begin addr_valid = 1; addr_idx = 94; end
+      RV_DM_FLAGS_70_OFFSET: begin addr_valid = 1; addr_idx = 95; end
+      RV_DM_FLAGS_71_OFFSET: begin addr_valid = 1; addr_idx = 96; end
+      RV_DM_FLAGS_72_OFFSET: begin addr_valid = 1; addr_idx = 97; end
+      RV_DM_FLAGS_73_OFFSET: begin addr_valid = 1; addr_idx = 98; end
+      RV_DM_FLAGS_74_OFFSET: begin addr_valid = 1; addr_idx = 99; end
+      RV_DM_FLAGS_75_OFFSET: begin addr_valid = 1; addr_idx = 100; end
+      RV_DM_FLAGS_76_OFFSET: begin addr_valid = 1; addr_idx = 101; end
+      RV_DM_FLAGS_77_OFFSET: begin addr_valid = 1; addr_idx = 102; end
+      RV_DM_FLAGS_78_OFFSET: begin addr_valid = 1; addr_idx = 103; end
+      RV_DM_FLAGS_79_OFFSET: begin addr_valid = 1; addr_idx = 104; end
+      RV_DM_FLAGS_80_OFFSET: begin addr_valid = 1; addr_idx = 105; end
+      RV_DM_FLAGS_81_OFFSET: begin addr_valid = 1; addr_idx = 106; end
+      RV_DM_FLAGS_82_OFFSET: begin addr_valid = 1; addr_idx = 107; end
+      RV_DM_FLAGS_83_OFFSET: begin addr_valid = 1; addr_idx = 108; end
+      RV_DM_FLAGS_84_OFFSET: begin addr_valid = 1; addr_idx = 109; end
+      RV_DM_FLAGS_85_OFFSET: begin addr_valid = 1; addr_idx = 110; end
+      RV_DM_FLAGS_86_OFFSET: begin addr_valid = 1; addr_idx = 111; end
+      RV_DM_FLAGS_87_OFFSET: begin addr_valid = 1; addr_idx = 112; end
+      RV_DM_FLAGS_88_OFFSET: begin addr_valid = 1; addr_idx = 113; end
+      RV_DM_FLAGS_89_OFFSET: begin addr_valid = 1; addr_idx = 114; end
+      RV_DM_FLAGS_90_OFFSET: begin addr_valid = 1; addr_idx = 115; end
+      RV_DM_FLAGS_91_OFFSET: begin addr_valid = 1; addr_idx = 116; end
+      RV_DM_FLAGS_92_OFFSET: begin addr_valid = 1; addr_idx = 117; end
+      RV_DM_FLAGS_93_OFFSET: begin addr_valid = 1; addr_idx = 118; end
+      RV_DM_FLAGS_94_OFFSET: begin addr_valid = 1; addr_idx = 119; end
+      RV_DM_FLAGS_95_OFFSET: begin addr_valid = 1; addr_idx = 120; end
+      RV_DM_FLAGS_96_OFFSET: begin addr_valid = 1; addr_idx = 121; end
+      RV_DM_FLAGS_97_OFFSET: begin addr_valid = 1; addr_idx = 122; end
+      RV_DM_FLAGS_98_OFFSET: begin addr_valid = 1; addr_idx = 123; end
+      RV_DM_FLAGS_99_OFFSET: begin addr_valid = 1; addr_idx = 124; end
+      RV_DM_FLAGS_100_OFFSET: begin addr_valid = 1; addr_idx = 125; end
+      RV_DM_FLAGS_101_OFFSET: begin addr_valid = 1; addr_idx = 126; end
+      RV_DM_FLAGS_102_OFFSET: begin addr_valid = 1; addr_idx = 127; end
+      RV_DM_FLAGS_103_OFFSET: begin addr_valid = 1; addr_idx = 128; end
+      RV_DM_FLAGS_104_OFFSET: begin addr_valid = 1; addr_idx = 129; end
+      RV_DM_FLAGS_105_OFFSET: begin addr_valid = 1; addr_idx = 130; end
+      RV_DM_FLAGS_106_OFFSET: begin addr_valid = 1; addr_idx = 131; end
+      RV_DM_FLAGS_107_OFFSET: begin addr_valid = 1; addr_idx = 132; end
+      RV_DM_FLAGS_108_OFFSET: begin addr_valid = 1; addr_idx = 133; end
+      RV_DM_FLAGS_109_OFFSET: begin addr_valid = 1; addr_idx = 134; end
+      RV_DM_FLAGS_110_OFFSET: begin addr_valid = 1; addr_idx = 135; end
+      RV_DM_FLAGS_111_OFFSET: begin addr_valid = 1; addr_idx = 136; end
+      RV_DM_FLAGS_112_OFFSET: begin addr_valid = 1; addr_idx = 137; end
+      RV_DM_FLAGS_113_OFFSET: begin addr_valid = 1; addr_idx = 138; end
+      RV_DM_FLAGS_114_OFFSET: begin addr_valid = 1; addr_idx = 139; end
+      RV_DM_FLAGS_115_OFFSET: begin addr_valid = 1; addr_idx = 140; end
+      RV_DM_FLAGS_116_OFFSET: begin addr_valid = 1; addr_idx = 141; end
+      RV_DM_FLAGS_117_OFFSET: begin addr_valid = 1; addr_idx = 142; end
+      RV_DM_FLAGS_118_OFFSET: begin addr_valid = 1; addr_idx = 143; end
+      RV_DM_FLAGS_119_OFFSET: begin addr_valid = 1; addr_idx = 144; end
+      RV_DM_FLAGS_120_OFFSET: begin addr_valid = 1; addr_idx = 145; end
+      RV_DM_FLAGS_121_OFFSET: begin addr_valid = 1; addr_idx = 146; end
+      RV_DM_FLAGS_122_OFFSET: begin addr_valid = 1; addr_idx = 147; end
+      RV_DM_FLAGS_123_OFFSET: begin addr_valid = 1; addr_idx = 148; end
+      RV_DM_FLAGS_124_OFFSET: begin addr_valid = 1; addr_idx = 149; end
+      RV_DM_FLAGS_125_OFFSET: begin addr_valid = 1; addr_idx = 150; end
+      RV_DM_FLAGS_126_OFFSET: begin addr_valid = 1; addr_idx = 151; end
+      RV_DM_FLAGS_127_OFFSET: begin addr_valid = 1; addr_idx = 152; end
+      RV_DM_FLAGS_128_OFFSET: begin addr_valid = 1; addr_idx = 153; end
+      RV_DM_FLAGS_129_OFFSET: begin addr_valid = 1; addr_idx = 154; end
+      RV_DM_FLAGS_130_OFFSET: begin addr_valid = 1; addr_idx = 155; end
+      RV_DM_FLAGS_131_OFFSET: begin addr_valid = 1; addr_idx = 156; end
+      RV_DM_FLAGS_132_OFFSET: begin addr_valid = 1; addr_idx = 157; end
+      RV_DM_FLAGS_133_OFFSET: begin addr_valid = 1; addr_idx = 158; end
+      RV_DM_FLAGS_134_OFFSET: begin addr_valid = 1; addr_idx = 159; end
+      RV_DM_FLAGS_135_OFFSET: begin addr_valid = 1; addr_idx = 160; end
+      RV_DM_FLAGS_136_OFFSET: begin addr_valid = 1; addr_idx = 161; end
+      RV_DM_FLAGS_137_OFFSET: begin addr_valid = 1; addr_idx = 162; end
+      RV_DM_FLAGS_138_OFFSET: begin addr_valid = 1; addr_idx = 163; end
+      RV_DM_FLAGS_139_OFFSET: begin addr_valid = 1; addr_idx = 164; end
+      RV_DM_FLAGS_140_OFFSET: begin addr_valid = 1; addr_idx = 165; end
+      RV_DM_FLAGS_141_OFFSET: begin addr_valid = 1; addr_idx = 166; end
+      RV_DM_FLAGS_142_OFFSET: begin addr_valid = 1; addr_idx = 167; end
+      RV_DM_FLAGS_143_OFFSET: begin addr_valid = 1; addr_idx = 168; end
+      RV_DM_FLAGS_144_OFFSET: begin addr_valid = 1; addr_idx = 169; end
+      RV_DM_FLAGS_145_OFFSET: begin addr_valid = 1; addr_idx = 170; end
+      RV_DM_FLAGS_146_OFFSET: begin addr_valid = 1; addr_idx = 171; end
+      RV_DM_FLAGS_147_OFFSET: begin addr_valid = 1; addr_idx = 172; end
+      RV_DM_FLAGS_148_OFFSET: begin addr_valid = 1; addr_idx = 173; end
+      RV_DM_FLAGS_149_OFFSET: begin addr_valid = 1; addr_idx = 174; end
+      RV_DM_FLAGS_150_OFFSET: begin addr_valid = 1; addr_idx = 175; end
+      RV_DM_FLAGS_151_OFFSET: begin addr_valid = 1; addr_idx = 176; end
+      RV_DM_FLAGS_152_OFFSET: begin addr_valid = 1; addr_idx = 177; end
+      RV_DM_FLAGS_153_OFFSET: begin addr_valid = 1; addr_idx = 178; end
+      RV_DM_FLAGS_154_OFFSET: begin addr_valid = 1; addr_idx = 179; end
+      RV_DM_FLAGS_155_OFFSET: begin addr_valid = 1; addr_idx = 180; end
+      RV_DM_FLAGS_156_OFFSET: begin addr_valid = 1; addr_idx = 181; end
+      RV_DM_FLAGS_157_OFFSET: begin addr_valid = 1; addr_idx = 182; end
+      RV_DM_FLAGS_158_OFFSET: begin addr_valid = 1; addr_idx = 183; end
+      RV_DM_FLAGS_159_OFFSET: begin addr_valid = 1; addr_idx = 184; end
+      RV_DM_FLAGS_160_OFFSET: begin addr_valid = 1; addr_idx = 185; end
+      RV_DM_FLAGS_161_OFFSET: begin addr_valid = 1; addr_idx = 186; end
+      RV_DM_FLAGS_162_OFFSET: begin addr_valid = 1; addr_idx = 187; end
+      RV_DM_FLAGS_163_OFFSET: begin addr_valid = 1; addr_idx = 188; end
+      RV_DM_FLAGS_164_OFFSET: begin addr_valid = 1; addr_idx = 189; end
+      RV_DM_FLAGS_165_OFFSET: begin addr_valid = 1; addr_idx = 190; end
+      RV_DM_FLAGS_166_OFFSET: begin addr_valid = 1; addr_idx = 191; end
+      RV_DM_FLAGS_167_OFFSET: begin addr_valid = 1; addr_idx = 192; end
+      RV_DM_FLAGS_168_OFFSET: begin addr_valid = 1; addr_idx = 193; end
+      RV_DM_FLAGS_169_OFFSET: begin addr_valid = 1; addr_idx = 194; end
+      RV_DM_FLAGS_170_OFFSET: begin addr_valid = 1; addr_idx = 195; end
+      RV_DM_FLAGS_171_OFFSET: begin addr_valid = 1; addr_idx = 196; end
+      RV_DM_FLAGS_172_OFFSET: begin addr_valid = 1; addr_idx = 197; end
+      RV_DM_FLAGS_173_OFFSET: begin addr_valid = 1; addr_idx = 198; end
+      RV_DM_FLAGS_174_OFFSET: begin addr_valid = 1; addr_idx = 199; end
+      RV_DM_FLAGS_175_OFFSET: begin addr_valid = 1; addr_idx = 200; end
+      RV_DM_FLAGS_176_OFFSET: begin addr_valid = 1; addr_idx = 201; end
+      RV_DM_FLAGS_177_OFFSET: begin addr_valid = 1; addr_idx = 202; end
+      RV_DM_FLAGS_178_OFFSET: begin addr_valid = 1; addr_idx = 203; end
+      RV_DM_FLAGS_179_OFFSET: begin addr_valid = 1; addr_idx = 204; end
+      RV_DM_FLAGS_180_OFFSET: begin addr_valid = 1; addr_idx = 205; end
+      RV_DM_FLAGS_181_OFFSET: begin addr_valid = 1; addr_idx = 206; end
+      RV_DM_FLAGS_182_OFFSET: begin addr_valid = 1; addr_idx = 207; end
+      RV_DM_FLAGS_183_OFFSET: begin addr_valid = 1; addr_idx = 208; end
+      RV_DM_FLAGS_184_OFFSET: begin addr_valid = 1; addr_idx = 209; end
+      RV_DM_FLAGS_185_OFFSET: begin addr_valid = 1; addr_idx = 210; end
+      RV_DM_FLAGS_186_OFFSET: begin addr_valid = 1; addr_idx = 211; end
+      RV_DM_FLAGS_187_OFFSET: begin addr_valid = 1; addr_idx = 212; end
+      RV_DM_FLAGS_188_OFFSET: begin addr_valid = 1; addr_idx = 213; end
+      RV_DM_FLAGS_189_OFFSET: begin addr_valid = 1; addr_idx = 214; end
+      RV_DM_FLAGS_190_OFFSET: begin addr_valid = 1; addr_idx = 215; end
+      RV_DM_FLAGS_191_OFFSET: begin addr_valid = 1; addr_idx = 216; end
+      RV_DM_FLAGS_192_OFFSET: begin addr_valid = 1; addr_idx = 217; end
+      RV_DM_FLAGS_193_OFFSET: begin addr_valid = 1; addr_idx = 218; end
+      RV_DM_FLAGS_194_OFFSET: begin addr_valid = 1; addr_idx = 219; end
+      RV_DM_FLAGS_195_OFFSET: begin addr_valid = 1; addr_idx = 220; end
+      RV_DM_FLAGS_196_OFFSET: begin addr_valid = 1; addr_idx = 221; end
+      RV_DM_FLAGS_197_OFFSET: begin addr_valid = 1; addr_idx = 222; end
+      RV_DM_FLAGS_198_OFFSET: begin addr_valid = 1; addr_idx = 223; end
+      RV_DM_FLAGS_199_OFFSET: begin addr_valid = 1; addr_idx = 224; end
+      RV_DM_FLAGS_200_OFFSET: begin addr_valid = 1; addr_idx = 225; end
+      RV_DM_FLAGS_201_OFFSET: begin addr_valid = 1; addr_idx = 226; end
+      RV_DM_FLAGS_202_OFFSET: begin addr_valid = 1; addr_idx = 227; end
+      RV_DM_FLAGS_203_OFFSET: begin addr_valid = 1; addr_idx = 228; end
+      RV_DM_FLAGS_204_OFFSET: begin addr_valid = 1; addr_idx = 229; end
+      RV_DM_FLAGS_205_OFFSET: begin addr_valid = 1; addr_idx = 230; end
+      RV_DM_FLAGS_206_OFFSET: begin addr_valid = 1; addr_idx = 231; end
+      RV_DM_FLAGS_207_OFFSET: begin addr_valid = 1; addr_idx = 232; end
+      RV_DM_FLAGS_208_OFFSET: begin addr_valid = 1; addr_idx = 233; end
+      RV_DM_FLAGS_209_OFFSET: begin addr_valid = 1; addr_idx = 234; end
+      RV_DM_FLAGS_210_OFFSET: begin addr_valid = 1; addr_idx = 235; end
+      RV_DM_FLAGS_211_OFFSET: begin addr_valid = 1; addr_idx = 236; end
+      RV_DM_FLAGS_212_OFFSET: begin addr_valid = 1; addr_idx = 237; end
+      RV_DM_FLAGS_213_OFFSET: begin addr_valid = 1; addr_idx = 238; end
+      RV_DM_FLAGS_214_OFFSET: begin addr_valid = 1; addr_idx = 239; end
+      RV_DM_FLAGS_215_OFFSET: begin addr_valid = 1; addr_idx = 240; end
+      RV_DM_FLAGS_216_OFFSET: begin addr_valid = 1; addr_idx = 241; end
+      RV_DM_FLAGS_217_OFFSET: begin addr_valid = 1; addr_idx = 242; end
+      RV_DM_FLAGS_218_OFFSET: begin addr_valid = 1; addr_idx = 243; end
+      RV_DM_FLAGS_219_OFFSET: begin addr_valid = 1; addr_idx = 244; end
+      RV_DM_FLAGS_220_OFFSET: begin addr_valid = 1; addr_idx = 245; end
+      RV_DM_FLAGS_221_OFFSET: begin addr_valid = 1; addr_idx = 246; end
+      RV_DM_FLAGS_222_OFFSET: begin addr_valid = 1; addr_idx = 247; end
+      RV_DM_FLAGS_223_OFFSET: begin addr_valid = 1; addr_idx = 248; end
+      RV_DM_FLAGS_224_OFFSET: begin addr_valid = 1; addr_idx = 249; end
+      RV_DM_FLAGS_225_OFFSET: begin addr_valid = 1; addr_idx = 250; end
+      RV_DM_FLAGS_226_OFFSET: begin addr_valid = 1; addr_idx = 251; end
+      RV_DM_FLAGS_227_OFFSET: begin addr_valid = 1; addr_idx = 252; end
+      RV_DM_FLAGS_228_OFFSET: begin addr_valid = 1; addr_idx = 253; end
+      RV_DM_FLAGS_229_OFFSET: begin addr_valid = 1; addr_idx = 254; end
+      RV_DM_FLAGS_230_OFFSET: begin addr_valid = 1; addr_idx = 255; end
+      RV_DM_FLAGS_231_OFFSET: begin addr_valid = 1; addr_idx = 256; end
+      RV_DM_FLAGS_232_OFFSET: begin addr_valid = 1; addr_idx = 257; end
+      RV_DM_FLAGS_233_OFFSET: begin addr_valid = 1; addr_idx = 258; end
+      RV_DM_FLAGS_234_OFFSET: begin addr_valid = 1; addr_idx = 259; end
+      RV_DM_FLAGS_235_OFFSET: begin addr_valid = 1; addr_idx = 260; end
+      RV_DM_FLAGS_236_OFFSET: begin addr_valid = 1; addr_idx = 261; end
+      RV_DM_FLAGS_237_OFFSET: begin addr_valid = 1; addr_idx = 262; end
+      RV_DM_FLAGS_238_OFFSET: begin addr_valid = 1; addr_idx = 263; end
+      RV_DM_FLAGS_239_OFFSET: begin addr_valid = 1; addr_idx = 264; end
+      RV_DM_FLAGS_240_OFFSET: begin addr_valid = 1; addr_idx = 265; end
+      RV_DM_FLAGS_241_OFFSET: begin addr_valid = 1; addr_idx = 266; end
+      RV_DM_FLAGS_242_OFFSET: begin addr_valid = 1; addr_idx = 267; end
+      RV_DM_FLAGS_243_OFFSET: begin addr_valid = 1; addr_idx = 268; end
+      RV_DM_FLAGS_244_OFFSET: begin addr_valid = 1; addr_idx = 269; end
+      RV_DM_FLAGS_245_OFFSET: begin addr_valid = 1; addr_idx = 270; end
+      RV_DM_FLAGS_246_OFFSET: begin addr_valid = 1; addr_idx = 271; end
+      RV_DM_FLAGS_247_OFFSET: begin addr_valid = 1; addr_idx = 272; end
+      RV_DM_FLAGS_248_OFFSET: begin addr_valid = 1; addr_idx = 273; end
+      RV_DM_FLAGS_249_OFFSET: begin addr_valid = 1; addr_idx = 274; end
+      RV_DM_FLAGS_250_OFFSET: begin addr_valid = 1; addr_idx = 275; end
+      RV_DM_FLAGS_251_OFFSET: begin addr_valid = 1; addr_idx = 276; end
+      RV_DM_FLAGS_252_OFFSET: begin addr_valid = 1; addr_idx = 277; end
+      RV_DM_FLAGS_253_OFFSET: begin addr_valid = 1; addr_idx = 278; end
+      RV_DM_FLAGS_254_OFFSET: begin addr_valid = 1; addr_idx = 279; end
+      RV_DM_FLAGS_255_OFFSET: begin addr_valid = 1; addr_idx = 280; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[  0] & (|(RV_DM_MEM_PERMIT[  0] & ~reg_be))) |
-               (addr_hit[  1] & (|(RV_DM_MEM_PERMIT[  1] & ~reg_be))) |
-               (addr_hit[  2] & (|(RV_DM_MEM_PERMIT[  2] & ~reg_be))) |
-               (addr_hit[  3] & (|(RV_DM_MEM_PERMIT[  3] & ~reg_be))) |
-               (addr_hit[  4] & (|(RV_DM_MEM_PERMIT[  4] & ~reg_be))) |
-               (addr_hit[  5] & (|(RV_DM_MEM_PERMIT[  5] & ~reg_be))) |
-               (addr_hit[  6] & (|(RV_DM_MEM_PERMIT[  6] & ~reg_be))) |
-               (addr_hit[  7] & (|(RV_DM_MEM_PERMIT[  7] & ~reg_be))) |
-               (addr_hit[  8] & (|(RV_DM_MEM_PERMIT[  8] & ~reg_be))) |
-               (addr_hit[  9] & (|(RV_DM_MEM_PERMIT[  9] & ~reg_be))) |
-               (addr_hit[ 10] & (|(RV_DM_MEM_PERMIT[ 10] & ~reg_be))) |
-               (addr_hit[ 11] & (|(RV_DM_MEM_PERMIT[ 11] & ~reg_be))) |
-               (addr_hit[ 12] & (|(RV_DM_MEM_PERMIT[ 12] & ~reg_be))) |
-               (addr_hit[ 13] & (|(RV_DM_MEM_PERMIT[ 13] & ~reg_be))) |
-               (addr_hit[ 14] & (|(RV_DM_MEM_PERMIT[ 14] & ~reg_be))) |
-               (addr_hit[ 15] & (|(RV_DM_MEM_PERMIT[ 15] & ~reg_be))) |
-               (addr_hit[ 16] & (|(RV_DM_MEM_PERMIT[ 16] & ~reg_be))) |
-               (addr_hit[ 17] & (|(RV_DM_MEM_PERMIT[ 17] & ~reg_be))) |
-               (addr_hit[ 18] & (|(RV_DM_MEM_PERMIT[ 18] & ~reg_be))) |
-               (addr_hit[ 19] & (|(RV_DM_MEM_PERMIT[ 19] & ~reg_be))) |
-               (addr_hit[ 20] & (|(RV_DM_MEM_PERMIT[ 20] & ~reg_be))) |
-               (addr_hit[ 21] & (|(RV_DM_MEM_PERMIT[ 21] & ~reg_be))) |
-               (addr_hit[ 22] & (|(RV_DM_MEM_PERMIT[ 22] & ~reg_be))) |
-               (addr_hit[ 23] & (|(RV_DM_MEM_PERMIT[ 23] & ~reg_be))) |
-               (addr_hit[ 24] & (|(RV_DM_MEM_PERMIT[ 24] & ~reg_be))) |
-               (addr_hit[ 25] & (|(RV_DM_MEM_PERMIT[ 25] & ~reg_be))) |
-               (addr_hit[ 26] & (|(RV_DM_MEM_PERMIT[ 26] & ~reg_be))) |
-               (addr_hit[ 27] & (|(RV_DM_MEM_PERMIT[ 27] & ~reg_be))) |
-               (addr_hit[ 28] & (|(RV_DM_MEM_PERMIT[ 28] & ~reg_be))) |
-               (addr_hit[ 29] & (|(RV_DM_MEM_PERMIT[ 29] & ~reg_be))) |
-               (addr_hit[ 30] & (|(RV_DM_MEM_PERMIT[ 30] & ~reg_be))) |
-               (addr_hit[ 31] & (|(RV_DM_MEM_PERMIT[ 31] & ~reg_be))) |
-               (addr_hit[ 32] & (|(RV_DM_MEM_PERMIT[ 32] & ~reg_be))) |
-               (addr_hit[ 33] & (|(RV_DM_MEM_PERMIT[ 33] & ~reg_be))) |
-               (addr_hit[ 34] & (|(RV_DM_MEM_PERMIT[ 34] & ~reg_be))) |
-               (addr_hit[ 35] & (|(RV_DM_MEM_PERMIT[ 35] & ~reg_be))) |
-               (addr_hit[ 36] & (|(RV_DM_MEM_PERMIT[ 36] & ~reg_be))) |
-               (addr_hit[ 37] & (|(RV_DM_MEM_PERMIT[ 37] & ~reg_be))) |
-               (addr_hit[ 38] & (|(RV_DM_MEM_PERMIT[ 38] & ~reg_be))) |
-               (addr_hit[ 39] & (|(RV_DM_MEM_PERMIT[ 39] & ~reg_be))) |
-               (addr_hit[ 40] & (|(RV_DM_MEM_PERMIT[ 40] & ~reg_be))) |
-               (addr_hit[ 41] & (|(RV_DM_MEM_PERMIT[ 41] & ~reg_be))) |
-               (addr_hit[ 42] & (|(RV_DM_MEM_PERMIT[ 42] & ~reg_be))) |
-               (addr_hit[ 43] & (|(RV_DM_MEM_PERMIT[ 43] & ~reg_be))) |
-               (addr_hit[ 44] & (|(RV_DM_MEM_PERMIT[ 44] & ~reg_be))) |
-               (addr_hit[ 45] & (|(RV_DM_MEM_PERMIT[ 45] & ~reg_be))) |
-               (addr_hit[ 46] & (|(RV_DM_MEM_PERMIT[ 46] & ~reg_be))) |
-               (addr_hit[ 47] & (|(RV_DM_MEM_PERMIT[ 47] & ~reg_be))) |
-               (addr_hit[ 48] & (|(RV_DM_MEM_PERMIT[ 48] & ~reg_be))) |
-               (addr_hit[ 49] & (|(RV_DM_MEM_PERMIT[ 49] & ~reg_be))) |
-               (addr_hit[ 50] & (|(RV_DM_MEM_PERMIT[ 50] & ~reg_be))) |
-               (addr_hit[ 51] & (|(RV_DM_MEM_PERMIT[ 51] & ~reg_be))) |
-               (addr_hit[ 52] & (|(RV_DM_MEM_PERMIT[ 52] & ~reg_be))) |
-               (addr_hit[ 53] & (|(RV_DM_MEM_PERMIT[ 53] & ~reg_be))) |
-               (addr_hit[ 54] & (|(RV_DM_MEM_PERMIT[ 54] & ~reg_be))) |
-               (addr_hit[ 55] & (|(RV_DM_MEM_PERMIT[ 55] & ~reg_be))) |
-               (addr_hit[ 56] & (|(RV_DM_MEM_PERMIT[ 56] & ~reg_be))) |
-               (addr_hit[ 57] & (|(RV_DM_MEM_PERMIT[ 57] & ~reg_be))) |
-               (addr_hit[ 58] & (|(RV_DM_MEM_PERMIT[ 58] & ~reg_be))) |
-               (addr_hit[ 59] & (|(RV_DM_MEM_PERMIT[ 59] & ~reg_be))) |
-               (addr_hit[ 60] & (|(RV_DM_MEM_PERMIT[ 60] & ~reg_be))) |
-               (addr_hit[ 61] & (|(RV_DM_MEM_PERMIT[ 61] & ~reg_be))) |
-               (addr_hit[ 62] & (|(RV_DM_MEM_PERMIT[ 62] & ~reg_be))) |
-               (addr_hit[ 63] & (|(RV_DM_MEM_PERMIT[ 63] & ~reg_be))) |
-               (addr_hit[ 64] & (|(RV_DM_MEM_PERMIT[ 64] & ~reg_be))) |
-               (addr_hit[ 65] & (|(RV_DM_MEM_PERMIT[ 65] & ~reg_be))) |
-               (addr_hit[ 66] & (|(RV_DM_MEM_PERMIT[ 66] & ~reg_be))) |
-               (addr_hit[ 67] & (|(RV_DM_MEM_PERMIT[ 67] & ~reg_be))) |
-               (addr_hit[ 68] & (|(RV_DM_MEM_PERMIT[ 68] & ~reg_be))) |
-               (addr_hit[ 69] & (|(RV_DM_MEM_PERMIT[ 69] & ~reg_be))) |
-               (addr_hit[ 70] & (|(RV_DM_MEM_PERMIT[ 70] & ~reg_be))) |
-               (addr_hit[ 71] & (|(RV_DM_MEM_PERMIT[ 71] & ~reg_be))) |
-               (addr_hit[ 72] & (|(RV_DM_MEM_PERMIT[ 72] & ~reg_be))) |
-               (addr_hit[ 73] & (|(RV_DM_MEM_PERMIT[ 73] & ~reg_be))) |
-               (addr_hit[ 74] & (|(RV_DM_MEM_PERMIT[ 74] & ~reg_be))) |
-               (addr_hit[ 75] & (|(RV_DM_MEM_PERMIT[ 75] & ~reg_be))) |
-               (addr_hit[ 76] & (|(RV_DM_MEM_PERMIT[ 76] & ~reg_be))) |
-               (addr_hit[ 77] & (|(RV_DM_MEM_PERMIT[ 77] & ~reg_be))) |
-               (addr_hit[ 78] & (|(RV_DM_MEM_PERMIT[ 78] & ~reg_be))) |
-               (addr_hit[ 79] & (|(RV_DM_MEM_PERMIT[ 79] & ~reg_be))) |
-               (addr_hit[ 80] & (|(RV_DM_MEM_PERMIT[ 80] & ~reg_be))) |
-               (addr_hit[ 81] & (|(RV_DM_MEM_PERMIT[ 81] & ~reg_be))) |
-               (addr_hit[ 82] & (|(RV_DM_MEM_PERMIT[ 82] & ~reg_be))) |
-               (addr_hit[ 83] & (|(RV_DM_MEM_PERMIT[ 83] & ~reg_be))) |
-               (addr_hit[ 84] & (|(RV_DM_MEM_PERMIT[ 84] & ~reg_be))) |
-               (addr_hit[ 85] & (|(RV_DM_MEM_PERMIT[ 85] & ~reg_be))) |
-               (addr_hit[ 86] & (|(RV_DM_MEM_PERMIT[ 86] & ~reg_be))) |
-               (addr_hit[ 87] & (|(RV_DM_MEM_PERMIT[ 87] & ~reg_be))) |
-               (addr_hit[ 88] & (|(RV_DM_MEM_PERMIT[ 88] & ~reg_be))) |
-               (addr_hit[ 89] & (|(RV_DM_MEM_PERMIT[ 89] & ~reg_be))) |
-               (addr_hit[ 90] & (|(RV_DM_MEM_PERMIT[ 90] & ~reg_be))) |
-               (addr_hit[ 91] & (|(RV_DM_MEM_PERMIT[ 91] & ~reg_be))) |
-               (addr_hit[ 92] & (|(RV_DM_MEM_PERMIT[ 92] & ~reg_be))) |
-               (addr_hit[ 93] & (|(RV_DM_MEM_PERMIT[ 93] & ~reg_be))) |
-               (addr_hit[ 94] & (|(RV_DM_MEM_PERMIT[ 94] & ~reg_be))) |
-               (addr_hit[ 95] & (|(RV_DM_MEM_PERMIT[ 95] & ~reg_be))) |
-               (addr_hit[ 96] & (|(RV_DM_MEM_PERMIT[ 96] & ~reg_be))) |
-               (addr_hit[ 97] & (|(RV_DM_MEM_PERMIT[ 97] & ~reg_be))) |
-               (addr_hit[ 98] & (|(RV_DM_MEM_PERMIT[ 98] & ~reg_be))) |
-               (addr_hit[ 99] & (|(RV_DM_MEM_PERMIT[ 99] & ~reg_be))) |
-               (addr_hit[100] & (|(RV_DM_MEM_PERMIT[100] & ~reg_be))) |
-               (addr_hit[101] & (|(RV_DM_MEM_PERMIT[101] & ~reg_be))) |
-               (addr_hit[102] & (|(RV_DM_MEM_PERMIT[102] & ~reg_be))) |
-               (addr_hit[103] & (|(RV_DM_MEM_PERMIT[103] & ~reg_be))) |
-               (addr_hit[104] & (|(RV_DM_MEM_PERMIT[104] & ~reg_be))) |
-               (addr_hit[105] & (|(RV_DM_MEM_PERMIT[105] & ~reg_be))) |
-               (addr_hit[106] & (|(RV_DM_MEM_PERMIT[106] & ~reg_be))) |
-               (addr_hit[107] & (|(RV_DM_MEM_PERMIT[107] & ~reg_be))) |
-               (addr_hit[108] & (|(RV_DM_MEM_PERMIT[108] & ~reg_be))) |
-               (addr_hit[109] & (|(RV_DM_MEM_PERMIT[109] & ~reg_be))) |
-               (addr_hit[110] & (|(RV_DM_MEM_PERMIT[110] & ~reg_be))) |
-               (addr_hit[111] & (|(RV_DM_MEM_PERMIT[111] & ~reg_be))) |
-               (addr_hit[112] & (|(RV_DM_MEM_PERMIT[112] & ~reg_be))) |
-               (addr_hit[113] & (|(RV_DM_MEM_PERMIT[113] & ~reg_be))) |
-               (addr_hit[114] & (|(RV_DM_MEM_PERMIT[114] & ~reg_be))) |
-               (addr_hit[115] & (|(RV_DM_MEM_PERMIT[115] & ~reg_be))) |
-               (addr_hit[116] & (|(RV_DM_MEM_PERMIT[116] & ~reg_be))) |
-               (addr_hit[117] & (|(RV_DM_MEM_PERMIT[117] & ~reg_be))) |
-               (addr_hit[118] & (|(RV_DM_MEM_PERMIT[118] & ~reg_be))) |
-               (addr_hit[119] & (|(RV_DM_MEM_PERMIT[119] & ~reg_be))) |
-               (addr_hit[120] & (|(RV_DM_MEM_PERMIT[120] & ~reg_be))) |
-               (addr_hit[121] & (|(RV_DM_MEM_PERMIT[121] & ~reg_be))) |
-               (addr_hit[122] & (|(RV_DM_MEM_PERMIT[122] & ~reg_be))) |
-               (addr_hit[123] & (|(RV_DM_MEM_PERMIT[123] & ~reg_be))) |
-               (addr_hit[124] & (|(RV_DM_MEM_PERMIT[124] & ~reg_be))) |
-               (addr_hit[125] & (|(RV_DM_MEM_PERMIT[125] & ~reg_be))) |
-               (addr_hit[126] & (|(RV_DM_MEM_PERMIT[126] & ~reg_be))) |
-               (addr_hit[127] & (|(RV_DM_MEM_PERMIT[127] & ~reg_be))) |
-               (addr_hit[128] & (|(RV_DM_MEM_PERMIT[128] & ~reg_be))) |
-               (addr_hit[129] & (|(RV_DM_MEM_PERMIT[129] & ~reg_be))) |
-               (addr_hit[130] & (|(RV_DM_MEM_PERMIT[130] & ~reg_be))) |
-               (addr_hit[131] & (|(RV_DM_MEM_PERMIT[131] & ~reg_be))) |
-               (addr_hit[132] & (|(RV_DM_MEM_PERMIT[132] & ~reg_be))) |
-               (addr_hit[133] & (|(RV_DM_MEM_PERMIT[133] & ~reg_be))) |
-               (addr_hit[134] & (|(RV_DM_MEM_PERMIT[134] & ~reg_be))) |
-               (addr_hit[135] & (|(RV_DM_MEM_PERMIT[135] & ~reg_be))) |
-               (addr_hit[136] & (|(RV_DM_MEM_PERMIT[136] & ~reg_be))) |
-               (addr_hit[137] & (|(RV_DM_MEM_PERMIT[137] & ~reg_be))) |
-               (addr_hit[138] & (|(RV_DM_MEM_PERMIT[138] & ~reg_be))) |
-               (addr_hit[139] & (|(RV_DM_MEM_PERMIT[139] & ~reg_be))) |
-               (addr_hit[140] & (|(RV_DM_MEM_PERMIT[140] & ~reg_be))) |
-               (addr_hit[141] & (|(RV_DM_MEM_PERMIT[141] & ~reg_be))) |
-               (addr_hit[142] & (|(RV_DM_MEM_PERMIT[142] & ~reg_be))) |
-               (addr_hit[143] & (|(RV_DM_MEM_PERMIT[143] & ~reg_be))) |
-               (addr_hit[144] & (|(RV_DM_MEM_PERMIT[144] & ~reg_be))) |
-               (addr_hit[145] & (|(RV_DM_MEM_PERMIT[145] & ~reg_be))) |
-               (addr_hit[146] & (|(RV_DM_MEM_PERMIT[146] & ~reg_be))) |
-               (addr_hit[147] & (|(RV_DM_MEM_PERMIT[147] & ~reg_be))) |
-               (addr_hit[148] & (|(RV_DM_MEM_PERMIT[148] & ~reg_be))) |
-               (addr_hit[149] & (|(RV_DM_MEM_PERMIT[149] & ~reg_be))) |
-               (addr_hit[150] & (|(RV_DM_MEM_PERMIT[150] & ~reg_be))) |
-               (addr_hit[151] & (|(RV_DM_MEM_PERMIT[151] & ~reg_be))) |
-               (addr_hit[152] & (|(RV_DM_MEM_PERMIT[152] & ~reg_be))) |
-               (addr_hit[153] & (|(RV_DM_MEM_PERMIT[153] & ~reg_be))) |
-               (addr_hit[154] & (|(RV_DM_MEM_PERMIT[154] & ~reg_be))) |
-               (addr_hit[155] & (|(RV_DM_MEM_PERMIT[155] & ~reg_be))) |
-               (addr_hit[156] & (|(RV_DM_MEM_PERMIT[156] & ~reg_be))) |
-               (addr_hit[157] & (|(RV_DM_MEM_PERMIT[157] & ~reg_be))) |
-               (addr_hit[158] & (|(RV_DM_MEM_PERMIT[158] & ~reg_be))) |
-               (addr_hit[159] & (|(RV_DM_MEM_PERMIT[159] & ~reg_be))) |
-               (addr_hit[160] & (|(RV_DM_MEM_PERMIT[160] & ~reg_be))) |
-               (addr_hit[161] & (|(RV_DM_MEM_PERMIT[161] & ~reg_be))) |
-               (addr_hit[162] & (|(RV_DM_MEM_PERMIT[162] & ~reg_be))) |
-               (addr_hit[163] & (|(RV_DM_MEM_PERMIT[163] & ~reg_be))) |
-               (addr_hit[164] & (|(RV_DM_MEM_PERMIT[164] & ~reg_be))) |
-               (addr_hit[165] & (|(RV_DM_MEM_PERMIT[165] & ~reg_be))) |
-               (addr_hit[166] & (|(RV_DM_MEM_PERMIT[166] & ~reg_be))) |
-               (addr_hit[167] & (|(RV_DM_MEM_PERMIT[167] & ~reg_be))) |
-               (addr_hit[168] & (|(RV_DM_MEM_PERMIT[168] & ~reg_be))) |
-               (addr_hit[169] & (|(RV_DM_MEM_PERMIT[169] & ~reg_be))) |
-               (addr_hit[170] & (|(RV_DM_MEM_PERMIT[170] & ~reg_be))) |
-               (addr_hit[171] & (|(RV_DM_MEM_PERMIT[171] & ~reg_be))) |
-               (addr_hit[172] & (|(RV_DM_MEM_PERMIT[172] & ~reg_be))) |
-               (addr_hit[173] & (|(RV_DM_MEM_PERMIT[173] & ~reg_be))) |
-               (addr_hit[174] & (|(RV_DM_MEM_PERMIT[174] & ~reg_be))) |
-               (addr_hit[175] & (|(RV_DM_MEM_PERMIT[175] & ~reg_be))) |
-               (addr_hit[176] & (|(RV_DM_MEM_PERMIT[176] & ~reg_be))) |
-               (addr_hit[177] & (|(RV_DM_MEM_PERMIT[177] & ~reg_be))) |
-               (addr_hit[178] & (|(RV_DM_MEM_PERMIT[178] & ~reg_be))) |
-               (addr_hit[179] & (|(RV_DM_MEM_PERMIT[179] & ~reg_be))) |
-               (addr_hit[180] & (|(RV_DM_MEM_PERMIT[180] & ~reg_be))) |
-               (addr_hit[181] & (|(RV_DM_MEM_PERMIT[181] & ~reg_be))) |
-               (addr_hit[182] & (|(RV_DM_MEM_PERMIT[182] & ~reg_be))) |
-               (addr_hit[183] & (|(RV_DM_MEM_PERMIT[183] & ~reg_be))) |
-               (addr_hit[184] & (|(RV_DM_MEM_PERMIT[184] & ~reg_be))) |
-               (addr_hit[185] & (|(RV_DM_MEM_PERMIT[185] & ~reg_be))) |
-               (addr_hit[186] & (|(RV_DM_MEM_PERMIT[186] & ~reg_be))) |
-               (addr_hit[187] & (|(RV_DM_MEM_PERMIT[187] & ~reg_be))) |
-               (addr_hit[188] & (|(RV_DM_MEM_PERMIT[188] & ~reg_be))) |
-               (addr_hit[189] & (|(RV_DM_MEM_PERMIT[189] & ~reg_be))) |
-               (addr_hit[190] & (|(RV_DM_MEM_PERMIT[190] & ~reg_be))) |
-               (addr_hit[191] & (|(RV_DM_MEM_PERMIT[191] & ~reg_be))) |
-               (addr_hit[192] & (|(RV_DM_MEM_PERMIT[192] & ~reg_be))) |
-               (addr_hit[193] & (|(RV_DM_MEM_PERMIT[193] & ~reg_be))) |
-               (addr_hit[194] & (|(RV_DM_MEM_PERMIT[194] & ~reg_be))) |
-               (addr_hit[195] & (|(RV_DM_MEM_PERMIT[195] & ~reg_be))) |
-               (addr_hit[196] & (|(RV_DM_MEM_PERMIT[196] & ~reg_be))) |
-               (addr_hit[197] & (|(RV_DM_MEM_PERMIT[197] & ~reg_be))) |
-               (addr_hit[198] & (|(RV_DM_MEM_PERMIT[198] & ~reg_be))) |
-               (addr_hit[199] & (|(RV_DM_MEM_PERMIT[199] & ~reg_be))) |
-               (addr_hit[200] & (|(RV_DM_MEM_PERMIT[200] & ~reg_be))) |
-               (addr_hit[201] & (|(RV_DM_MEM_PERMIT[201] & ~reg_be))) |
-               (addr_hit[202] & (|(RV_DM_MEM_PERMIT[202] & ~reg_be))) |
-               (addr_hit[203] & (|(RV_DM_MEM_PERMIT[203] & ~reg_be))) |
-               (addr_hit[204] & (|(RV_DM_MEM_PERMIT[204] & ~reg_be))) |
-               (addr_hit[205] & (|(RV_DM_MEM_PERMIT[205] & ~reg_be))) |
-               (addr_hit[206] & (|(RV_DM_MEM_PERMIT[206] & ~reg_be))) |
-               (addr_hit[207] & (|(RV_DM_MEM_PERMIT[207] & ~reg_be))) |
-               (addr_hit[208] & (|(RV_DM_MEM_PERMIT[208] & ~reg_be))) |
-               (addr_hit[209] & (|(RV_DM_MEM_PERMIT[209] & ~reg_be))) |
-               (addr_hit[210] & (|(RV_DM_MEM_PERMIT[210] & ~reg_be))) |
-               (addr_hit[211] & (|(RV_DM_MEM_PERMIT[211] & ~reg_be))) |
-               (addr_hit[212] & (|(RV_DM_MEM_PERMIT[212] & ~reg_be))) |
-               (addr_hit[213] & (|(RV_DM_MEM_PERMIT[213] & ~reg_be))) |
-               (addr_hit[214] & (|(RV_DM_MEM_PERMIT[214] & ~reg_be))) |
-               (addr_hit[215] & (|(RV_DM_MEM_PERMIT[215] & ~reg_be))) |
-               (addr_hit[216] & (|(RV_DM_MEM_PERMIT[216] & ~reg_be))) |
-               (addr_hit[217] & (|(RV_DM_MEM_PERMIT[217] & ~reg_be))) |
-               (addr_hit[218] & (|(RV_DM_MEM_PERMIT[218] & ~reg_be))) |
-               (addr_hit[219] & (|(RV_DM_MEM_PERMIT[219] & ~reg_be))) |
-               (addr_hit[220] & (|(RV_DM_MEM_PERMIT[220] & ~reg_be))) |
-               (addr_hit[221] & (|(RV_DM_MEM_PERMIT[221] & ~reg_be))) |
-               (addr_hit[222] & (|(RV_DM_MEM_PERMIT[222] & ~reg_be))) |
-               (addr_hit[223] & (|(RV_DM_MEM_PERMIT[223] & ~reg_be))) |
-               (addr_hit[224] & (|(RV_DM_MEM_PERMIT[224] & ~reg_be))) |
-               (addr_hit[225] & (|(RV_DM_MEM_PERMIT[225] & ~reg_be))) |
-               (addr_hit[226] & (|(RV_DM_MEM_PERMIT[226] & ~reg_be))) |
-               (addr_hit[227] & (|(RV_DM_MEM_PERMIT[227] & ~reg_be))) |
-               (addr_hit[228] & (|(RV_DM_MEM_PERMIT[228] & ~reg_be))) |
-               (addr_hit[229] & (|(RV_DM_MEM_PERMIT[229] & ~reg_be))) |
-               (addr_hit[230] & (|(RV_DM_MEM_PERMIT[230] & ~reg_be))) |
-               (addr_hit[231] & (|(RV_DM_MEM_PERMIT[231] & ~reg_be))) |
-               (addr_hit[232] & (|(RV_DM_MEM_PERMIT[232] & ~reg_be))) |
-               (addr_hit[233] & (|(RV_DM_MEM_PERMIT[233] & ~reg_be))) |
-               (addr_hit[234] & (|(RV_DM_MEM_PERMIT[234] & ~reg_be))) |
-               (addr_hit[235] & (|(RV_DM_MEM_PERMIT[235] & ~reg_be))) |
-               (addr_hit[236] & (|(RV_DM_MEM_PERMIT[236] & ~reg_be))) |
-               (addr_hit[237] & (|(RV_DM_MEM_PERMIT[237] & ~reg_be))) |
-               (addr_hit[238] & (|(RV_DM_MEM_PERMIT[238] & ~reg_be))) |
-               (addr_hit[239] & (|(RV_DM_MEM_PERMIT[239] & ~reg_be))) |
-               (addr_hit[240] & (|(RV_DM_MEM_PERMIT[240] & ~reg_be))) |
-               (addr_hit[241] & (|(RV_DM_MEM_PERMIT[241] & ~reg_be))) |
-               (addr_hit[242] & (|(RV_DM_MEM_PERMIT[242] & ~reg_be))) |
-               (addr_hit[243] & (|(RV_DM_MEM_PERMIT[243] & ~reg_be))) |
-               (addr_hit[244] & (|(RV_DM_MEM_PERMIT[244] & ~reg_be))) |
-               (addr_hit[245] & (|(RV_DM_MEM_PERMIT[245] & ~reg_be))) |
-               (addr_hit[246] & (|(RV_DM_MEM_PERMIT[246] & ~reg_be))) |
-               (addr_hit[247] & (|(RV_DM_MEM_PERMIT[247] & ~reg_be))) |
-               (addr_hit[248] & (|(RV_DM_MEM_PERMIT[248] & ~reg_be))) |
-               (addr_hit[249] & (|(RV_DM_MEM_PERMIT[249] & ~reg_be))) |
-               (addr_hit[250] & (|(RV_DM_MEM_PERMIT[250] & ~reg_be))) |
-               (addr_hit[251] & (|(RV_DM_MEM_PERMIT[251] & ~reg_be))) |
-               (addr_hit[252] & (|(RV_DM_MEM_PERMIT[252] & ~reg_be))) |
-               (addr_hit[253] & (|(RV_DM_MEM_PERMIT[253] & ~reg_be))) |
-               (addr_hit[254] & (|(RV_DM_MEM_PERMIT[254] & ~reg_be))) |
-               (addr_hit[255] & (|(RV_DM_MEM_PERMIT[255] & ~reg_be))) |
-               (addr_hit[256] & (|(RV_DM_MEM_PERMIT[256] & ~reg_be))) |
-               (addr_hit[257] & (|(RV_DM_MEM_PERMIT[257] & ~reg_be))) |
-               (addr_hit[258] & (|(RV_DM_MEM_PERMIT[258] & ~reg_be))) |
-               (addr_hit[259] & (|(RV_DM_MEM_PERMIT[259] & ~reg_be))) |
-               (addr_hit[260] & (|(RV_DM_MEM_PERMIT[260] & ~reg_be))) |
-               (addr_hit[261] & (|(RV_DM_MEM_PERMIT[261] & ~reg_be))) |
-               (addr_hit[262] & (|(RV_DM_MEM_PERMIT[262] & ~reg_be))) |
-               (addr_hit[263] & (|(RV_DM_MEM_PERMIT[263] & ~reg_be))) |
-               (addr_hit[264] & (|(RV_DM_MEM_PERMIT[264] & ~reg_be))) |
-               (addr_hit[265] & (|(RV_DM_MEM_PERMIT[265] & ~reg_be))) |
-               (addr_hit[266] & (|(RV_DM_MEM_PERMIT[266] & ~reg_be))) |
-               (addr_hit[267] & (|(RV_DM_MEM_PERMIT[267] & ~reg_be))) |
-               (addr_hit[268] & (|(RV_DM_MEM_PERMIT[268] & ~reg_be))) |
-               (addr_hit[269] & (|(RV_DM_MEM_PERMIT[269] & ~reg_be))) |
-               (addr_hit[270] & (|(RV_DM_MEM_PERMIT[270] & ~reg_be))) |
-               (addr_hit[271] & (|(RV_DM_MEM_PERMIT[271] & ~reg_be))) |
-               (addr_hit[272] & (|(RV_DM_MEM_PERMIT[272] & ~reg_be))) |
-               (addr_hit[273] & (|(RV_DM_MEM_PERMIT[273] & ~reg_be))) |
-               (addr_hit[274] & (|(RV_DM_MEM_PERMIT[274] & ~reg_be))) |
-               (addr_hit[275] & (|(RV_DM_MEM_PERMIT[275] & ~reg_be))) |
-               (addr_hit[276] & (|(RV_DM_MEM_PERMIT[276] & ~reg_be))) |
-               (addr_hit[277] & (|(RV_DM_MEM_PERMIT[277] & ~reg_be))) |
-               (addr_hit[278] & (|(RV_DM_MEM_PERMIT[278] & ~reg_be))) |
-               (addr_hit[279] & (|(RV_DM_MEM_PERMIT[279] & ~reg_be))) |
-               (addr_hit[280] & (|(RV_DM_MEM_PERMIT[280] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:   wr_err = |(RV_DM_MEM_PERMIT[  0] & ~reg_be);
+        1:   wr_err = |(RV_DM_MEM_PERMIT[  1] & ~reg_be);
+        2:   wr_err = |(RV_DM_MEM_PERMIT[  2] & ~reg_be);
+        3:   wr_err = |(RV_DM_MEM_PERMIT[  3] & ~reg_be);
+        4:   wr_err = |(RV_DM_MEM_PERMIT[  4] & ~reg_be);
+        5:   wr_err = |(RV_DM_MEM_PERMIT[  5] & ~reg_be);
+        6:   wr_err = |(RV_DM_MEM_PERMIT[  6] & ~reg_be);
+        7:   wr_err = |(RV_DM_MEM_PERMIT[  7] & ~reg_be);
+        8:   wr_err = |(RV_DM_MEM_PERMIT[  8] & ~reg_be);
+        9:   wr_err = |(RV_DM_MEM_PERMIT[  9] & ~reg_be);
+        10:  wr_err = |(RV_DM_MEM_PERMIT[ 10] & ~reg_be);
+        11:  wr_err = |(RV_DM_MEM_PERMIT[ 11] & ~reg_be);
+        12:  wr_err = |(RV_DM_MEM_PERMIT[ 12] & ~reg_be);
+        13:  wr_err = |(RV_DM_MEM_PERMIT[ 13] & ~reg_be);
+        14:  wr_err = |(RV_DM_MEM_PERMIT[ 14] & ~reg_be);
+        15:  wr_err = |(RV_DM_MEM_PERMIT[ 15] & ~reg_be);
+        16:  wr_err = |(RV_DM_MEM_PERMIT[ 16] & ~reg_be);
+        17:  wr_err = |(RV_DM_MEM_PERMIT[ 17] & ~reg_be);
+        18:  wr_err = |(RV_DM_MEM_PERMIT[ 18] & ~reg_be);
+        19:  wr_err = |(RV_DM_MEM_PERMIT[ 19] & ~reg_be);
+        20:  wr_err = |(RV_DM_MEM_PERMIT[ 20] & ~reg_be);
+        21:  wr_err = |(RV_DM_MEM_PERMIT[ 21] & ~reg_be);
+        22:  wr_err = |(RV_DM_MEM_PERMIT[ 22] & ~reg_be);
+        23:  wr_err = |(RV_DM_MEM_PERMIT[ 23] & ~reg_be);
+        24:  wr_err = |(RV_DM_MEM_PERMIT[ 24] & ~reg_be);
+        25:  wr_err = |(RV_DM_MEM_PERMIT[ 25] & ~reg_be);
+        26:  wr_err = |(RV_DM_MEM_PERMIT[ 26] & ~reg_be);
+        27:  wr_err = |(RV_DM_MEM_PERMIT[ 27] & ~reg_be);
+        28:  wr_err = |(RV_DM_MEM_PERMIT[ 28] & ~reg_be);
+        29:  wr_err = |(RV_DM_MEM_PERMIT[ 29] & ~reg_be);
+        30:  wr_err = |(RV_DM_MEM_PERMIT[ 30] & ~reg_be);
+        31:  wr_err = |(RV_DM_MEM_PERMIT[ 31] & ~reg_be);
+        32:  wr_err = |(RV_DM_MEM_PERMIT[ 32] & ~reg_be);
+        33:  wr_err = |(RV_DM_MEM_PERMIT[ 33] & ~reg_be);
+        34:  wr_err = |(RV_DM_MEM_PERMIT[ 34] & ~reg_be);
+        35:  wr_err = |(RV_DM_MEM_PERMIT[ 35] & ~reg_be);
+        36:  wr_err = |(RV_DM_MEM_PERMIT[ 36] & ~reg_be);
+        37:  wr_err = |(RV_DM_MEM_PERMIT[ 37] & ~reg_be);
+        38:  wr_err = |(RV_DM_MEM_PERMIT[ 38] & ~reg_be);
+        39:  wr_err = |(RV_DM_MEM_PERMIT[ 39] & ~reg_be);
+        40:  wr_err = |(RV_DM_MEM_PERMIT[ 40] & ~reg_be);
+        41:  wr_err = |(RV_DM_MEM_PERMIT[ 41] & ~reg_be);
+        42:  wr_err = |(RV_DM_MEM_PERMIT[ 42] & ~reg_be);
+        43:  wr_err = |(RV_DM_MEM_PERMIT[ 43] & ~reg_be);
+        44:  wr_err = |(RV_DM_MEM_PERMIT[ 44] & ~reg_be);
+        45:  wr_err = |(RV_DM_MEM_PERMIT[ 45] & ~reg_be);
+        46:  wr_err = |(RV_DM_MEM_PERMIT[ 46] & ~reg_be);
+        47:  wr_err = |(RV_DM_MEM_PERMIT[ 47] & ~reg_be);
+        48:  wr_err = |(RV_DM_MEM_PERMIT[ 48] & ~reg_be);
+        49:  wr_err = |(RV_DM_MEM_PERMIT[ 49] & ~reg_be);
+        50:  wr_err = |(RV_DM_MEM_PERMIT[ 50] & ~reg_be);
+        51:  wr_err = |(RV_DM_MEM_PERMIT[ 51] & ~reg_be);
+        52:  wr_err = |(RV_DM_MEM_PERMIT[ 52] & ~reg_be);
+        53:  wr_err = |(RV_DM_MEM_PERMIT[ 53] & ~reg_be);
+        54:  wr_err = |(RV_DM_MEM_PERMIT[ 54] & ~reg_be);
+        55:  wr_err = |(RV_DM_MEM_PERMIT[ 55] & ~reg_be);
+        56:  wr_err = |(RV_DM_MEM_PERMIT[ 56] & ~reg_be);
+        57:  wr_err = |(RV_DM_MEM_PERMIT[ 57] & ~reg_be);
+        58:  wr_err = |(RV_DM_MEM_PERMIT[ 58] & ~reg_be);
+        59:  wr_err = |(RV_DM_MEM_PERMIT[ 59] & ~reg_be);
+        60:  wr_err = |(RV_DM_MEM_PERMIT[ 60] & ~reg_be);
+        61:  wr_err = |(RV_DM_MEM_PERMIT[ 61] & ~reg_be);
+        62:  wr_err = |(RV_DM_MEM_PERMIT[ 62] & ~reg_be);
+        63:  wr_err = |(RV_DM_MEM_PERMIT[ 63] & ~reg_be);
+        64:  wr_err = |(RV_DM_MEM_PERMIT[ 64] & ~reg_be);
+        65:  wr_err = |(RV_DM_MEM_PERMIT[ 65] & ~reg_be);
+        66:  wr_err = |(RV_DM_MEM_PERMIT[ 66] & ~reg_be);
+        67:  wr_err = |(RV_DM_MEM_PERMIT[ 67] & ~reg_be);
+        68:  wr_err = |(RV_DM_MEM_PERMIT[ 68] & ~reg_be);
+        69:  wr_err = |(RV_DM_MEM_PERMIT[ 69] & ~reg_be);
+        70:  wr_err = |(RV_DM_MEM_PERMIT[ 70] & ~reg_be);
+        71:  wr_err = |(RV_DM_MEM_PERMIT[ 71] & ~reg_be);
+        72:  wr_err = |(RV_DM_MEM_PERMIT[ 72] & ~reg_be);
+        73:  wr_err = |(RV_DM_MEM_PERMIT[ 73] & ~reg_be);
+        74:  wr_err = |(RV_DM_MEM_PERMIT[ 74] & ~reg_be);
+        75:  wr_err = |(RV_DM_MEM_PERMIT[ 75] & ~reg_be);
+        76:  wr_err = |(RV_DM_MEM_PERMIT[ 76] & ~reg_be);
+        77:  wr_err = |(RV_DM_MEM_PERMIT[ 77] & ~reg_be);
+        78:  wr_err = |(RV_DM_MEM_PERMIT[ 78] & ~reg_be);
+        79:  wr_err = |(RV_DM_MEM_PERMIT[ 79] & ~reg_be);
+        80:  wr_err = |(RV_DM_MEM_PERMIT[ 80] & ~reg_be);
+        81:  wr_err = |(RV_DM_MEM_PERMIT[ 81] & ~reg_be);
+        82:  wr_err = |(RV_DM_MEM_PERMIT[ 82] & ~reg_be);
+        83:  wr_err = |(RV_DM_MEM_PERMIT[ 83] & ~reg_be);
+        84:  wr_err = |(RV_DM_MEM_PERMIT[ 84] & ~reg_be);
+        85:  wr_err = |(RV_DM_MEM_PERMIT[ 85] & ~reg_be);
+        86:  wr_err = |(RV_DM_MEM_PERMIT[ 86] & ~reg_be);
+        87:  wr_err = |(RV_DM_MEM_PERMIT[ 87] & ~reg_be);
+        88:  wr_err = |(RV_DM_MEM_PERMIT[ 88] & ~reg_be);
+        89:  wr_err = |(RV_DM_MEM_PERMIT[ 89] & ~reg_be);
+        90:  wr_err = |(RV_DM_MEM_PERMIT[ 90] & ~reg_be);
+        91:  wr_err = |(RV_DM_MEM_PERMIT[ 91] & ~reg_be);
+        92:  wr_err = |(RV_DM_MEM_PERMIT[ 92] & ~reg_be);
+        93:  wr_err = |(RV_DM_MEM_PERMIT[ 93] & ~reg_be);
+        94:  wr_err = |(RV_DM_MEM_PERMIT[ 94] & ~reg_be);
+        95:  wr_err = |(RV_DM_MEM_PERMIT[ 95] & ~reg_be);
+        96:  wr_err = |(RV_DM_MEM_PERMIT[ 96] & ~reg_be);
+        97:  wr_err = |(RV_DM_MEM_PERMIT[ 97] & ~reg_be);
+        98:  wr_err = |(RV_DM_MEM_PERMIT[ 98] & ~reg_be);
+        99:  wr_err = |(RV_DM_MEM_PERMIT[ 99] & ~reg_be);
+        100: wr_err = |(RV_DM_MEM_PERMIT[100] & ~reg_be);
+        101: wr_err = |(RV_DM_MEM_PERMIT[101] & ~reg_be);
+        102: wr_err = |(RV_DM_MEM_PERMIT[102] & ~reg_be);
+        103: wr_err = |(RV_DM_MEM_PERMIT[103] & ~reg_be);
+        104: wr_err = |(RV_DM_MEM_PERMIT[104] & ~reg_be);
+        105: wr_err = |(RV_DM_MEM_PERMIT[105] & ~reg_be);
+        106: wr_err = |(RV_DM_MEM_PERMIT[106] & ~reg_be);
+        107: wr_err = |(RV_DM_MEM_PERMIT[107] & ~reg_be);
+        108: wr_err = |(RV_DM_MEM_PERMIT[108] & ~reg_be);
+        109: wr_err = |(RV_DM_MEM_PERMIT[109] & ~reg_be);
+        110: wr_err = |(RV_DM_MEM_PERMIT[110] & ~reg_be);
+        111: wr_err = |(RV_DM_MEM_PERMIT[111] & ~reg_be);
+        112: wr_err = |(RV_DM_MEM_PERMIT[112] & ~reg_be);
+        113: wr_err = |(RV_DM_MEM_PERMIT[113] & ~reg_be);
+        114: wr_err = |(RV_DM_MEM_PERMIT[114] & ~reg_be);
+        115: wr_err = |(RV_DM_MEM_PERMIT[115] & ~reg_be);
+        116: wr_err = |(RV_DM_MEM_PERMIT[116] & ~reg_be);
+        117: wr_err = |(RV_DM_MEM_PERMIT[117] & ~reg_be);
+        118: wr_err = |(RV_DM_MEM_PERMIT[118] & ~reg_be);
+        119: wr_err = |(RV_DM_MEM_PERMIT[119] & ~reg_be);
+        120: wr_err = |(RV_DM_MEM_PERMIT[120] & ~reg_be);
+        121: wr_err = |(RV_DM_MEM_PERMIT[121] & ~reg_be);
+        122: wr_err = |(RV_DM_MEM_PERMIT[122] & ~reg_be);
+        123: wr_err = |(RV_DM_MEM_PERMIT[123] & ~reg_be);
+        124: wr_err = |(RV_DM_MEM_PERMIT[124] & ~reg_be);
+        125: wr_err = |(RV_DM_MEM_PERMIT[125] & ~reg_be);
+        126: wr_err = |(RV_DM_MEM_PERMIT[126] & ~reg_be);
+        127: wr_err = |(RV_DM_MEM_PERMIT[127] & ~reg_be);
+        128: wr_err = |(RV_DM_MEM_PERMIT[128] & ~reg_be);
+        129: wr_err = |(RV_DM_MEM_PERMIT[129] & ~reg_be);
+        130: wr_err = |(RV_DM_MEM_PERMIT[130] & ~reg_be);
+        131: wr_err = |(RV_DM_MEM_PERMIT[131] & ~reg_be);
+        132: wr_err = |(RV_DM_MEM_PERMIT[132] & ~reg_be);
+        133: wr_err = |(RV_DM_MEM_PERMIT[133] & ~reg_be);
+        134: wr_err = |(RV_DM_MEM_PERMIT[134] & ~reg_be);
+        135: wr_err = |(RV_DM_MEM_PERMIT[135] & ~reg_be);
+        136: wr_err = |(RV_DM_MEM_PERMIT[136] & ~reg_be);
+        137: wr_err = |(RV_DM_MEM_PERMIT[137] & ~reg_be);
+        138: wr_err = |(RV_DM_MEM_PERMIT[138] & ~reg_be);
+        139: wr_err = |(RV_DM_MEM_PERMIT[139] & ~reg_be);
+        140: wr_err = |(RV_DM_MEM_PERMIT[140] & ~reg_be);
+        141: wr_err = |(RV_DM_MEM_PERMIT[141] & ~reg_be);
+        142: wr_err = |(RV_DM_MEM_PERMIT[142] & ~reg_be);
+        143: wr_err = |(RV_DM_MEM_PERMIT[143] & ~reg_be);
+        144: wr_err = |(RV_DM_MEM_PERMIT[144] & ~reg_be);
+        145: wr_err = |(RV_DM_MEM_PERMIT[145] & ~reg_be);
+        146: wr_err = |(RV_DM_MEM_PERMIT[146] & ~reg_be);
+        147: wr_err = |(RV_DM_MEM_PERMIT[147] & ~reg_be);
+        148: wr_err = |(RV_DM_MEM_PERMIT[148] & ~reg_be);
+        149: wr_err = |(RV_DM_MEM_PERMIT[149] & ~reg_be);
+        150: wr_err = |(RV_DM_MEM_PERMIT[150] & ~reg_be);
+        151: wr_err = |(RV_DM_MEM_PERMIT[151] & ~reg_be);
+        152: wr_err = |(RV_DM_MEM_PERMIT[152] & ~reg_be);
+        153: wr_err = |(RV_DM_MEM_PERMIT[153] & ~reg_be);
+        154: wr_err = |(RV_DM_MEM_PERMIT[154] & ~reg_be);
+        155: wr_err = |(RV_DM_MEM_PERMIT[155] & ~reg_be);
+        156: wr_err = |(RV_DM_MEM_PERMIT[156] & ~reg_be);
+        157: wr_err = |(RV_DM_MEM_PERMIT[157] & ~reg_be);
+        158: wr_err = |(RV_DM_MEM_PERMIT[158] & ~reg_be);
+        159: wr_err = |(RV_DM_MEM_PERMIT[159] & ~reg_be);
+        160: wr_err = |(RV_DM_MEM_PERMIT[160] & ~reg_be);
+        161: wr_err = |(RV_DM_MEM_PERMIT[161] & ~reg_be);
+        162: wr_err = |(RV_DM_MEM_PERMIT[162] & ~reg_be);
+        163: wr_err = |(RV_DM_MEM_PERMIT[163] & ~reg_be);
+        164: wr_err = |(RV_DM_MEM_PERMIT[164] & ~reg_be);
+        165: wr_err = |(RV_DM_MEM_PERMIT[165] & ~reg_be);
+        166: wr_err = |(RV_DM_MEM_PERMIT[166] & ~reg_be);
+        167: wr_err = |(RV_DM_MEM_PERMIT[167] & ~reg_be);
+        168: wr_err = |(RV_DM_MEM_PERMIT[168] & ~reg_be);
+        169: wr_err = |(RV_DM_MEM_PERMIT[169] & ~reg_be);
+        170: wr_err = |(RV_DM_MEM_PERMIT[170] & ~reg_be);
+        171: wr_err = |(RV_DM_MEM_PERMIT[171] & ~reg_be);
+        172: wr_err = |(RV_DM_MEM_PERMIT[172] & ~reg_be);
+        173: wr_err = |(RV_DM_MEM_PERMIT[173] & ~reg_be);
+        174: wr_err = |(RV_DM_MEM_PERMIT[174] & ~reg_be);
+        175: wr_err = |(RV_DM_MEM_PERMIT[175] & ~reg_be);
+        176: wr_err = |(RV_DM_MEM_PERMIT[176] & ~reg_be);
+        177: wr_err = |(RV_DM_MEM_PERMIT[177] & ~reg_be);
+        178: wr_err = |(RV_DM_MEM_PERMIT[178] & ~reg_be);
+        179: wr_err = |(RV_DM_MEM_PERMIT[179] & ~reg_be);
+        180: wr_err = |(RV_DM_MEM_PERMIT[180] & ~reg_be);
+        181: wr_err = |(RV_DM_MEM_PERMIT[181] & ~reg_be);
+        182: wr_err = |(RV_DM_MEM_PERMIT[182] & ~reg_be);
+        183: wr_err = |(RV_DM_MEM_PERMIT[183] & ~reg_be);
+        184: wr_err = |(RV_DM_MEM_PERMIT[184] & ~reg_be);
+        185: wr_err = |(RV_DM_MEM_PERMIT[185] & ~reg_be);
+        186: wr_err = |(RV_DM_MEM_PERMIT[186] & ~reg_be);
+        187: wr_err = |(RV_DM_MEM_PERMIT[187] & ~reg_be);
+        188: wr_err = |(RV_DM_MEM_PERMIT[188] & ~reg_be);
+        189: wr_err = |(RV_DM_MEM_PERMIT[189] & ~reg_be);
+        190: wr_err = |(RV_DM_MEM_PERMIT[190] & ~reg_be);
+        191: wr_err = |(RV_DM_MEM_PERMIT[191] & ~reg_be);
+        192: wr_err = |(RV_DM_MEM_PERMIT[192] & ~reg_be);
+        193: wr_err = |(RV_DM_MEM_PERMIT[193] & ~reg_be);
+        194: wr_err = |(RV_DM_MEM_PERMIT[194] & ~reg_be);
+        195: wr_err = |(RV_DM_MEM_PERMIT[195] & ~reg_be);
+        196: wr_err = |(RV_DM_MEM_PERMIT[196] & ~reg_be);
+        197: wr_err = |(RV_DM_MEM_PERMIT[197] & ~reg_be);
+        198: wr_err = |(RV_DM_MEM_PERMIT[198] & ~reg_be);
+        199: wr_err = |(RV_DM_MEM_PERMIT[199] & ~reg_be);
+        200: wr_err = |(RV_DM_MEM_PERMIT[200] & ~reg_be);
+        201: wr_err = |(RV_DM_MEM_PERMIT[201] & ~reg_be);
+        202: wr_err = |(RV_DM_MEM_PERMIT[202] & ~reg_be);
+        203: wr_err = |(RV_DM_MEM_PERMIT[203] & ~reg_be);
+        204: wr_err = |(RV_DM_MEM_PERMIT[204] & ~reg_be);
+        205: wr_err = |(RV_DM_MEM_PERMIT[205] & ~reg_be);
+        206: wr_err = |(RV_DM_MEM_PERMIT[206] & ~reg_be);
+        207: wr_err = |(RV_DM_MEM_PERMIT[207] & ~reg_be);
+        208: wr_err = |(RV_DM_MEM_PERMIT[208] & ~reg_be);
+        209: wr_err = |(RV_DM_MEM_PERMIT[209] & ~reg_be);
+        210: wr_err = |(RV_DM_MEM_PERMIT[210] & ~reg_be);
+        211: wr_err = |(RV_DM_MEM_PERMIT[211] & ~reg_be);
+        212: wr_err = |(RV_DM_MEM_PERMIT[212] & ~reg_be);
+        213: wr_err = |(RV_DM_MEM_PERMIT[213] & ~reg_be);
+        214: wr_err = |(RV_DM_MEM_PERMIT[214] & ~reg_be);
+        215: wr_err = |(RV_DM_MEM_PERMIT[215] & ~reg_be);
+        216: wr_err = |(RV_DM_MEM_PERMIT[216] & ~reg_be);
+        217: wr_err = |(RV_DM_MEM_PERMIT[217] & ~reg_be);
+        218: wr_err = |(RV_DM_MEM_PERMIT[218] & ~reg_be);
+        219: wr_err = |(RV_DM_MEM_PERMIT[219] & ~reg_be);
+        220: wr_err = |(RV_DM_MEM_PERMIT[220] & ~reg_be);
+        221: wr_err = |(RV_DM_MEM_PERMIT[221] & ~reg_be);
+        222: wr_err = |(RV_DM_MEM_PERMIT[222] & ~reg_be);
+        223: wr_err = |(RV_DM_MEM_PERMIT[223] & ~reg_be);
+        224: wr_err = |(RV_DM_MEM_PERMIT[224] & ~reg_be);
+        225: wr_err = |(RV_DM_MEM_PERMIT[225] & ~reg_be);
+        226: wr_err = |(RV_DM_MEM_PERMIT[226] & ~reg_be);
+        227: wr_err = |(RV_DM_MEM_PERMIT[227] & ~reg_be);
+        228: wr_err = |(RV_DM_MEM_PERMIT[228] & ~reg_be);
+        229: wr_err = |(RV_DM_MEM_PERMIT[229] & ~reg_be);
+        230: wr_err = |(RV_DM_MEM_PERMIT[230] & ~reg_be);
+        231: wr_err = |(RV_DM_MEM_PERMIT[231] & ~reg_be);
+        232: wr_err = |(RV_DM_MEM_PERMIT[232] & ~reg_be);
+        233: wr_err = |(RV_DM_MEM_PERMIT[233] & ~reg_be);
+        234: wr_err = |(RV_DM_MEM_PERMIT[234] & ~reg_be);
+        235: wr_err = |(RV_DM_MEM_PERMIT[235] & ~reg_be);
+        236: wr_err = |(RV_DM_MEM_PERMIT[236] & ~reg_be);
+        237: wr_err = |(RV_DM_MEM_PERMIT[237] & ~reg_be);
+        238: wr_err = |(RV_DM_MEM_PERMIT[238] & ~reg_be);
+        239: wr_err = |(RV_DM_MEM_PERMIT[239] & ~reg_be);
+        240: wr_err = |(RV_DM_MEM_PERMIT[240] & ~reg_be);
+        241: wr_err = |(RV_DM_MEM_PERMIT[241] & ~reg_be);
+        242: wr_err = |(RV_DM_MEM_PERMIT[242] & ~reg_be);
+        243: wr_err = |(RV_DM_MEM_PERMIT[243] & ~reg_be);
+        244: wr_err = |(RV_DM_MEM_PERMIT[244] & ~reg_be);
+        245: wr_err = |(RV_DM_MEM_PERMIT[245] & ~reg_be);
+        246: wr_err = |(RV_DM_MEM_PERMIT[246] & ~reg_be);
+        247: wr_err = |(RV_DM_MEM_PERMIT[247] & ~reg_be);
+        248: wr_err = |(RV_DM_MEM_PERMIT[248] & ~reg_be);
+        249: wr_err = |(RV_DM_MEM_PERMIT[249] & ~reg_be);
+        250: wr_err = |(RV_DM_MEM_PERMIT[250] & ~reg_be);
+        251: wr_err = |(RV_DM_MEM_PERMIT[251] & ~reg_be);
+        252: wr_err = |(RV_DM_MEM_PERMIT[252] & ~reg_be);
+        253: wr_err = |(RV_DM_MEM_PERMIT[253] & ~reg_be);
+        254: wr_err = |(RV_DM_MEM_PERMIT[254] & ~reg_be);
+        255: wr_err = |(RV_DM_MEM_PERMIT[255] & ~reg_be);
+        256: wr_err = |(RV_DM_MEM_PERMIT[256] & ~reg_be);
+        257: wr_err = |(RV_DM_MEM_PERMIT[257] & ~reg_be);
+        258: wr_err = |(RV_DM_MEM_PERMIT[258] & ~reg_be);
+        259: wr_err = |(RV_DM_MEM_PERMIT[259] & ~reg_be);
+        260: wr_err = |(RV_DM_MEM_PERMIT[260] & ~reg_be);
+        261: wr_err = |(RV_DM_MEM_PERMIT[261] & ~reg_be);
+        262: wr_err = |(RV_DM_MEM_PERMIT[262] & ~reg_be);
+        263: wr_err = |(RV_DM_MEM_PERMIT[263] & ~reg_be);
+        264: wr_err = |(RV_DM_MEM_PERMIT[264] & ~reg_be);
+        265: wr_err = |(RV_DM_MEM_PERMIT[265] & ~reg_be);
+        266: wr_err = |(RV_DM_MEM_PERMIT[266] & ~reg_be);
+        267: wr_err = |(RV_DM_MEM_PERMIT[267] & ~reg_be);
+        268: wr_err = |(RV_DM_MEM_PERMIT[268] & ~reg_be);
+        269: wr_err = |(RV_DM_MEM_PERMIT[269] & ~reg_be);
+        270: wr_err = |(RV_DM_MEM_PERMIT[270] & ~reg_be);
+        271: wr_err = |(RV_DM_MEM_PERMIT[271] & ~reg_be);
+        272: wr_err = |(RV_DM_MEM_PERMIT[272] & ~reg_be);
+        273: wr_err = |(RV_DM_MEM_PERMIT[273] & ~reg_be);
+        274: wr_err = |(RV_DM_MEM_PERMIT[274] & ~reg_be);
+        275: wr_err = |(RV_DM_MEM_PERMIT[275] & ~reg_be);
+        276: wr_err = |(RV_DM_MEM_PERMIT[276] & ~reg_be);
+        277: wr_err = |(RV_DM_MEM_PERMIT[277] & ~reg_be);
+        278: wr_err = |(RV_DM_MEM_PERMIT[278] & ~reg_be);
+        279: wr_err = |(RV_DM_MEM_PERMIT[279] & ~reg_be);
+        280: wr_err = |(RV_DM_MEM_PERMIT[280] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign halted_we = addr_hit[0] & reg_we & !reg_error;
+  assign halted_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign halted_wd = reg_wdata[0];
-  assign going_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign going_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign going_wd = reg_wdata[0];
-  assign resuming_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign resuming_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign resuming_wd = reg_wdata[0];
-  assign exception_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign exception_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign exception_wd = reg_wdata[0];
-  assign dataaddr_0_we = addr_hit[23] & reg_we & !reg_error;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  assign dataaddr_0_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign dataaddr_0_wd = reg_wdata[31:0];
-  assign dataaddr_1_we = addr_hit[24] & reg_we & !reg_error;
+
+  assign dataaddr_1_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
   assign dataaddr_1_wd = reg_wdata[31:0];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -9486,1136 +9780,1129 @@ module rv_dm_mem_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = '0;
-      end
-
-      addr_hit[1]: begin
-        reg_rdata_next[0] = '0;
-      end
-
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-      end
-
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-      end
-
-      addr_hit[4]: begin
-        reg_rdata_next[31:0] = whereto_qs;
-      end
-
-      addr_hit[5]: begin
-        reg_rdata_next[31:0] = abstractcmd_0_qs;
-      end
-
-      addr_hit[6]: begin
-        reg_rdata_next[31:0] = abstractcmd_1_qs;
-      end
-
-      addr_hit[7]: begin
-        reg_rdata_next[31:0] = abstractcmd_2_qs;
-      end
-
-      addr_hit[8]: begin
-        reg_rdata_next[31:0] = abstractcmd_3_qs;
-      end
-
-      addr_hit[9]: begin
-        reg_rdata_next[31:0] = abstractcmd_4_qs;
-      end
-
-      addr_hit[10]: begin
-        reg_rdata_next[31:0] = abstractcmd_5_qs;
-      end
-
-      addr_hit[11]: begin
-        reg_rdata_next[31:0] = abstractcmd_6_qs;
-      end
-
-      addr_hit[12]: begin
-        reg_rdata_next[31:0] = abstractcmd_7_qs;
-      end
-
-      addr_hit[13]: begin
-        reg_rdata_next[31:0] = abstractcmd_8_qs;
-      end
-
-      addr_hit[14]: begin
-        reg_rdata_next[31:0] = abstractcmd_9_qs;
-      end
-
-      addr_hit[15]: begin
-        reg_rdata_next[31:0] = program_buffer_0_qs;
-      end
-
-      addr_hit[16]: begin
-        reg_rdata_next[31:0] = program_buffer_1_qs;
-      end
-
-      addr_hit[17]: begin
-        reg_rdata_next[31:0] = program_buffer_2_qs;
-      end
-
-      addr_hit[18]: begin
-        reg_rdata_next[31:0] = program_buffer_3_qs;
-      end
-
-      addr_hit[19]: begin
-        reg_rdata_next[31:0] = program_buffer_4_qs;
-      end
-
-      addr_hit[20]: begin
-        reg_rdata_next[31:0] = program_buffer_5_qs;
-      end
-
-      addr_hit[21]: begin
-        reg_rdata_next[31:0] = program_buffer_6_qs;
-      end
-
-      addr_hit[22]: begin
-        reg_rdata_next[31:0] = program_buffer_7_qs;
-      end
-
-      addr_hit[23]: begin
-        reg_rdata_next[31:0] = dataaddr_0_qs;
-      end
-
-      addr_hit[24]: begin
-        reg_rdata_next[31:0] = dataaddr_1_qs;
-      end
-
-      addr_hit[25]: begin
-        reg_rdata_next[31:0] = flags_0_qs;
-      end
-
-      addr_hit[26]: begin
-        reg_rdata_next[31:0] = flags_1_qs;
-      end
-
-      addr_hit[27]: begin
-        reg_rdata_next[31:0] = flags_2_qs;
-      end
-
-      addr_hit[28]: begin
-        reg_rdata_next[31:0] = flags_3_qs;
-      end
-
-      addr_hit[29]: begin
-        reg_rdata_next[31:0] = flags_4_qs;
-      end
-
-      addr_hit[30]: begin
-        reg_rdata_next[31:0] = flags_5_qs;
-      end
-
-      addr_hit[31]: begin
-        reg_rdata_next[31:0] = flags_6_qs;
-      end
-
-      addr_hit[32]: begin
-        reg_rdata_next[31:0] = flags_7_qs;
-      end
-
-      addr_hit[33]: begin
-        reg_rdata_next[31:0] = flags_8_qs;
-      end
-
-      addr_hit[34]: begin
-        reg_rdata_next[31:0] = flags_9_qs;
-      end
-
-      addr_hit[35]: begin
-        reg_rdata_next[31:0] = flags_10_qs;
-      end
-
-      addr_hit[36]: begin
-        reg_rdata_next[31:0] = flags_11_qs;
-      end
-
-      addr_hit[37]: begin
-        reg_rdata_next[31:0] = flags_12_qs;
-      end
-
-      addr_hit[38]: begin
-        reg_rdata_next[31:0] = flags_13_qs;
-      end
-
-      addr_hit[39]: begin
-        reg_rdata_next[31:0] = flags_14_qs;
-      end
-
-      addr_hit[40]: begin
-        reg_rdata_next[31:0] = flags_15_qs;
-      end
-
-      addr_hit[41]: begin
-        reg_rdata_next[31:0] = flags_16_qs;
-      end
-
-      addr_hit[42]: begin
-        reg_rdata_next[31:0] = flags_17_qs;
-      end
-
-      addr_hit[43]: begin
-        reg_rdata_next[31:0] = flags_18_qs;
-      end
-
-      addr_hit[44]: begin
-        reg_rdata_next[31:0] = flags_19_qs;
-      end
-
-      addr_hit[45]: begin
-        reg_rdata_next[31:0] = flags_20_qs;
-      end
-
-      addr_hit[46]: begin
-        reg_rdata_next[31:0] = flags_21_qs;
-      end
-
-      addr_hit[47]: begin
-        reg_rdata_next[31:0] = flags_22_qs;
-      end
-
-      addr_hit[48]: begin
-        reg_rdata_next[31:0] = flags_23_qs;
-      end
-
-      addr_hit[49]: begin
-        reg_rdata_next[31:0] = flags_24_qs;
-      end
-
-      addr_hit[50]: begin
-        reg_rdata_next[31:0] = flags_25_qs;
-      end
-
-      addr_hit[51]: begin
-        reg_rdata_next[31:0] = flags_26_qs;
-      end
-
-      addr_hit[52]: begin
-        reg_rdata_next[31:0] = flags_27_qs;
-      end
-
-      addr_hit[53]: begin
-        reg_rdata_next[31:0] = flags_28_qs;
-      end
-
-      addr_hit[54]: begin
-        reg_rdata_next[31:0] = flags_29_qs;
-      end
-
-      addr_hit[55]: begin
-        reg_rdata_next[31:0] = flags_30_qs;
-      end
-
-      addr_hit[56]: begin
-        reg_rdata_next[31:0] = flags_31_qs;
-      end
-
-      addr_hit[57]: begin
-        reg_rdata_next[31:0] = flags_32_qs;
-      end
-
-      addr_hit[58]: begin
-        reg_rdata_next[31:0] = flags_33_qs;
-      end
-
-      addr_hit[59]: begin
-        reg_rdata_next[31:0] = flags_34_qs;
-      end
-
-      addr_hit[60]: begin
-        reg_rdata_next[31:0] = flags_35_qs;
-      end
-
-      addr_hit[61]: begin
-        reg_rdata_next[31:0] = flags_36_qs;
-      end
-
-      addr_hit[62]: begin
-        reg_rdata_next[31:0] = flags_37_qs;
-      end
-
-      addr_hit[63]: begin
-        reg_rdata_next[31:0] = flags_38_qs;
-      end
-
-      addr_hit[64]: begin
-        reg_rdata_next[31:0] = flags_39_qs;
-      end
-
-      addr_hit[65]: begin
-        reg_rdata_next[31:0] = flags_40_qs;
-      end
-
-      addr_hit[66]: begin
-        reg_rdata_next[31:0] = flags_41_qs;
-      end
-
-      addr_hit[67]: begin
-        reg_rdata_next[31:0] = flags_42_qs;
-      end
-
-      addr_hit[68]: begin
-        reg_rdata_next[31:0] = flags_43_qs;
-      end
-
-      addr_hit[69]: begin
-        reg_rdata_next[31:0] = flags_44_qs;
-      end
-
-      addr_hit[70]: begin
-        reg_rdata_next[31:0] = flags_45_qs;
-      end
-
-      addr_hit[71]: begin
-        reg_rdata_next[31:0] = flags_46_qs;
-      end
-
-      addr_hit[72]: begin
-        reg_rdata_next[31:0] = flags_47_qs;
-      end
-
-      addr_hit[73]: begin
-        reg_rdata_next[31:0] = flags_48_qs;
-      end
-
-      addr_hit[74]: begin
-        reg_rdata_next[31:0] = flags_49_qs;
-      end
-
-      addr_hit[75]: begin
-        reg_rdata_next[31:0] = flags_50_qs;
-      end
-
-      addr_hit[76]: begin
-        reg_rdata_next[31:0] = flags_51_qs;
-      end
-
-      addr_hit[77]: begin
-        reg_rdata_next[31:0] = flags_52_qs;
-      end
-
-      addr_hit[78]: begin
-        reg_rdata_next[31:0] = flags_53_qs;
-      end
-
-      addr_hit[79]: begin
-        reg_rdata_next[31:0] = flags_54_qs;
-      end
-
-      addr_hit[80]: begin
-        reg_rdata_next[31:0] = flags_55_qs;
-      end
-
-      addr_hit[81]: begin
-        reg_rdata_next[31:0] = flags_56_qs;
-      end
-
-      addr_hit[82]: begin
-        reg_rdata_next[31:0] = flags_57_qs;
-      end
-
-      addr_hit[83]: begin
-        reg_rdata_next[31:0] = flags_58_qs;
-      end
-
-      addr_hit[84]: begin
-        reg_rdata_next[31:0] = flags_59_qs;
-      end
-
-      addr_hit[85]: begin
-        reg_rdata_next[31:0] = flags_60_qs;
-      end
-
-      addr_hit[86]: begin
-        reg_rdata_next[31:0] = flags_61_qs;
-      end
-
-      addr_hit[87]: begin
-        reg_rdata_next[31:0] = flags_62_qs;
-      end
-
-      addr_hit[88]: begin
-        reg_rdata_next[31:0] = flags_63_qs;
-      end
-
-      addr_hit[89]: begin
-        reg_rdata_next[31:0] = flags_64_qs;
-      end
-
-      addr_hit[90]: begin
-        reg_rdata_next[31:0] = flags_65_qs;
-      end
-
-      addr_hit[91]: begin
-        reg_rdata_next[31:0] = flags_66_qs;
-      end
-
-      addr_hit[92]: begin
-        reg_rdata_next[31:0] = flags_67_qs;
-      end
-
-      addr_hit[93]: begin
-        reg_rdata_next[31:0] = flags_68_qs;
-      end
-
-      addr_hit[94]: begin
-        reg_rdata_next[31:0] = flags_69_qs;
-      end
-
-      addr_hit[95]: begin
-        reg_rdata_next[31:0] = flags_70_qs;
-      end
-
-      addr_hit[96]: begin
-        reg_rdata_next[31:0] = flags_71_qs;
-      end
-
-      addr_hit[97]: begin
-        reg_rdata_next[31:0] = flags_72_qs;
-      end
-
-      addr_hit[98]: begin
-        reg_rdata_next[31:0] = flags_73_qs;
-      end
-
-      addr_hit[99]: begin
-        reg_rdata_next[31:0] = flags_74_qs;
-      end
-
-      addr_hit[100]: begin
-        reg_rdata_next[31:0] = flags_75_qs;
-      end
-
-      addr_hit[101]: begin
-        reg_rdata_next[31:0] = flags_76_qs;
-      end
-
-      addr_hit[102]: begin
-        reg_rdata_next[31:0] = flags_77_qs;
-      end
-
-      addr_hit[103]: begin
-        reg_rdata_next[31:0] = flags_78_qs;
-      end
-
-      addr_hit[104]: begin
-        reg_rdata_next[31:0] = flags_79_qs;
-      end
-
-      addr_hit[105]: begin
-        reg_rdata_next[31:0] = flags_80_qs;
-      end
-
-      addr_hit[106]: begin
-        reg_rdata_next[31:0] = flags_81_qs;
-      end
-
-      addr_hit[107]: begin
-        reg_rdata_next[31:0] = flags_82_qs;
-      end
-
-      addr_hit[108]: begin
-        reg_rdata_next[31:0] = flags_83_qs;
-      end
-
-      addr_hit[109]: begin
-        reg_rdata_next[31:0] = flags_84_qs;
-      end
-
-      addr_hit[110]: begin
-        reg_rdata_next[31:0] = flags_85_qs;
-      end
-
-      addr_hit[111]: begin
-        reg_rdata_next[31:0] = flags_86_qs;
-      end
-
-      addr_hit[112]: begin
-        reg_rdata_next[31:0] = flags_87_qs;
-      end
-
-      addr_hit[113]: begin
-        reg_rdata_next[31:0] = flags_88_qs;
-      end
-
-      addr_hit[114]: begin
-        reg_rdata_next[31:0] = flags_89_qs;
-      end
-
-      addr_hit[115]: begin
-        reg_rdata_next[31:0] = flags_90_qs;
-      end
-
-      addr_hit[116]: begin
-        reg_rdata_next[31:0] = flags_91_qs;
-      end
-
-      addr_hit[117]: begin
-        reg_rdata_next[31:0] = flags_92_qs;
-      end
-
-      addr_hit[118]: begin
-        reg_rdata_next[31:0] = flags_93_qs;
-      end
-
-      addr_hit[119]: begin
-        reg_rdata_next[31:0] = flags_94_qs;
-      end
-
-      addr_hit[120]: begin
-        reg_rdata_next[31:0] = flags_95_qs;
-      end
-
-      addr_hit[121]: begin
-        reg_rdata_next[31:0] = flags_96_qs;
-      end
-
-      addr_hit[122]: begin
-        reg_rdata_next[31:0] = flags_97_qs;
-      end
-
-      addr_hit[123]: begin
-        reg_rdata_next[31:0] = flags_98_qs;
-      end
-
-      addr_hit[124]: begin
-        reg_rdata_next[31:0] = flags_99_qs;
-      end
-
-      addr_hit[125]: begin
-        reg_rdata_next[31:0] = flags_100_qs;
-      end
-
-      addr_hit[126]: begin
-        reg_rdata_next[31:0] = flags_101_qs;
-      end
-
-      addr_hit[127]: begin
-        reg_rdata_next[31:0] = flags_102_qs;
-      end
-
-      addr_hit[128]: begin
-        reg_rdata_next[31:0] = flags_103_qs;
-      end
-
-      addr_hit[129]: begin
-        reg_rdata_next[31:0] = flags_104_qs;
-      end
-
-      addr_hit[130]: begin
-        reg_rdata_next[31:0] = flags_105_qs;
-      end
-
-      addr_hit[131]: begin
-        reg_rdata_next[31:0] = flags_106_qs;
-      end
-
-      addr_hit[132]: begin
-        reg_rdata_next[31:0] = flags_107_qs;
-      end
-
-      addr_hit[133]: begin
-        reg_rdata_next[31:0] = flags_108_qs;
-      end
-
-      addr_hit[134]: begin
-        reg_rdata_next[31:0] = flags_109_qs;
-      end
-
-      addr_hit[135]: begin
-        reg_rdata_next[31:0] = flags_110_qs;
-      end
-
-      addr_hit[136]: begin
-        reg_rdata_next[31:0] = flags_111_qs;
-      end
-
-      addr_hit[137]: begin
-        reg_rdata_next[31:0] = flags_112_qs;
-      end
-
-      addr_hit[138]: begin
-        reg_rdata_next[31:0] = flags_113_qs;
-      end
-
-      addr_hit[139]: begin
-        reg_rdata_next[31:0] = flags_114_qs;
-      end
-
-      addr_hit[140]: begin
-        reg_rdata_next[31:0] = flags_115_qs;
-      end
-
-      addr_hit[141]: begin
-        reg_rdata_next[31:0] = flags_116_qs;
-      end
-
-      addr_hit[142]: begin
-        reg_rdata_next[31:0] = flags_117_qs;
-      end
-
-      addr_hit[143]: begin
-        reg_rdata_next[31:0] = flags_118_qs;
-      end
-
-      addr_hit[144]: begin
-        reg_rdata_next[31:0] = flags_119_qs;
-      end
-
-      addr_hit[145]: begin
-        reg_rdata_next[31:0] = flags_120_qs;
-      end
-
-      addr_hit[146]: begin
-        reg_rdata_next[31:0] = flags_121_qs;
-      end
-
-      addr_hit[147]: begin
-        reg_rdata_next[31:0] = flags_122_qs;
-      end
-
-      addr_hit[148]: begin
-        reg_rdata_next[31:0] = flags_123_qs;
-      end
-
-      addr_hit[149]: begin
-        reg_rdata_next[31:0] = flags_124_qs;
-      end
-
-      addr_hit[150]: begin
-        reg_rdata_next[31:0] = flags_125_qs;
-      end
-
-      addr_hit[151]: begin
-        reg_rdata_next[31:0] = flags_126_qs;
-      end
-
-      addr_hit[152]: begin
-        reg_rdata_next[31:0] = flags_127_qs;
-      end
-
-      addr_hit[153]: begin
-        reg_rdata_next[31:0] = flags_128_qs;
-      end
-
-      addr_hit[154]: begin
-        reg_rdata_next[31:0] = flags_129_qs;
-      end
-
-      addr_hit[155]: begin
-        reg_rdata_next[31:0] = flags_130_qs;
-      end
-
-      addr_hit[156]: begin
-        reg_rdata_next[31:0] = flags_131_qs;
-      end
-
-      addr_hit[157]: begin
-        reg_rdata_next[31:0] = flags_132_qs;
-      end
-
-      addr_hit[158]: begin
-        reg_rdata_next[31:0] = flags_133_qs;
-      end
-
-      addr_hit[159]: begin
-        reg_rdata_next[31:0] = flags_134_qs;
-      end
-
-      addr_hit[160]: begin
-        reg_rdata_next[31:0] = flags_135_qs;
-      end
-
-      addr_hit[161]: begin
-        reg_rdata_next[31:0] = flags_136_qs;
-      end
-
-      addr_hit[162]: begin
-        reg_rdata_next[31:0] = flags_137_qs;
-      end
-
-      addr_hit[163]: begin
-        reg_rdata_next[31:0] = flags_138_qs;
-      end
-
-      addr_hit[164]: begin
-        reg_rdata_next[31:0] = flags_139_qs;
-      end
-
-      addr_hit[165]: begin
-        reg_rdata_next[31:0] = flags_140_qs;
-      end
-
-      addr_hit[166]: begin
-        reg_rdata_next[31:0] = flags_141_qs;
-      end
-
-      addr_hit[167]: begin
-        reg_rdata_next[31:0] = flags_142_qs;
-      end
-
-      addr_hit[168]: begin
-        reg_rdata_next[31:0] = flags_143_qs;
-      end
-
-      addr_hit[169]: begin
-        reg_rdata_next[31:0] = flags_144_qs;
-      end
-
-      addr_hit[170]: begin
-        reg_rdata_next[31:0] = flags_145_qs;
-      end
-
-      addr_hit[171]: begin
-        reg_rdata_next[31:0] = flags_146_qs;
-      end
-
-      addr_hit[172]: begin
-        reg_rdata_next[31:0] = flags_147_qs;
-      end
-
-      addr_hit[173]: begin
-        reg_rdata_next[31:0] = flags_148_qs;
-      end
-
-      addr_hit[174]: begin
-        reg_rdata_next[31:0] = flags_149_qs;
-      end
-
-      addr_hit[175]: begin
-        reg_rdata_next[31:0] = flags_150_qs;
-      end
-
-      addr_hit[176]: begin
-        reg_rdata_next[31:0] = flags_151_qs;
-      end
-
-      addr_hit[177]: begin
-        reg_rdata_next[31:0] = flags_152_qs;
-      end
-
-      addr_hit[178]: begin
-        reg_rdata_next[31:0] = flags_153_qs;
-      end
-
-      addr_hit[179]: begin
-        reg_rdata_next[31:0] = flags_154_qs;
-      end
-
-      addr_hit[180]: begin
-        reg_rdata_next[31:0] = flags_155_qs;
-      end
-
-      addr_hit[181]: begin
-        reg_rdata_next[31:0] = flags_156_qs;
-      end
-
-      addr_hit[182]: begin
-        reg_rdata_next[31:0] = flags_157_qs;
-      end
-
-      addr_hit[183]: begin
-        reg_rdata_next[31:0] = flags_158_qs;
-      end
-
-      addr_hit[184]: begin
-        reg_rdata_next[31:0] = flags_159_qs;
-      end
-
-      addr_hit[185]: begin
-        reg_rdata_next[31:0] = flags_160_qs;
-      end
-
-      addr_hit[186]: begin
-        reg_rdata_next[31:0] = flags_161_qs;
-      end
-
-      addr_hit[187]: begin
-        reg_rdata_next[31:0] = flags_162_qs;
-      end
-
-      addr_hit[188]: begin
-        reg_rdata_next[31:0] = flags_163_qs;
-      end
-
-      addr_hit[189]: begin
-        reg_rdata_next[31:0] = flags_164_qs;
-      end
-
-      addr_hit[190]: begin
-        reg_rdata_next[31:0] = flags_165_qs;
-      end
-
-      addr_hit[191]: begin
-        reg_rdata_next[31:0] = flags_166_qs;
-      end
-
-      addr_hit[192]: begin
-        reg_rdata_next[31:0] = flags_167_qs;
-      end
-
-      addr_hit[193]: begin
-        reg_rdata_next[31:0] = flags_168_qs;
-      end
-
-      addr_hit[194]: begin
-        reg_rdata_next[31:0] = flags_169_qs;
-      end
-
-      addr_hit[195]: begin
-        reg_rdata_next[31:0] = flags_170_qs;
-      end
-
-      addr_hit[196]: begin
-        reg_rdata_next[31:0] = flags_171_qs;
-      end
-
-      addr_hit[197]: begin
-        reg_rdata_next[31:0] = flags_172_qs;
-      end
-
-      addr_hit[198]: begin
-        reg_rdata_next[31:0] = flags_173_qs;
-      end
-
-      addr_hit[199]: begin
-        reg_rdata_next[31:0] = flags_174_qs;
-      end
-
-      addr_hit[200]: begin
-        reg_rdata_next[31:0] = flags_175_qs;
-      end
-
-      addr_hit[201]: begin
-        reg_rdata_next[31:0] = flags_176_qs;
-      end
-
-      addr_hit[202]: begin
-        reg_rdata_next[31:0] = flags_177_qs;
-      end
-
-      addr_hit[203]: begin
-        reg_rdata_next[31:0] = flags_178_qs;
-      end
-
-      addr_hit[204]: begin
-        reg_rdata_next[31:0] = flags_179_qs;
-      end
-
-      addr_hit[205]: begin
-        reg_rdata_next[31:0] = flags_180_qs;
-      end
-
-      addr_hit[206]: begin
-        reg_rdata_next[31:0] = flags_181_qs;
-      end
-
-      addr_hit[207]: begin
-        reg_rdata_next[31:0] = flags_182_qs;
-      end
-
-      addr_hit[208]: begin
-        reg_rdata_next[31:0] = flags_183_qs;
-      end
-
-      addr_hit[209]: begin
-        reg_rdata_next[31:0] = flags_184_qs;
-      end
-
-      addr_hit[210]: begin
-        reg_rdata_next[31:0] = flags_185_qs;
-      end
-
-      addr_hit[211]: begin
-        reg_rdata_next[31:0] = flags_186_qs;
-      end
-
-      addr_hit[212]: begin
-        reg_rdata_next[31:0] = flags_187_qs;
-      end
-
-      addr_hit[213]: begin
-        reg_rdata_next[31:0] = flags_188_qs;
-      end
-
-      addr_hit[214]: begin
-        reg_rdata_next[31:0] = flags_189_qs;
-      end
-
-      addr_hit[215]: begin
-        reg_rdata_next[31:0] = flags_190_qs;
-      end
-
-      addr_hit[216]: begin
-        reg_rdata_next[31:0] = flags_191_qs;
-      end
-
-      addr_hit[217]: begin
-        reg_rdata_next[31:0] = flags_192_qs;
-      end
-
-      addr_hit[218]: begin
-        reg_rdata_next[31:0] = flags_193_qs;
-      end
-
-      addr_hit[219]: begin
-        reg_rdata_next[31:0] = flags_194_qs;
-      end
-
-      addr_hit[220]: begin
-        reg_rdata_next[31:0] = flags_195_qs;
-      end
-
-      addr_hit[221]: begin
-        reg_rdata_next[31:0] = flags_196_qs;
-      end
-
-      addr_hit[222]: begin
-        reg_rdata_next[31:0] = flags_197_qs;
-      end
-
-      addr_hit[223]: begin
-        reg_rdata_next[31:0] = flags_198_qs;
-      end
-
-      addr_hit[224]: begin
-        reg_rdata_next[31:0] = flags_199_qs;
-      end
-
-      addr_hit[225]: begin
-        reg_rdata_next[31:0] = flags_200_qs;
-      end
-
-      addr_hit[226]: begin
-        reg_rdata_next[31:0] = flags_201_qs;
-      end
-
-      addr_hit[227]: begin
-        reg_rdata_next[31:0] = flags_202_qs;
-      end
-
-      addr_hit[228]: begin
-        reg_rdata_next[31:0] = flags_203_qs;
-      end
-
-      addr_hit[229]: begin
-        reg_rdata_next[31:0] = flags_204_qs;
-      end
-
-      addr_hit[230]: begin
-        reg_rdata_next[31:0] = flags_205_qs;
-      end
-
-      addr_hit[231]: begin
-        reg_rdata_next[31:0] = flags_206_qs;
-      end
-
-      addr_hit[232]: begin
-        reg_rdata_next[31:0] = flags_207_qs;
-      end
-
-      addr_hit[233]: begin
-        reg_rdata_next[31:0] = flags_208_qs;
-      end
-
-      addr_hit[234]: begin
-        reg_rdata_next[31:0] = flags_209_qs;
-      end
-
-      addr_hit[235]: begin
-        reg_rdata_next[31:0] = flags_210_qs;
-      end
-
-      addr_hit[236]: begin
-        reg_rdata_next[31:0] = flags_211_qs;
-      end
-
-      addr_hit[237]: begin
-        reg_rdata_next[31:0] = flags_212_qs;
-      end
-
-      addr_hit[238]: begin
-        reg_rdata_next[31:0] = flags_213_qs;
-      end
-
-      addr_hit[239]: begin
-        reg_rdata_next[31:0] = flags_214_qs;
-      end
-
-      addr_hit[240]: begin
-        reg_rdata_next[31:0] = flags_215_qs;
-      end
-
-      addr_hit[241]: begin
-        reg_rdata_next[31:0] = flags_216_qs;
-      end
-
-      addr_hit[242]: begin
-        reg_rdata_next[31:0] = flags_217_qs;
-      end
-
-      addr_hit[243]: begin
-        reg_rdata_next[31:0] = flags_218_qs;
-      end
-
-      addr_hit[244]: begin
-        reg_rdata_next[31:0] = flags_219_qs;
-      end
-
-      addr_hit[245]: begin
-        reg_rdata_next[31:0] = flags_220_qs;
-      end
-
-      addr_hit[246]: begin
-        reg_rdata_next[31:0] = flags_221_qs;
-      end
-
-      addr_hit[247]: begin
-        reg_rdata_next[31:0] = flags_222_qs;
-      end
-
-      addr_hit[248]: begin
-        reg_rdata_next[31:0] = flags_223_qs;
-      end
-
-      addr_hit[249]: begin
-        reg_rdata_next[31:0] = flags_224_qs;
-      end
-
-      addr_hit[250]: begin
-        reg_rdata_next[31:0] = flags_225_qs;
-      end
-
-      addr_hit[251]: begin
-        reg_rdata_next[31:0] = flags_226_qs;
-      end
-
-      addr_hit[252]: begin
-        reg_rdata_next[31:0] = flags_227_qs;
-      end
-
-      addr_hit[253]: begin
-        reg_rdata_next[31:0] = flags_228_qs;
-      end
-
-      addr_hit[254]: begin
-        reg_rdata_next[31:0] = flags_229_qs;
-      end
-
-      addr_hit[255]: begin
-        reg_rdata_next[31:0] = flags_230_qs;
-      end
-
-      addr_hit[256]: begin
-        reg_rdata_next[31:0] = flags_231_qs;
-      end
-
-      addr_hit[257]: begin
-        reg_rdata_next[31:0] = flags_232_qs;
-      end
-
-      addr_hit[258]: begin
-        reg_rdata_next[31:0] = flags_233_qs;
-      end
-
-      addr_hit[259]: begin
-        reg_rdata_next[31:0] = flags_234_qs;
-      end
-
-      addr_hit[260]: begin
-        reg_rdata_next[31:0] = flags_235_qs;
-      end
-
-      addr_hit[261]: begin
-        reg_rdata_next[31:0] = flags_236_qs;
-      end
-
-      addr_hit[262]: begin
-        reg_rdata_next[31:0] = flags_237_qs;
-      end
-
-      addr_hit[263]: begin
-        reg_rdata_next[31:0] = flags_238_qs;
-      end
-
-      addr_hit[264]: begin
-        reg_rdata_next[31:0] = flags_239_qs;
-      end
-
-      addr_hit[265]: begin
-        reg_rdata_next[31:0] = flags_240_qs;
-      end
-
-      addr_hit[266]: begin
-        reg_rdata_next[31:0] = flags_241_qs;
-      end
-
-      addr_hit[267]: begin
-        reg_rdata_next[31:0] = flags_242_qs;
-      end
-
-      addr_hit[268]: begin
-        reg_rdata_next[31:0] = flags_243_qs;
-      end
-
-      addr_hit[269]: begin
-        reg_rdata_next[31:0] = flags_244_qs;
-      end
-
-      addr_hit[270]: begin
-        reg_rdata_next[31:0] = flags_245_qs;
-      end
-
-      addr_hit[271]: begin
-        reg_rdata_next[31:0] = flags_246_qs;
-      end
-
-      addr_hit[272]: begin
-        reg_rdata_next[31:0] = flags_247_qs;
-      end
-
-      addr_hit[273]: begin
-        reg_rdata_next[31:0] = flags_248_qs;
-      end
-
-      addr_hit[274]: begin
-        reg_rdata_next[31:0] = flags_249_qs;
-      end
-
-      addr_hit[275]: begin
-        reg_rdata_next[31:0] = flags_250_qs;
-      end
-
-      addr_hit[276]: begin
-        reg_rdata_next[31:0] = flags_251_qs;
-      end
-
-      addr_hit[277]: begin
-        reg_rdata_next[31:0] = flags_252_qs;
-      end
-
-      addr_hit[278]: begin
-        reg_rdata_next[31:0] = flags_253_qs;
-      end
-
-      addr_hit[279]: begin
-        reg_rdata_next[31:0] = flags_254_qs;
-      end
-
-      addr_hit[280]: begin
-        reg_rdata_next[31:0] = flags_255_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0,1,2,3: begin
+          reg_rdata_next[0] = '0;
+        end
+
+        4: begin
+          reg_rdata_next[31:0] = whereto_qs;
+        end
+
+        5: begin
+          reg_rdata_next[31:0] = abstractcmd_0_qs;
+        end
+
+        6: begin
+          reg_rdata_next[31:0] = abstractcmd_1_qs;
+        end
+
+        7: begin
+          reg_rdata_next[31:0] = abstractcmd_2_qs;
+        end
+
+        8: begin
+          reg_rdata_next[31:0] = abstractcmd_3_qs;
+        end
+
+        9: begin
+          reg_rdata_next[31:0] = abstractcmd_4_qs;
+        end
+
+        10: begin
+          reg_rdata_next[31:0] = abstractcmd_5_qs;
+        end
+
+        11: begin
+          reg_rdata_next[31:0] = abstractcmd_6_qs;
+        end
+
+        12: begin
+          reg_rdata_next[31:0] = abstractcmd_7_qs;
+        end
+
+        13: begin
+          reg_rdata_next[31:0] = abstractcmd_8_qs;
+        end
+
+        14: begin
+          reg_rdata_next[31:0] = abstractcmd_9_qs;
+        end
+
+        15: begin
+          reg_rdata_next[31:0] = program_buffer_0_qs;
+        end
+
+        16: begin
+          reg_rdata_next[31:0] = program_buffer_1_qs;
+        end
+
+        17: begin
+          reg_rdata_next[31:0] = program_buffer_2_qs;
+        end
+
+        18: begin
+          reg_rdata_next[31:0] = program_buffer_3_qs;
+        end
+
+        19: begin
+          reg_rdata_next[31:0] = program_buffer_4_qs;
+        end
+
+        20: begin
+          reg_rdata_next[31:0] = program_buffer_5_qs;
+        end
+
+        21: begin
+          reg_rdata_next[31:0] = program_buffer_6_qs;
+        end
+
+        22: begin
+          reg_rdata_next[31:0] = program_buffer_7_qs;
+        end
+
+        23: begin
+          reg_rdata_next[31:0] = dataaddr_0_qs;
+        end
+
+        24: begin
+          reg_rdata_next[31:0] = dataaddr_1_qs;
+        end
+
+        25: begin
+          reg_rdata_next[31:0] = flags_0_qs;
+        end
+
+        26: begin
+          reg_rdata_next[31:0] = flags_1_qs;
+        end
+
+        27: begin
+          reg_rdata_next[31:0] = flags_2_qs;
+        end
+
+        28: begin
+          reg_rdata_next[31:0] = flags_3_qs;
+        end
+
+        29: begin
+          reg_rdata_next[31:0] = flags_4_qs;
+        end
+
+        30: begin
+          reg_rdata_next[31:0] = flags_5_qs;
+        end
+
+        31: begin
+          reg_rdata_next[31:0] = flags_6_qs;
+        end
+
+        32: begin
+          reg_rdata_next[31:0] = flags_7_qs;
+        end
+
+        33: begin
+          reg_rdata_next[31:0] = flags_8_qs;
+        end
+
+        34: begin
+          reg_rdata_next[31:0] = flags_9_qs;
+        end
+
+        35: begin
+          reg_rdata_next[31:0] = flags_10_qs;
+        end
+
+        36: begin
+          reg_rdata_next[31:0] = flags_11_qs;
+        end
+
+        37: begin
+          reg_rdata_next[31:0] = flags_12_qs;
+        end
+
+        38: begin
+          reg_rdata_next[31:0] = flags_13_qs;
+        end
+
+        39: begin
+          reg_rdata_next[31:0] = flags_14_qs;
+        end
+
+        40: begin
+          reg_rdata_next[31:0] = flags_15_qs;
+        end
+
+        41: begin
+          reg_rdata_next[31:0] = flags_16_qs;
+        end
+
+        42: begin
+          reg_rdata_next[31:0] = flags_17_qs;
+        end
+
+        43: begin
+          reg_rdata_next[31:0] = flags_18_qs;
+        end
+
+        44: begin
+          reg_rdata_next[31:0] = flags_19_qs;
+        end
+
+        45: begin
+          reg_rdata_next[31:0] = flags_20_qs;
+        end
+
+        46: begin
+          reg_rdata_next[31:0] = flags_21_qs;
+        end
+
+        47: begin
+          reg_rdata_next[31:0] = flags_22_qs;
+        end
+
+        48: begin
+          reg_rdata_next[31:0] = flags_23_qs;
+        end
+
+        49: begin
+          reg_rdata_next[31:0] = flags_24_qs;
+        end
+
+        50: begin
+          reg_rdata_next[31:0] = flags_25_qs;
+        end
+
+        51: begin
+          reg_rdata_next[31:0] = flags_26_qs;
+        end
+
+        52: begin
+          reg_rdata_next[31:0] = flags_27_qs;
+        end
+
+        53: begin
+          reg_rdata_next[31:0] = flags_28_qs;
+        end
+
+        54: begin
+          reg_rdata_next[31:0] = flags_29_qs;
+        end
+
+        55: begin
+          reg_rdata_next[31:0] = flags_30_qs;
+        end
+
+        56: begin
+          reg_rdata_next[31:0] = flags_31_qs;
+        end
+
+        57: begin
+          reg_rdata_next[31:0] = flags_32_qs;
+        end
+
+        58: begin
+          reg_rdata_next[31:0] = flags_33_qs;
+        end
+
+        59: begin
+          reg_rdata_next[31:0] = flags_34_qs;
+        end
+
+        60: begin
+          reg_rdata_next[31:0] = flags_35_qs;
+        end
+
+        61: begin
+          reg_rdata_next[31:0] = flags_36_qs;
+        end
+
+        62: begin
+          reg_rdata_next[31:0] = flags_37_qs;
+        end
+
+        63: begin
+          reg_rdata_next[31:0] = flags_38_qs;
+        end
+
+        64: begin
+          reg_rdata_next[31:0] = flags_39_qs;
+        end
+
+        65: begin
+          reg_rdata_next[31:0] = flags_40_qs;
+        end
+
+        66: begin
+          reg_rdata_next[31:0] = flags_41_qs;
+        end
+
+        67: begin
+          reg_rdata_next[31:0] = flags_42_qs;
+        end
+
+        68: begin
+          reg_rdata_next[31:0] = flags_43_qs;
+        end
+
+        69: begin
+          reg_rdata_next[31:0] = flags_44_qs;
+        end
+
+        70: begin
+          reg_rdata_next[31:0] = flags_45_qs;
+        end
+
+        71: begin
+          reg_rdata_next[31:0] = flags_46_qs;
+        end
+
+        72: begin
+          reg_rdata_next[31:0] = flags_47_qs;
+        end
+
+        73: begin
+          reg_rdata_next[31:0] = flags_48_qs;
+        end
+
+        74: begin
+          reg_rdata_next[31:0] = flags_49_qs;
+        end
+
+        75: begin
+          reg_rdata_next[31:0] = flags_50_qs;
+        end
+
+        76: begin
+          reg_rdata_next[31:0] = flags_51_qs;
+        end
+
+        77: begin
+          reg_rdata_next[31:0] = flags_52_qs;
+        end
+
+        78: begin
+          reg_rdata_next[31:0] = flags_53_qs;
+        end
+
+        79: begin
+          reg_rdata_next[31:0] = flags_54_qs;
+        end
+
+        80: begin
+          reg_rdata_next[31:0] = flags_55_qs;
+        end
+
+        81: begin
+          reg_rdata_next[31:0] = flags_56_qs;
+        end
+
+        82: begin
+          reg_rdata_next[31:0] = flags_57_qs;
+        end
+
+        83: begin
+          reg_rdata_next[31:0] = flags_58_qs;
+        end
+
+        84: begin
+          reg_rdata_next[31:0] = flags_59_qs;
+        end
+
+        85: begin
+          reg_rdata_next[31:0] = flags_60_qs;
+        end
+
+        86: begin
+          reg_rdata_next[31:0] = flags_61_qs;
+        end
+
+        87: begin
+          reg_rdata_next[31:0] = flags_62_qs;
+        end
+
+        88: begin
+          reg_rdata_next[31:0] = flags_63_qs;
+        end
+
+        89: begin
+          reg_rdata_next[31:0] = flags_64_qs;
+        end
+
+        90: begin
+          reg_rdata_next[31:0] = flags_65_qs;
+        end
+
+        91: begin
+          reg_rdata_next[31:0] = flags_66_qs;
+        end
+
+        92: begin
+          reg_rdata_next[31:0] = flags_67_qs;
+        end
+
+        93: begin
+          reg_rdata_next[31:0] = flags_68_qs;
+        end
+
+        94: begin
+          reg_rdata_next[31:0] = flags_69_qs;
+        end
+
+        95: begin
+          reg_rdata_next[31:0] = flags_70_qs;
+        end
+
+        96: begin
+          reg_rdata_next[31:0] = flags_71_qs;
+        end
+
+        97: begin
+          reg_rdata_next[31:0] = flags_72_qs;
+        end
+
+        98: begin
+          reg_rdata_next[31:0] = flags_73_qs;
+        end
+
+        99: begin
+          reg_rdata_next[31:0] = flags_74_qs;
+        end
+
+        100: begin
+          reg_rdata_next[31:0] = flags_75_qs;
+        end
+
+        101: begin
+          reg_rdata_next[31:0] = flags_76_qs;
+        end
+
+        102: begin
+          reg_rdata_next[31:0] = flags_77_qs;
+        end
+
+        103: begin
+          reg_rdata_next[31:0] = flags_78_qs;
+        end
+
+        104: begin
+          reg_rdata_next[31:0] = flags_79_qs;
+        end
+
+        105: begin
+          reg_rdata_next[31:0] = flags_80_qs;
+        end
+
+        106: begin
+          reg_rdata_next[31:0] = flags_81_qs;
+        end
+
+        107: begin
+          reg_rdata_next[31:0] = flags_82_qs;
+        end
+
+        108: begin
+          reg_rdata_next[31:0] = flags_83_qs;
+        end
+
+        109: begin
+          reg_rdata_next[31:0] = flags_84_qs;
+        end
+
+        110: begin
+          reg_rdata_next[31:0] = flags_85_qs;
+        end
+
+        111: begin
+          reg_rdata_next[31:0] = flags_86_qs;
+        end
+
+        112: begin
+          reg_rdata_next[31:0] = flags_87_qs;
+        end
+
+        113: begin
+          reg_rdata_next[31:0] = flags_88_qs;
+        end
+
+        114: begin
+          reg_rdata_next[31:0] = flags_89_qs;
+        end
+
+        115: begin
+          reg_rdata_next[31:0] = flags_90_qs;
+        end
+
+        116: begin
+          reg_rdata_next[31:0] = flags_91_qs;
+        end
+
+        117: begin
+          reg_rdata_next[31:0] = flags_92_qs;
+        end
+
+        118: begin
+          reg_rdata_next[31:0] = flags_93_qs;
+        end
+
+        119: begin
+          reg_rdata_next[31:0] = flags_94_qs;
+        end
+
+        120: begin
+          reg_rdata_next[31:0] = flags_95_qs;
+        end
+
+        121: begin
+          reg_rdata_next[31:0] = flags_96_qs;
+        end
+
+        122: begin
+          reg_rdata_next[31:0] = flags_97_qs;
+        end
+
+        123: begin
+          reg_rdata_next[31:0] = flags_98_qs;
+        end
+
+        124: begin
+          reg_rdata_next[31:0] = flags_99_qs;
+        end
+
+        125: begin
+          reg_rdata_next[31:0] = flags_100_qs;
+        end
+
+        126: begin
+          reg_rdata_next[31:0] = flags_101_qs;
+        end
+
+        127: begin
+          reg_rdata_next[31:0] = flags_102_qs;
+        end
+
+        128: begin
+          reg_rdata_next[31:0] = flags_103_qs;
+        end
+
+        129: begin
+          reg_rdata_next[31:0] = flags_104_qs;
+        end
+
+        130: begin
+          reg_rdata_next[31:0] = flags_105_qs;
+        end
+
+        131: begin
+          reg_rdata_next[31:0] = flags_106_qs;
+        end
+
+        132: begin
+          reg_rdata_next[31:0] = flags_107_qs;
+        end
+
+        133: begin
+          reg_rdata_next[31:0] = flags_108_qs;
+        end
+
+        134: begin
+          reg_rdata_next[31:0] = flags_109_qs;
+        end
+
+        135: begin
+          reg_rdata_next[31:0] = flags_110_qs;
+        end
+
+        136: begin
+          reg_rdata_next[31:0] = flags_111_qs;
+        end
+
+        137: begin
+          reg_rdata_next[31:0] = flags_112_qs;
+        end
+
+        138: begin
+          reg_rdata_next[31:0] = flags_113_qs;
+        end
+
+        139: begin
+          reg_rdata_next[31:0] = flags_114_qs;
+        end
+
+        140: begin
+          reg_rdata_next[31:0] = flags_115_qs;
+        end
+
+        141: begin
+          reg_rdata_next[31:0] = flags_116_qs;
+        end
+
+        142: begin
+          reg_rdata_next[31:0] = flags_117_qs;
+        end
+
+        143: begin
+          reg_rdata_next[31:0] = flags_118_qs;
+        end
+
+        144: begin
+          reg_rdata_next[31:0] = flags_119_qs;
+        end
+
+        145: begin
+          reg_rdata_next[31:0] = flags_120_qs;
+        end
+
+        146: begin
+          reg_rdata_next[31:0] = flags_121_qs;
+        end
+
+        147: begin
+          reg_rdata_next[31:0] = flags_122_qs;
+        end
+
+        148: begin
+          reg_rdata_next[31:0] = flags_123_qs;
+        end
+
+        149: begin
+          reg_rdata_next[31:0] = flags_124_qs;
+        end
+
+        150: begin
+          reg_rdata_next[31:0] = flags_125_qs;
+        end
+
+        151: begin
+          reg_rdata_next[31:0] = flags_126_qs;
+        end
+
+        152: begin
+          reg_rdata_next[31:0] = flags_127_qs;
+        end
+
+        153: begin
+          reg_rdata_next[31:0] = flags_128_qs;
+        end
+
+        154: begin
+          reg_rdata_next[31:0] = flags_129_qs;
+        end
+
+        155: begin
+          reg_rdata_next[31:0] = flags_130_qs;
+        end
+
+        156: begin
+          reg_rdata_next[31:0] = flags_131_qs;
+        end
+
+        157: begin
+          reg_rdata_next[31:0] = flags_132_qs;
+        end
+
+        158: begin
+          reg_rdata_next[31:0] = flags_133_qs;
+        end
+
+        159: begin
+          reg_rdata_next[31:0] = flags_134_qs;
+        end
+
+        160: begin
+          reg_rdata_next[31:0] = flags_135_qs;
+        end
+
+        161: begin
+          reg_rdata_next[31:0] = flags_136_qs;
+        end
+
+        162: begin
+          reg_rdata_next[31:0] = flags_137_qs;
+        end
+
+        163: begin
+          reg_rdata_next[31:0] = flags_138_qs;
+        end
+
+        164: begin
+          reg_rdata_next[31:0] = flags_139_qs;
+        end
+
+        165: begin
+          reg_rdata_next[31:0] = flags_140_qs;
+        end
+
+        166: begin
+          reg_rdata_next[31:0] = flags_141_qs;
+        end
+
+        167: begin
+          reg_rdata_next[31:0] = flags_142_qs;
+        end
+
+        168: begin
+          reg_rdata_next[31:0] = flags_143_qs;
+        end
+
+        169: begin
+          reg_rdata_next[31:0] = flags_144_qs;
+        end
+
+        170: begin
+          reg_rdata_next[31:0] = flags_145_qs;
+        end
+
+        171: begin
+          reg_rdata_next[31:0] = flags_146_qs;
+        end
+
+        172: begin
+          reg_rdata_next[31:0] = flags_147_qs;
+        end
+
+        173: begin
+          reg_rdata_next[31:0] = flags_148_qs;
+        end
+
+        174: begin
+          reg_rdata_next[31:0] = flags_149_qs;
+        end
+
+        175: begin
+          reg_rdata_next[31:0] = flags_150_qs;
+        end
+
+        176: begin
+          reg_rdata_next[31:0] = flags_151_qs;
+        end
+
+        177: begin
+          reg_rdata_next[31:0] = flags_152_qs;
+        end
+
+        178: begin
+          reg_rdata_next[31:0] = flags_153_qs;
+        end
+
+        179: begin
+          reg_rdata_next[31:0] = flags_154_qs;
+        end
+
+        180: begin
+          reg_rdata_next[31:0] = flags_155_qs;
+        end
+
+        181: begin
+          reg_rdata_next[31:0] = flags_156_qs;
+        end
+
+        182: begin
+          reg_rdata_next[31:0] = flags_157_qs;
+        end
+
+        183: begin
+          reg_rdata_next[31:0] = flags_158_qs;
+        end
+
+        184: begin
+          reg_rdata_next[31:0] = flags_159_qs;
+        end
+
+        185: begin
+          reg_rdata_next[31:0] = flags_160_qs;
+        end
+
+        186: begin
+          reg_rdata_next[31:0] = flags_161_qs;
+        end
+
+        187: begin
+          reg_rdata_next[31:0] = flags_162_qs;
+        end
+
+        188: begin
+          reg_rdata_next[31:0] = flags_163_qs;
+        end
+
+        189: begin
+          reg_rdata_next[31:0] = flags_164_qs;
+        end
+
+        190: begin
+          reg_rdata_next[31:0] = flags_165_qs;
+        end
+
+        191: begin
+          reg_rdata_next[31:0] = flags_166_qs;
+        end
+
+        192: begin
+          reg_rdata_next[31:0] = flags_167_qs;
+        end
+
+        193: begin
+          reg_rdata_next[31:0] = flags_168_qs;
+        end
+
+        194: begin
+          reg_rdata_next[31:0] = flags_169_qs;
+        end
+
+        195: begin
+          reg_rdata_next[31:0] = flags_170_qs;
+        end
+
+        196: begin
+          reg_rdata_next[31:0] = flags_171_qs;
+        end
+
+        197: begin
+          reg_rdata_next[31:0] = flags_172_qs;
+        end
+
+        198: begin
+          reg_rdata_next[31:0] = flags_173_qs;
+        end
+
+        199: begin
+          reg_rdata_next[31:0] = flags_174_qs;
+        end
+
+        200: begin
+          reg_rdata_next[31:0] = flags_175_qs;
+        end
+
+        201: begin
+          reg_rdata_next[31:0] = flags_176_qs;
+        end
+
+        202: begin
+          reg_rdata_next[31:0] = flags_177_qs;
+        end
+
+        203: begin
+          reg_rdata_next[31:0] = flags_178_qs;
+        end
+
+        204: begin
+          reg_rdata_next[31:0] = flags_179_qs;
+        end
+
+        205: begin
+          reg_rdata_next[31:0] = flags_180_qs;
+        end
+
+        206: begin
+          reg_rdata_next[31:0] = flags_181_qs;
+        end
+
+        207: begin
+          reg_rdata_next[31:0] = flags_182_qs;
+        end
+
+        208: begin
+          reg_rdata_next[31:0] = flags_183_qs;
+        end
+
+        209: begin
+          reg_rdata_next[31:0] = flags_184_qs;
+        end
+
+        210: begin
+          reg_rdata_next[31:0] = flags_185_qs;
+        end
+
+        211: begin
+          reg_rdata_next[31:0] = flags_186_qs;
+        end
+
+        212: begin
+          reg_rdata_next[31:0] = flags_187_qs;
+        end
+
+        213: begin
+          reg_rdata_next[31:0] = flags_188_qs;
+        end
+
+        214: begin
+          reg_rdata_next[31:0] = flags_189_qs;
+        end
+
+        215: begin
+          reg_rdata_next[31:0] = flags_190_qs;
+        end
+
+        216: begin
+          reg_rdata_next[31:0] = flags_191_qs;
+        end
+
+        217: begin
+          reg_rdata_next[31:0] = flags_192_qs;
+        end
+
+        218: begin
+          reg_rdata_next[31:0] = flags_193_qs;
+        end
+
+        219: begin
+          reg_rdata_next[31:0] = flags_194_qs;
+        end
+
+        220: begin
+          reg_rdata_next[31:0] = flags_195_qs;
+        end
+
+        221: begin
+          reg_rdata_next[31:0] = flags_196_qs;
+        end
+
+        222: begin
+          reg_rdata_next[31:0] = flags_197_qs;
+        end
+
+        223: begin
+          reg_rdata_next[31:0] = flags_198_qs;
+        end
+
+        224: begin
+          reg_rdata_next[31:0] = flags_199_qs;
+        end
+
+        225: begin
+          reg_rdata_next[31:0] = flags_200_qs;
+        end
+
+        226: begin
+          reg_rdata_next[31:0] = flags_201_qs;
+        end
+
+        227: begin
+          reg_rdata_next[31:0] = flags_202_qs;
+        end
+
+        228: begin
+          reg_rdata_next[31:0] = flags_203_qs;
+        end
+
+        229: begin
+          reg_rdata_next[31:0] = flags_204_qs;
+        end
+
+        230: begin
+          reg_rdata_next[31:0] = flags_205_qs;
+        end
+
+        231: begin
+          reg_rdata_next[31:0] = flags_206_qs;
+        end
+
+        232: begin
+          reg_rdata_next[31:0] = flags_207_qs;
+        end
+
+        233: begin
+          reg_rdata_next[31:0] = flags_208_qs;
+        end
+
+        234: begin
+          reg_rdata_next[31:0] = flags_209_qs;
+        end
+
+        235: begin
+          reg_rdata_next[31:0] = flags_210_qs;
+        end
+
+        236: begin
+          reg_rdata_next[31:0] = flags_211_qs;
+        end
+
+        237: begin
+          reg_rdata_next[31:0] = flags_212_qs;
+        end
+
+        238: begin
+          reg_rdata_next[31:0] = flags_213_qs;
+        end
+
+        239: begin
+          reg_rdata_next[31:0] = flags_214_qs;
+        end
+
+        240: begin
+          reg_rdata_next[31:0] = flags_215_qs;
+        end
+
+        241: begin
+          reg_rdata_next[31:0] = flags_216_qs;
+        end
+
+        242: begin
+          reg_rdata_next[31:0] = flags_217_qs;
+        end
+
+        243: begin
+          reg_rdata_next[31:0] = flags_218_qs;
+        end
+
+        244: begin
+          reg_rdata_next[31:0] = flags_219_qs;
+        end
+
+        245: begin
+          reg_rdata_next[31:0] = flags_220_qs;
+        end
+
+        246: begin
+          reg_rdata_next[31:0] = flags_221_qs;
+        end
+
+        247: begin
+          reg_rdata_next[31:0] = flags_222_qs;
+        end
+
+        248: begin
+          reg_rdata_next[31:0] = flags_223_qs;
+        end
+
+        249: begin
+          reg_rdata_next[31:0] = flags_224_qs;
+        end
+
+        250: begin
+          reg_rdata_next[31:0] = flags_225_qs;
+        end
+
+        251: begin
+          reg_rdata_next[31:0] = flags_226_qs;
+        end
+
+        252: begin
+          reg_rdata_next[31:0] = flags_227_qs;
+        end
+
+        253: begin
+          reg_rdata_next[31:0] = flags_228_qs;
+        end
+
+        254: begin
+          reg_rdata_next[31:0] = flags_229_qs;
+        end
+
+        255: begin
+          reg_rdata_next[31:0] = flags_230_qs;
+        end
+
+        256: begin
+          reg_rdata_next[31:0] = flags_231_qs;
+        end
+
+        257: begin
+          reg_rdata_next[31:0] = flags_232_qs;
+        end
+
+        258: begin
+          reg_rdata_next[31:0] = flags_233_qs;
+        end
+
+        259: begin
+          reg_rdata_next[31:0] = flags_234_qs;
+        end
+
+        260: begin
+          reg_rdata_next[31:0] = flags_235_qs;
+        end
+
+        261: begin
+          reg_rdata_next[31:0] = flags_236_qs;
+        end
+
+        262: begin
+          reg_rdata_next[31:0] = flags_237_qs;
+        end
+
+        263: begin
+          reg_rdata_next[31:0] = flags_238_qs;
+        end
+
+        264: begin
+          reg_rdata_next[31:0] = flags_239_qs;
+        end
+
+        265: begin
+          reg_rdata_next[31:0] = flags_240_qs;
+        end
+
+        266: begin
+          reg_rdata_next[31:0] = flags_241_qs;
+        end
+
+        267: begin
+          reg_rdata_next[31:0] = flags_242_qs;
+        end
+
+        268: begin
+          reg_rdata_next[31:0] = flags_243_qs;
+        end
+
+        269: begin
+          reg_rdata_next[31:0] = flags_244_qs;
+        end
+
+        270: begin
+          reg_rdata_next[31:0] = flags_245_qs;
+        end
+
+        271: begin
+          reg_rdata_next[31:0] = flags_246_qs;
+        end
+
+        272: begin
+          reg_rdata_next[31:0] = flags_247_qs;
+        end
+
+        273: begin
+          reg_rdata_next[31:0] = flags_248_qs;
+        end
+
+        274: begin
+          reg_rdata_next[31:0] = flags_249_qs;
+        end
+
+        275: begin
+          reg_rdata_next[31:0] = flags_250_qs;
+        end
+
+        276: begin
+          reg_rdata_next[31:0] = flags_251_qs;
+        end
+
+        277: begin
+          reg_rdata_next[31:0] = flags_252_qs;
+        end
+
+        278: begin
+          reg_rdata_next[31:0] = flags_253_qs;
+        end
+
+        279: begin
+          reg_rdata_next[31:0] = flags_254_qs;
+        end
+
+        280: begin
+          reg_rdata_next[31:0] = flags_255_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -10640,7 +10927,7 @@ module rv_dm_mem_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

@@ -151,25 +151,40 @@ module soc_proxy_core_reg_top (
 
 
 
-  logic [1:0] addr_hit;
+  logic [$clog2(NumRegsCore)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[0] = (reg_addr == SOC_PROXY_ALERT_TEST_OFFSET);
-    addr_hit[1] = (reg_addr == SOC_PROXY_DUMMY_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SOC_PROXY_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SOC_PROXY_DUMMY_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[0] & (|(SOC_PROXY_CORE_PERMIT[0] & ~reg_be))) |
-               (addr_hit[1] & (|(SOC_PROXY_CORE_PERMIT[1] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: wr_err = |(SOC_PROXY_CORE_PERMIT[0] & ~reg_be);
+        1: wr_err = |(SOC_PROXY_CORE_PERMIT[1] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign alert_test_we = addr_hit[0] & reg_we & !reg_error;
+  assign alert_test_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
+
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -179,20 +194,25 @@ module soc_proxy_core_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = '0;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = dummy_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = dummy_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -217,7 +237,7 @@ module soc_proxy_core_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

@@ -3971,205 +3971,193 @@ module adc_ctrl_reg_top (
 
 
 
-  logic [31:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == ADC_CTRL_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == ADC_CTRL_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == ADC_CTRL_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == ADC_CTRL_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == ADC_CTRL_ADC_EN_CTL_OFFSET);
-    addr_hit[ 5] = (reg_addr == ADC_CTRL_ADC_PD_CTL_OFFSET);
-    addr_hit[ 6] = (reg_addr == ADC_CTRL_ADC_LP_SAMPLE_CTL_OFFSET);
-    addr_hit[ 7] = (reg_addr == ADC_CTRL_ADC_SAMPLE_CTL_OFFSET);
-    addr_hit[ 8] = (reg_addr == ADC_CTRL_ADC_FSM_RST_OFFSET);
-    addr_hit[ 9] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_0_OFFSET);
-    addr_hit[10] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_1_OFFSET);
-    addr_hit[11] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_2_OFFSET);
-    addr_hit[12] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_3_OFFSET);
-    addr_hit[13] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_4_OFFSET);
-    addr_hit[14] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_5_OFFSET);
-    addr_hit[15] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_6_OFFSET);
-    addr_hit[16] = (reg_addr == ADC_CTRL_ADC_CHN0_FILTER_CTL_7_OFFSET);
-    addr_hit[17] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_0_OFFSET);
-    addr_hit[18] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_1_OFFSET);
-    addr_hit[19] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_2_OFFSET);
-    addr_hit[20] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_3_OFFSET);
-    addr_hit[21] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_4_OFFSET);
-    addr_hit[22] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_5_OFFSET);
-    addr_hit[23] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_6_OFFSET);
-    addr_hit[24] = (reg_addr == ADC_CTRL_ADC_CHN1_FILTER_CTL_7_OFFSET);
-    addr_hit[25] = (reg_addr == ADC_CTRL_ADC_CHN_VAL_0_OFFSET);
-    addr_hit[26] = (reg_addr == ADC_CTRL_ADC_CHN_VAL_1_OFFSET);
-    addr_hit[27] = (reg_addr == ADC_CTRL_ADC_WAKEUP_CTL_OFFSET);
-    addr_hit[28] = (reg_addr == ADC_CTRL_FILTER_STATUS_OFFSET);
-    addr_hit[29] = (reg_addr == ADC_CTRL_ADC_INTR_CTL_OFFSET);
-    addr_hit[30] = (reg_addr == ADC_CTRL_ADC_INTR_STATUS_OFFSET);
-    addr_hit[31] = (reg_addr == ADC_CTRL_ADC_FSM_STATE_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      ADC_CTRL_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      ADC_CTRL_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      ADC_CTRL_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      ADC_CTRL_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      ADC_CTRL_ADC_EN_CTL_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      ADC_CTRL_ADC_PD_CTL_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      ADC_CTRL_ADC_LP_SAMPLE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      ADC_CTRL_ADC_SAMPLE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      ADC_CTRL_ADC_FSM_RST_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_4_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_5_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_6_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      ADC_CTRL_ADC_CHN0_FILTER_CTL_7_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_4_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_5_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_6_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      ADC_CTRL_ADC_CHN1_FILTER_CTL_7_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      ADC_CTRL_ADC_CHN_VAL_0_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      ADC_CTRL_ADC_CHN_VAL_1_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      ADC_CTRL_ADC_WAKEUP_CTL_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      ADC_CTRL_FILTER_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      ADC_CTRL_ADC_INTR_CTL_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      ADC_CTRL_ADC_INTR_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      ADC_CTRL_ADC_FSM_STATE_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(ADC_CTRL_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(ADC_CTRL_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(ADC_CTRL_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(ADC_CTRL_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(ADC_CTRL_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(ADC_CTRL_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(ADC_CTRL_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(ADC_CTRL_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(ADC_CTRL_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(ADC_CTRL_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(ADC_CTRL_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(ADC_CTRL_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(ADC_CTRL_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(ADC_CTRL_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(ADC_CTRL_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(ADC_CTRL_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(ADC_CTRL_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(ADC_CTRL_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(ADC_CTRL_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(ADC_CTRL_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(ADC_CTRL_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(ADC_CTRL_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(ADC_CTRL_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(ADC_CTRL_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(ADC_CTRL_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(ADC_CTRL_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(ADC_CTRL_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(ADC_CTRL_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(ADC_CTRL_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(ADC_CTRL_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(ADC_CTRL_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(ADC_CTRL_PERMIT[31] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(ADC_CTRL_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(ADC_CTRL_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(ADC_CTRL_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(ADC_CTRL_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(ADC_CTRL_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(ADC_CTRL_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(ADC_CTRL_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(ADC_CTRL_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(ADC_CTRL_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(ADC_CTRL_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(ADC_CTRL_PERMIT[10] & ~reg_be);
+        11: wr_err = |(ADC_CTRL_PERMIT[11] & ~reg_be);
+        12: wr_err = |(ADC_CTRL_PERMIT[12] & ~reg_be);
+        13: wr_err = |(ADC_CTRL_PERMIT[13] & ~reg_be);
+        14: wr_err = |(ADC_CTRL_PERMIT[14] & ~reg_be);
+        15: wr_err = |(ADC_CTRL_PERMIT[15] & ~reg_be);
+        16: wr_err = |(ADC_CTRL_PERMIT[16] & ~reg_be);
+        17: wr_err = |(ADC_CTRL_PERMIT[17] & ~reg_be);
+        18: wr_err = |(ADC_CTRL_PERMIT[18] & ~reg_be);
+        19: wr_err = |(ADC_CTRL_PERMIT[19] & ~reg_be);
+        20: wr_err = |(ADC_CTRL_PERMIT[20] & ~reg_be);
+        21: wr_err = |(ADC_CTRL_PERMIT[21] & ~reg_be);
+        22: wr_err = |(ADC_CTRL_PERMIT[22] & ~reg_be);
+        23: wr_err = |(ADC_CTRL_PERMIT[23] & ~reg_be);
+        24: wr_err = |(ADC_CTRL_PERMIT[24] & ~reg_be);
+        25: wr_err = |(ADC_CTRL_PERMIT[25] & ~reg_be);
+        26: wr_err = |(ADC_CTRL_PERMIT[26] & ~reg_be);
+        27: wr_err = |(ADC_CTRL_PERMIT[27] & ~reg_be);
+        28: wr_err = |(ADC_CTRL_PERMIT[28] & ~reg_be);
+        29: wr_err = |(ADC_CTRL_PERMIT[29] & ~reg_be);
+        30: wr_err = |(ADC_CTRL_PERMIT[30] & ~reg_be);
+        31: wr_err = |(ADC_CTRL_PERMIT[31] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_wd = reg_wdata[0];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_wd = reg_wdata[0];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign adc_en_ctl_we = addr_hit[4] & reg_we & !reg_error;
 
+  assign adc_en_ctl_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
-  assign adc_pd_ctl_we = addr_hit[5] & reg_we & !reg_error;
 
+  assign adc_pd_ctl_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
 
-  assign adc_lp_sample_ctl_we = addr_hit[6] & reg_we & !reg_error;
+  assign adc_lp_sample_ctl_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
-  assign adc_sample_ctl_we = addr_hit[7] & reg_we & !reg_error;
 
-  assign adc_fsm_rst_we = addr_hit[8] & reg_we & !reg_error;
+  assign adc_sample_ctl_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_0_we = addr_hit[9] & reg_we & !reg_error;
 
+  assign adc_fsm_rst_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
 
+  assign adc_chn0_filter_ctl_0_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_1_we = addr_hit[10] & reg_we & !reg_error;
 
+  assign adc_chn0_filter_ctl_1_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
 
+  assign adc_chn0_filter_ctl_2_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_2_we = addr_hit[11] & reg_we & !reg_error;
 
+  assign adc_chn0_filter_ctl_3_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
 
+  assign adc_chn0_filter_ctl_4_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_3_we = addr_hit[12] & reg_we & !reg_error;
 
+  assign adc_chn0_filter_ctl_5_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
 
+  assign adc_chn0_filter_ctl_6_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_4_we = addr_hit[13] & reg_we & !reg_error;
 
+  assign adc_chn0_filter_ctl_7_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
 
+  assign adc_chn1_filter_ctl_0_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_5_we = addr_hit[14] & reg_we & !reg_error;
 
+  assign adc_chn1_filter_ctl_1_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
 
+  assign adc_chn1_filter_ctl_2_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_6_we = addr_hit[15] & reg_we & !reg_error;
 
+  assign adc_chn1_filter_ctl_3_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
 
+  assign adc_chn1_filter_ctl_4_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
-  assign adc_chn0_filter_ctl_7_we = addr_hit[16] & reg_we & !reg_error;
 
+  assign adc_chn1_filter_ctl_5_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
 
+  assign adc_chn1_filter_ctl_6_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
-  assign adc_chn1_filter_ctl_0_we = addr_hit[17] & reg_we & !reg_error;
 
+  assign adc_chn1_filter_ctl_7_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
 
 
-  assign adc_chn1_filter_ctl_1_we = addr_hit[18] & reg_we & !reg_error;
 
+  assign adc_wakeup_ctl_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
 
+  assign filter_status_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
-  assign adc_chn1_filter_ctl_2_we = addr_hit[19] & reg_we & !reg_error;
 
-
-
-
-  assign adc_chn1_filter_ctl_3_we = addr_hit[20] & reg_we & !reg_error;
-
-
-
-
-  assign adc_chn1_filter_ctl_4_we = addr_hit[21] & reg_we & !reg_error;
-
-
-
-
-  assign adc_chn1_filter_ctl_5_we = addr_hit[22] & reg_we & !reg_error;
-
-
-
-
-  assign adc_chn1_filter_ctl_6_we = addr_hit[23] & reg_we & !reg_error;
-
-
-
-
-  assign adc_chn1_filter_ctl_7_we = addr_hit[24] & reg_we & !reg_error;
-
-
-
-
-  assign adc_wakeup_ctl_we = addr_hit[27] & reg_we & !reg_error;
-
-
-  assign filter_status_we = addr_hit[28] & reg_we & !reg_error;
-
-
-  assign adc_intr_ctl_we = addr_hit[29] & reg_we & !reg_error;
+  assign adc_intr_ctl_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
   assign adc_intr_ctl_match_en_wd = reg_wdata[7:0];
-
   assign adc_intr_ctl_trans_en_wd = reg_wdata[8];
-
   assign adc_intr_ctl_oneshot_en_wd = reg_wdata[9];
-  assign adc_intr_status_we = addr_hit[30] & reg_we & !reg_error;
+
+  assign adc_intr_status_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
   assign adc_intr_status_match_wd = reg_wdata[7:0];
-
   assign adc_intr_status_trans_wd = reg_wdata[8];
-
   assign adc_intr_status_oneshot_wd = reg_wdata[9];
-  assign adc_fsm_state_re = addr_hit[31] & reg_re & !reg_error;
+
+  assign adc_fsm_state_re = addr_valid & (addr_idx == 31) & reg_re & !reg_error;
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -4209,118 +4197,145 @@ module adc_ctrl_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-      end
+        2,3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        4: begin
+          reg_rdata_next = DW'(adc_en_ctl_qs);
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next = DW'(adc_en_ctl_qs);
-      end
-      addr_hit[5]: begin
-        reg_rdata_next = DW'(adc_pd_ctl_qs);
-      end
-      addr_hit[6]: begin
-        reg_rdata_next = DW'(adc_lp_sample_ctl_qs);
-      end
-      addr_hit[7]: begin
-        reg_rdata_next = DW'(adc_sample_ctl_qs);
-      end
-      addr_hit[8]: begin
-        reg_rdata_next = DW'(adc_fsm_rst_qs);
-      end
-      addr_hit[9]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_0_qs);
-      end
-      addr_hit[10]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_1_qs);
-      end
-      addr_hit[11]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_2_qs);
-      end
-      addr_hit[12]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_3_qs);
-      end
-      addr_hit[13]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_4_qs);
-      end
-      addr_hit[14]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_5_qs);
-      end
-      addr_hit[15]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_6_qs);
-      end
-      addr_hit[16]: begin
-        reg_rdata_next = DW'(adc_chn0_filter_ctl_7_qs);
-      end
-      addr_hit[17]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_0_qs);
-      end
-      addr_hit[18]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_1_qs);
-      end
-      addr_hit[19]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_2_qs);
-      end
-      addr_hit[20]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_3_qs);
-      end
-      addr_hit[21]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_4_qs);
-      end
-      addr_hit[22]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_5_qs);
-      end
-      addr_hit[23]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_6_qs);
-      end
-      addr_hit[24]: begin
-        reg_rdata_next = DW'(adc_chn1_filter_ctl_7_qs);
-      end
-      addr_hit[25]: begin
-        reg_rdata_next = DW'(adc_chn_val_0_qs);
-      end
-      addr_hit[26]: begin
-        reg_rdata_next = DW'(adc_chn_val_1_qs);
-      end
-      addr_hit[27]: begin
-        reg_rdata_next = DW'(adc_wakeup_ctl_qs);
-      end
-      addr_hit[28]: begin
-        reg_rdata_next = DW'(filter_status_qs);
-      end
-      addr_hit[29]: begin
-        reg_rdata_next[7:0] = adc_intr_ctl_match_en_qs;
-        reg_rdata_next[8] = adc_intr_ctl_trans_en_qs;
-        reg_rdata_next[9] = adc_intr_ctl_oneshot_en_qs;
-      end
+        5: begin
+          reg_rdata_next = DW'(adc_pd_ctl_qs);
+        end
 
-      addr_hit[30]: begin
-        reg_rdata_next[7:0] = adc_intr_status_match_qs;
-        reg_rdata_next[8] = adc_intr_status_trans_qs;
-        reg_rdata_next[9] = adc_intr_status_oneshot_qs;
-      end
+        6: begin
+          reg_rdata_next = DW'(adc_lp_sample_ctl_qs);
+        end
 
-      addr_hit[31]: begin
-        reg_rdata_next = DW'(adc_fsm_state_qs);
-      end
+        7: begin
+          reg_rdata_next = DW'(adc_sample_ctl_qs);
+        end
+
+        8: begin
+          reg_rdata_next = DW'(adc_fsm_rst_qs);
+        end
+
+        9: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_0_qs);
+        end
+
+        10: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_1_qs);
+        end
+
+        11: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_2_qs);
+        end
+
+        12: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_3_qs);
+        end
+
+        13: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_4_qs);
+        end
+
+        14: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_5_qs);
+        end
+
+        15: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_6_qs);
+        end
+
+        16: begin
+          reg_rdata_next = DW'(adc_chn0_filter_ctl_7_qs);
+        end
+
+        17: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_0_qs);
+        end
+
+        18: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_1_qs);
+        end
+
+        19: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_2_qs);
+        end
+
+        20: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_3_qs);
+        end
+
+        21: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_4_qs);
+        end
+
+        22: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_5_qs);
+        end
+
+        23: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_6_qs);
+        end
+
+        24: begin
+          reg_rdata_next = DW'(adc_chn1_filter_ctl_7_qs);
+        end
+
+        25: begin
+          reg_rdata_next = DW'(adc_chn_val_0_qs);
+        end
+
+        26: begin
+          reg_rdata_next = DW'(adc_chn_val_1_qs);
+        end
+
+        27: begin
+          reg_rdata_next = DW'(adc_wakeup_ctl_qs);
+        end
+
+        28: begin
+          reg_rdata_next = DW'(filter_status_qs);
+        end
+
+        29: begin
+          reg_rdata_next[7:0] = adc_intr_ctl_match_en_qs;
+          reg_rdata_next[8] = adc_intr_ctl_trans_en_qs;
+          reg_rdata_next[9] = adc_intr_ctl_oneshot_en_qs;
+        end
+
+        30: begin
+          reg_rdata_next[7:0] = adc_intr_status_match_qs;
+          reg_rdata_next[8] = adc_intr_status_trans_qs;
+          reg_rdata_next[9] = adc_intr_status_oneshot_qs;
+        end
+
+        31: begin
+          reg_rdata_next = DW'(adc_fsm_state_qs);
+        end
+
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -4332,89 +4347,88 @@ module adc_ctrl_reg_top (
   assign reg_busy = (reg_busy_sel | shadow_busy) & tl_i.a_valid;
   always_comb begin
     reg_busy_sel = '0;
-    unique case (1'b1)
-      addr_hit[4]: begin
-        reg_busy_sel = adc_en_ctl_busy;
-      end
-      addr_hit[5]: begin
-        reg_busy_sel = adc_pd_ctl_busy;
-      end
-      addr_hit[6]: begin
-        reg_busy_sel = adc_lp_sample_ctl_busy;
-      end
-      addr_hit[7]: begin
-        reg_busy_sel = adc_sample_ctl_busy;
-      end
-      addr_hit[8]: begin
-        reg_busy_sel = adc_fsm_rst_busy;
-      end
-      addr_hit[9]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_0_busy;
-      end
-      addr_hit[10]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_1_busy;
-      end
-      addr_hit[11]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_2_busy;
-      end
-      addr_hit[12]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_3_busy;
-      end
-      addr_hit[13]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_4_busy;
-      end
-      addr_hit[14]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_5_busy;
-      end
-      addr_hit[15]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_6_busy;
-      end
-      addr_hit[16]: begin
-        reg_busy_sel = adc_chn0_filter_ctl_7_busy;
-      end
-      addr_hit[17]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_0_busy;
-      end
-      addr_hit[18]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_1_busy;
-      end
-      addr_hit[19]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_2_busy;
-      end
-      addr_hit[20]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_3_busy;
-      end
-      addr_hit[21]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_4_busy;
-      end
-      addr_hit[22]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_5_busy;
-      end
-      addr_hit[23]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_6_busy;
-      end
-      addr_hit[24]: begin
-        reg_busy_sel = adc_chn1_filter_ctl_7_busy;
-      end
-      addr_hit[25]: begin
-        reg_busy_sel = adc_chn_val_0_busy;
-      end
-      addr_hit[26]: begin
-        reg_busy_sel = adc_chn_val_1_busy;
-      end
-      addr_hit[27]: begin
-        reg_busy_sel = adc_wakeup_ctl_busy;
-      end
-      addr_hit[28]: begin
-        reg_busy_sel = filter_status_busy;
-      end
-      addr_hit[31]: begin
-        reg_busy_sel = adc_fsm_state_busy;
-      end
-      default: begin
-        reg_busy_sel  = '0;
-      end
-    endcase
+    if (addr_valid) begin
+      unique case (addr_idx)
+        4: begin
+          reg_busy_sel = adc_en_ctl_busy;
+        end
+        5: begin
+          reg_busy_sel = adc_pd_ctl_busy;
+        end
+        6: begin
+          reg_busy_sel = adc_lp_sample_ctl_busy;
+        end
+        7: begin
+          reg_busy_sel = adc_sample_ctl_busy;
+        end
+        8: begin
+          reg_busy_sel = adc_fsm_rst_busy;
+        end
+        9: begin
+          reg_busy_sel = adc_chn0_filter_ctl_0_busy;
+        end
+        10: begin
+          reg_busy_sel = adc_chn0_filter_ctl_1_busy;
+        end
+        11: begin
+          reg_busy_sel = adc_chn0_filter_ctl_2_busy;
+        end
+        12: begin
+          reg_busy_sel = adc_chn0_filter_ctl_3_busy;
+        end
+        13: begin
+          reg_busy_sel = adc_chn0_filter_ctl_4_busy;
+        end
+        14: begin
+          reg_busy_sel = adc_chn0_filter_ctl_5_busy;
+        end
+        15: begin
+          reg_busy_sel = adc_chn0_filter_ctl_6_busy;
+        end
+        16: begin
+          reg_busy_sel = adc_chn0_filter_ctl_7_busy;
+        end
+        17: begin
+          reg_busy_sel = adc_chn1_filter_ctl_0_busy;
+        end
+        18: begin
+          reg_busy_sel = adc_chn1_filter_ctl_1_busy;
+        end
+        19: begin
+          reg_busy_sel = adc_chn1_filter_ctl_2_busy;
+        end
+        20: begin
+          reg_busy_sel = adc_chn1_filter_ctl_3_busy;
+        end
+        21: begin
+          reg_busy_sel = adc_chn1_filter_ctl_4_busy;
+        end
+        22: begin
+          reg_busy_sel = adc_chn1_filter_ctl_5_busy;
+        end
+        23: begin
+          reg_busy_sel = adc_chn1_filter_ctl_6_busy;
+        end
+        24: begin
+          reg_busy_sel = adc_chn1_filter_ctl_7_busy;
+        end
+        25: begin
+          reg_busy_sel = adc_chn_val_0_busy;
+        end
+        26: begin
+          reg_busy_sel = adc_chn_val_1_busy;
+        end
+        27: begin
+          reg_busy_sel = adc_wakeup_ctl_busy;
+        end
+        28: begin
+          reg_busy_sel = filter_status_busy;
+        end
+        31: begin
+          reg_busy_sel = adc_fsm_state_busy;
+        end
+      endcase
+    end
   end
 
 
@@ -4433,7 +4447,7 @@ module adc_ctrl_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

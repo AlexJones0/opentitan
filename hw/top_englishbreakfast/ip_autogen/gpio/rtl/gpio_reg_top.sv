@@ -701,12 +701,15 @@ module gpio_reg_top
 
 
 
-  logic [17:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [17:0] racl_addr_hit_read;
-  logic [17:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -725,46 +728,56 @@ module gpio_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[ 0] = (reg_addr == GPIO_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == GPIO_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == GPIO_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == GPIO_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == GPIO_DATA_IN_OFFSET);
-    addr_hit[ 5] = (reg_addr == GPIO_DIRECT_OUT_OFFSET);
-    addr_hit[ 6] = (reg_addr == GPIO_MASKED_OUT_LOWER_OFFSET);
-    addr_hit[ 7] = (reg_addr == GPIO_MASKED_OUT_UPPER_OFFSET);
-    addr_hit[ 8] = (reg_addr == GPIO_DIRECT_OE_OFFSET);
-    addr_hit[ 9] = (reg_addr == GPIO_MASKED_OE_LOWER_OFFSET);
-    addr_hit[10] = (reg_addr == GPIO_MASKED_OE_UPPER_OFFSET);
-    addr_hit[11] = (reg_addr == GPIO_INTR_CTRL_EN_RISING_OFFSET);
-    addr_hit[12] = (reg_addr == GPIO_INTR_CTRL_EN_FALLING_OFFSET);
-    addr_hit[13] = (reg_addr == GPIO_INTR_CTRL_EN_LVLHIGH_OFFSET);
-    addr_hit[14] = (reg_addr == GPIO_INTR_CTRL_EN_LVLLOW_OFFSET);
-    addr_hit[15] = (reg_addr == GPIO_CTRL_EN_INPUT_FILTER_OFFSET);
-    addr_hit[16] = (reg_addr == GPIO_HW_STRAPS_DATA_IN_VALID_OFFSET);
-    addr_hit[17] = (reg_addr == GPIO_HW_STRAPS_DATA_IN_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      GPIO_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      GPIO_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      GPIO_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      GPIO_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      GPIO_DATA_IN_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      GPIO_DIRECT_OUT_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      GPIO_MASKED_OUT_LOWER_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      GPIO_MASKED_OUT_UPPER_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      GPIO_DIRECT_OE_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      GPIO_MASKED_OE_LOWER_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      GPIO_MASKED_OE_UPPER_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      GPIO_INTR_CTRL_EN_RISING_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      GPIO_INTR_CTRL_EN_FALLING_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      GPIO_INTR_CTRL_EN_LVLHIGH_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      GPIO_INTR_CTRL_EN_LVLLOW_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      GPIO_CTRL_EN_INPUT_FILTER_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      GPIO_HW_STRAPS_DATA_IN_VALID_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      GPIO_HW_STRAPS_DATA_IN_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 18; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -779,87 +792,107 @@ module gpio_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[ 0] & (|(GPIO_PERMIT[ 0] & ~reg_be))) |
-               (racl_addr_hit_write[ 1] & (|(GPIO_PERMIT[ 1] & ~reg_be))) |
-               (racl_addr_hit_write[ 2] & (|(GPIO_PERMIT[ 2] & ~reg_be))) |
-               (racl_addr_hit_write[ 3] & (|(GPIO_PERMIT[ 3] & ~reg_be))) |
-               (racl_addr_hit_write[ 4] & (|(GPIO_PERMIT[ 4] & ~reg_be))) |
-               (racl_addr_hit_write[ 5] & (|(GPIO_PERMIT[ 5] & ~reg_be))) |
-               (racl_addr_hit_write[ 6] & (|(GPIO_PERMIT[ 6] & ~reg_be))) |
-               (racl_addr_hit_write[ 7] & (|(GPIO_PERMIT[ 7] & ~reg_be))) |
-               (racl_addr_hit_write[ 8] & (|(GPIO_PERMIT[ 8] & ~reg_be))) |
-               (racl_addr_hit_write[ 9] & (|(GPIO_PERMIT[ 9] & ~reg_be))) |
-               (racl_addr_hit_write[10] & (|(GPIO_PERMIT[10] & ~reg_be))) |
-               (racl_addr_hit_write[11] & (|(GPIO_PERMIT[11] & ~reg_be))) |
-               (racl_addr_hit_write[12] & (|(GPIO_PERMIT[12] & ~reg_be))) |
-               (racl_addr_hit_write[13] & (|(GPIO_PERMIT[13] & ~reg_be))) |
-               (racl_addr_hit_write[14] & (|(GPIO_PERMIT[14] & ~reg_be))) |
-               (racl_addr_hit_write[15] & (|(GPIO_PERMIT[15] & ~reg_be))) |
-               (racl_addr_hit_write[16] & (|(GPIO_PERMIT[16] & ~reg_be))) |
-               (racl_addr_hit_write[17] & (|(GPIO_PERMIT[17] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(GPIO_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(GPIO_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(GPIO_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(GPIO_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(GPIO_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(GPIO_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(GPIO_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(GPIO_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(GPIO_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(GPIO_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(GPIO_PERMIT[10] & ~reg_be);
+        11: wr_err = |(GPIO_PERMIT[11] & ~reg_be);
+        12: wr_err = |(GPIO_PERMIT[12] & ~reg_be);
+        13: wr_err = |(GPIO_PERMIT[13] & ~reg_be);
+        14: wr_err = |(GPIO_PERMIT[14] & ~reg_be);
+        15: wr_err = |(GPIO_PERMIT[15] & ~reg_be);
+        16: wr_err = |(GPIO_PERMIT[16] & ~reg_be);
+        17: wr_err = |(GPIO_PERMIT[17] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = racl_addr_hit_write[0] & reg_we & !reg_error;
+  assign intr_state_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_wd = reg_wdata[31:0];
-  assign intr_enable_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_wd = reg_wdata[31:0];
-  assign intr_test_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign intr_test_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_wd = reg_wdata[31:0];
-  assign alert_test_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign direct_out_re = racl_addr_hit_read[5] & reg_re & !reg_error;
-  assign direct_out_we = racl_addr_hit_write[5] & reg_we & !reg_error;
+
+
+  assign direct_out_re = racl_addr_read_valid & (racl_addr_read_idx == 5) & reg_re & !reg_error;
+  assign direct_out_we = racl_addr_write_valid & (racl_addr_write_idx == 5) & reg_we & !reg_error;
 
   assign direct_out_wd = reg_wdata[31:0];
-  assign masked_out_lower_re = racl_addr_hit_read[6] & reg_re & !reg_error;
-  assign masked_out_lower_we = racl_addr_hit_write[6] & reg_we & !reg_error;
+
+  assign masked_out_lower_re = racl_addr_read_valid & (racl_addr_read_idx == 6) & reg_re & !reg_error;
+  assign masked_out_lower_we = racl_addr_write_valid & (racl_addr_write_idx == 6) & reg_we & !reg_error;
 
   assign masked_out_lower_data_wd = reg_wdata[15:0];
-
   assign masked_out_lower_mask_wd = reg_wdata[31:16];
-  assign masked_out_upper_re = racl_addr_hit_read[7] & reg_re & !reg_error;
-  assign masked_out_upper_we = racl_addr_hit_write[7] & reg_we & !reg_error;
+
+  assign masked_out_upper_re = racl_addr_read_valid & (racl_addr_read_idx == 7) & reg_re & !reg_error;
+  assign masked_out_upper_we = racl_addr_write_valid & (racl_addr_write_idx == 7) & reg_we & !reg_error;
 
   assign masked_out_upper_data_wd = reg_wdata[15:0];
-
   assign masked_out_upper_mask_wd = reg_wdata[31:16];
-  assign direct_oe_re = racl_addr_hit_read[8] & reg_re & !reg_error;
-  assign direct_oe_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+
+  assign direct_oe_re = racl_addr_read_valid & (racl_addr_read_idx == 8) & reg_re & !reg_error;
+  assign direct_oe_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
   assign direct_oe_wd = reg_wdata[31:0];
-  assign masked_oe_lower_re = racl_addr_hit_read[9] & reg_re & !reg_error;
-  assign masked_oe_lower_we = racl_addr_hit_write[9] & reg_we & !reg_error;
+
+  assign masked_oe_lower_re = racl_addr_read_valid & (racl_addr_read_idx == 9) & reg_re & !reg_error;
+  assign masked_oe_lower_we = racl_addr_write_valid & (racl_addr_write_idx == 9) & reg_we & !reg_error;
 
   assign masked_oe_lower_data_wd = reg_wdata[15:0];
-
   assign masked_oe_lower_mask_wd = reg_wdata[31:16];
-  assign masked_oe_upper_re = racl_addr_hit_read[10] & reg_re & !reg_error;
-  assign masked_oe_upper_we = racl_addr_hit_write[10] & reg_we & !reg_error;
+
+  assign masked_oe_upper_re = racl_addr_read_valid & (racl_addr_read_idx == 10) & reg_re & !reg_error;
+  assign masked_oe_upper_we = racl_addr_write_valid & (racl_addr_write_idx == 10) & reg_we & !reg_error;
 
   assign masked_oe_upper_data_wd = reg_wdata[15:0];
-
   assign masked_oe_upper_mask_wd = reg_wdata[31:16];
-  assign intr_ctrl_en_rising_we = racl_addr_hit_write[11] & reg_we & !reg_error;
+
+  assign intr_ctrl_en_rising_we = racl_addr_write_valid & (racl_addr_write_idx == 11) & reg_we & !reg_error;
 
   assign intr_ctrl_en_rising_wd = reg_wdata[31:0];
-  assign intr_ctrl_en_falling_we = racl_addr_hit_write[12] & reg_we & !reg_error;
+
+  assign intr_ctrl_en_falling_we = racl_addr_write_valid & (racl_addr_write_idx == 12) & reg_we & !reg_error;
 
   assign intr_ctrl_en_falling_wd = reg_wdata[31:0];
-  assign intr_ctrl_en_lvlhigh_we = racl_addr_hit_write[13] & reg_we & !reg_error;
+
+  assign intr_ctrl_en_lvlhigh_we = racl_addr_write_valid & (racl_addr_write_idx == 13) & reg_we & !reg_error;
 
   assign intr_ctrl_en_lvlhigh_wd = reg_wdata[31:0];
-  assign intr_ctrl_en_lvllow_we = racl_addr_hit_write[14] & reg_we & !reg_error;
+
+  assign intr_ctrl_en_lvllow_we = racl_addr_write_valid & (racl_addr_write_idx == 14) & reg_we & !reg_error;
 
   assign intr_ctrl_en_lvllow_wd = reg_wdata[31:0];
-  assign ctrl_en_input_filter_we = racl_addr_hit_write[15] & reg_we & !reg_error;
+
+  assign ctrl_en_input_filter_we = racl_addr_write_valid & (racl_addr_write_idx == 15) & reg_we & !reg_error;
 
   assign ctrl_en_input_filter_wd = reg_wdata[31:0];
+
+
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -885,88 +918,93 @@ module gpio_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[31:0] = intr_state_qs;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[31:0] = intr_state_qs;
+        end
 
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[31:0] = intr_enable_qs;
-      end
+        1: begin
+          reg_rdata_next[31:0] = intr_enable_qs;
+        end
 
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[31:0] = '0;
-      end
+        2: begin
+          reg_rdata_next[31:0] = '0;
+        end
 
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next[31:0] = data_in_qs;
-      end
+        4: begin
+          reg_rdata_next[31:0] = data_in_qs;
+        end
 
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next[31:0] = direct_out_qs;
-      end
+        5: begin
+          reg_rdata_next[31:0] = direct_out_qs;
+        end
 
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next[15:0] = masked_out_lower_data_qs;
-        reg_rdata_next[31:16] = '0;
-      end
+        6: begin
+          reg_rdata_next[15:0] = masked_out_lower_data_qs;
+          reg_rdata_next[31:16] = '0;
+        end
 
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next[15:0] = masked_out_upper_data_qs;
-        reg_rdata_next[31:16] = '0;
-      end
+        7: begin
+          reg_rdata_next[15:0] = masked_out_upper_data_qs;
+          reg_rdata_next[31:16] = '0;
+        end
 
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next[31:0] = direct_oe_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = direct_oe_qs;
+        end
 
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next[15:0] = masked_oe_lower_data_qs;
-        reg_rdata_next[31:16] = masked_oe_lower_mask_qs;
-      end
+        9: begin
+          reg_rdata_next[15:0] = masked_oe_lower_data_qs;
+          reg_rdata_next[31:16] = masked_oe_lower_mask_qs;
+        end
 
-      racl_addr_hit_read[10]: begin
-        reg_rdata_next[15:0] = masked_oe_upper_data_qs;
-        reg_rdata_next[31:16] = masked_oe_upper_mask_qs;
-      end
+        10: begin
+          reg_rdata_next[15:0] = masked_oe_upper_data_qs;
+          reg_rdata_next[31:16] = masked_oe_upper_mask_qs;
+        end
 
-      racl_addr_hit_read[11]: begin
-        reg_rdata_next[31:0] = intr_ctrl_en_rising_qs;
-      end
+        11: begin
+          reg_rdata_next[31:0] = intr_ctrl_en_rising_qs;
+        end
 
-      racl_addr_hit_read[12]: begin
-        reg_rdata_next[31:0] = intr_ctrl_en_falling_qs;
-      end
+        12: begin
+          reg_rdata_next[31:0] = intr_ctrl_en_falling_qs;
+        end
 
-      racl_addr_hit_read[13]: begin
-        reg_rdata_next[31:0] = intr_ctrl_en_lvlhigh_qs;
-      end
+        13: begin
+          reg_rdata_next[31:0] = intr_ctrl_en_lvlhigh_qs;
+        end
 
-      racl_addr_hit_read[14]: begin
-        reg_rdata_next[31:0] = intr_ctrl_en_lvllow_qs;
-      end
+        14: begin
+          reg_rdata_next[31:0] = intr_ctrl_en_lvllow_qs;
+        end
 
-      racl_addr_hit_read[15]: begin
-        reg_rdata_next[31:0] = ctrl_en_input_filter_qs;
-      end
+        15: begin
+          reg_rdata_next[31:0] = ctrl_en_input_filter_qs;
+        end
 
-      racl_addr_hit_read[16]: begin
-        reg_rdata_next[0] = hw_straps_data_in_valid_qs;
-      end
+        16: begin
+          reg_rdata_next[0] = hw_straps_data_in_valid_qs;
+        end
 
-      racl_addr_hit_read[17]: begin
-        reg_rdata_next[31:0] = hw_straps_data_in_qs;
-      end
+        17: begin
+          reg_rdata_next[31:0] = hw_straps_data_in_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -993,7 +1031,7 @@ module gpio_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

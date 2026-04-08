@@ -2499,245 +2499,245 @@ module sensor_ctrl_reg_top (
 
 
 
-  logic [28:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == SENSOR_CTRL_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == SENSOR_CTRL_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == SENSOR_CTRL_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == SENSOR_CTRL_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == SENSOR_CTRL_CFG_REGWEN_OFFSET);
-    addr_hit[ 5] = (reg_addr == SENSOR_CTRL_ALERT_TRIG_OFFSET);
-    addr_hit[ 6] = (reg_addr == SENSOR_CTRL_ALERT_EN_0_OFFSET);
-    addr_hit[ 7] = (reg_addr == SENSOR_CTRL_ALERT_EN_1_OFFSET);
-    addr_hit[ 8] = (reg_addr == SENSOR_CTRL_ALERT_EN_2_OFFSET);
-    addr_hit[ 9] = (reg_addr == SENSOR_CTRL_ALERT_EN_3_OFFSET);
-    addr_hit[10] = (reg_addr == SENSOR_CTRL_ALERT_EN_4_OFFSET);
-    addr_hit[11] = (reg_addr == SENSOR_CTRL_ALERT_EN_5_OFFSET);
-    addr_hit[12] = (reg_addr == SENSOR_CTRL_ALERT_EN_6_OFFSET);
-    addr_hit[13] = (reg_addr == SENSOR_CTRL_ALERT_EN_7_OFFSET);
-    addr_hit[14] = (reg_addr == SENSOR_CTRL_ALERT_EN_8_OFFSET);
-    addr_hit[15] = (reg_addr == SENSOR_CTRL_ALERT_EN_9_OFFSET);
-    addr_hit[16] = (reg_addr == SENSOR_CTRL_ALERT_EN_10_OFFSET);
-    addr_hit[17] = (reg_addr == SENSOR_CTRL_FATAL_ALERT_EN_OFFSET);
-    addr_hit[18] = (reg_addr == SENSOR_CTRL_RECOV_ALERT_OFFSET);
-    addr_hit[19] = (reg_addr == SENSOR_CTRL_FATAL_ALERT_OFFSET);
-    addr_hit[20] = (reg_addr == SENSOR_CTRL_STATUS_OFFSET);
-    addr_hit[21] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_0_OFFSET);
-    addr_hit[22] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_1_OFFSET);
-    addr_hit[23] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_2_OFFSET);
-    addr_hit[24] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_3_OFFSET);
-    addr_hit[25] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_0_OFFSET);
-    addr_hit[26] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_1_OFFSET);
-    addr_hit[27] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_2_OFFSET);
-    addr_hit[28] = (reg_addr == SENSOR_CTRL_MANUAL_PAD_ATTR_3_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SENSOR_CTRL_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SENSOR_CTRL_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      SENSOR_CTRL_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      SENSOR_CTRL_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      SENSOR_CTRL_CFG_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      SENSOR_CTRL_ALERT_TRIG_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      SENSOR_CTRL_ALERT_EN_0_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      SENSOR_CTRL_ALERT_EN_1_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      SENSOR_CTRL_ALERT_EN_2_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      SENSOR_CTRL_ALERT_EN_3_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      SENSOR_CTRL_ALERT_EN_4_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      SENSOR_CTRL_ALERT_EN_5_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      SENSOR_CTRL_ALERT_EN_6_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      SENSOR_CTRL_ALERT_EN_7_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      SENSOR_CTRL_ALERT_EN_8_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      SENSOR_CTRL_ALERT_EN_9_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      SENSOR_CTRL_ALERT_EN_10_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      SENSOR_CTRL_FATAL_ALERT_EN_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      SENSOR_CTRL_RECOV_ALERT_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      SENSOR_CTRL_FATAL_ALERT_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      SENSOR_CTRL_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_0_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_1_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_2_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_REGWEN_3_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_0_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_1_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_2_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      SENSOR_CTRL_MANUAL_PAD_ATTR_3_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(SENSOR_CTRL_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(SENSOR_CTRL_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(SENSOR_CTRL_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(SENSOR_CTRL_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(SENSOR_CTRL_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(SENSOR_CTRL_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(SENSOR_CTRL_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(SENSOR_CTRL_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(SENSOR_CTRL_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(SENSOR_CTRL_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(SENSOR_CTRL_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(SENSOR_CTRL_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(SENSOR_CTRL_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(SENSOR_CTRL_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(SENSOR_CTRL_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(SENSOR_CTRL_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(SENSOR_CTRL_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(SENSOR_CTRL_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(SENSOR_CTRL_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(SENSOR_CTRL_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(SENSOR_CTRL_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(SENSOR_CTRL_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(SENSOR_CTRL_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(SENSOR_CTRL_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(SENSOR_CTRL_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(SENSOR_CTRL_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(SENSOR_CTRL_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(SENSOR_CTRL_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(SENSOR_CTRL_PERMIT[28] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(SENSOR_CTRL_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(SENSOR_CTRL_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(SENSOR_CTRL_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(SENSOR_CTRL_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(SENSOR_CTRL_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(SENSOR_CTRL_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(SENSOR_CTRL_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(SENSOR_CTRL_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(SENSOR_CTRL_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(SENSOR_CTRL_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(SENSOR_CTRL_PERMIT[10] & ~reg_be);
+        11: wr_err = |(SENSOR_CTRL_PERMIT[11] & ~reg_be);
+        12: wr_err = |(SENSOR_CTRL_PERMIT[12] & ~reg_be);
+        13: wr_err = |(SENSOR_CTRL_PERMIT[13] & ~reg_be);
+        14: wr_err = |(SENSOR_CTRL_PERMIT[14] & ~reg_be);
+        15: wr_err = |(SENSOR_CTRL_PERMIT[15] & ~reg_be);
+        16: wr_err = |(SENSOR_CTRL_PERMIT[16] & ~reg_be);
+        17: wr_err = |(SENSOR_CTRL_PERMIT[17] & ~reg_be);
+        18: wr_err = |(SENSOR_CTRL_PERMIT[18] & ~reg_be);
+        19: wr_err = |(SENSOR_CTRL_PERMIT[19] & ~reg_be);
+        20: wr_err = |(SENSOR_CTRL_PERMIT[20] & ~reg_be);
+        21: wr_err = |(SENSOR_CTRL_PERMIT[21] & ~reg_be);
+        22: wr_err = |(SENSOR_CTRL_PERMIT[22] & ~reg_be);
+        23: wr_err = |(SENSOR_CTRL_PERMIT[23] & ~reg_be);
+        24: wr_err = |(SENSOR_CTRL_PERMIT[24] & ~reg_be);
+        25: wr_err = |(SENSOR_CTRL_PERMIT[25] & ~reg_be);
+        26: wr_err = |(SENSOR_CTRL_PERMIT[26] & ~reg_be);
+        27: wr_err = |(SENSOR_CTRL_PERMIT[27] & ~reg_be);
+        28: wr_err = |(SENSOR_CTRL_PERMIT[28] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_io_status_change_wd = reg_wdata[0];
-
   assign intr_state_init_status_change_wd = reg_wdata[1];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_io_status_change_wd = reg_wdata[0];
-
   assign intr_enable_init_status_change_wd = reg_wdata[1];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_io_status_change_wd = reg_wdata[0];
-
   assign intr_test_init_status_change_wd = reg_wdata[1];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_recov_alert_wd = reg_wdata[0];
-
   assign alert_test_fatal_alert_wd = reg_wdata[1];
-  assign cfg_regwen_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign cfg_regwen_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign cfg_regwen_wd = reg_wdata[0];
-  assign alert_trig_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign alert_trig_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign alert_trig_val_0_wd = reg_wdata[0];
-
   assign alert_trig_val_1_wd = reg_wdata[1];
-
   assign alert_trig_val_2_wd = reg_wdata[2];
-
   assign alert_trig_val_3_wd = reg_wdata[3];
-
   assign alert_trig_val_4_wd = reg_wdata[4];
-
   assign alert_trig_val_5_wd = reg_wdata[5];
-
   assign alert_trig_val_6_wd = reg_wdata[6];
-
   assign alert_trig_val_7_wd = reg_wdata[7];
-
   assign alert_trig_val_8_wd = reg_wdata[8];
-
   assign alert_trig_val_9_wd = reg_wdata[9];
-
   assign alert_trig_val_10_wd = reg_wdata[10];
-  assign alert_en_0_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign alert_en_0_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign alert_en_0_wd = reg_wdata[3:0];
-  assign alert_en_1_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign alert_en_1_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign alert_en_1_wd = reg_wdata[3:0];
-  assign alert_en_2_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign alert_en_2_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign alert_en_2_wd = reg_wdata[3:0];
-  assign alert_en_3_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign alert_en_3_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign alert_en_3_wd = reg_wdata[3:0];
-  assign alert_en_4_we = addr_hit[10] & reg_we & !reg_error;
+
+  assign alert_en_4_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign alert_en_4_wd = reg_wdata[3:0];
-  assign alert_en_5_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign alert_en_5_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign alert_en_5_wd = reg_wdata[3:0];
-  assign alert_en_6_we = addr_hit[12] & reg_we & !reg_error;
+
+  assign alert_en_6_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
   assign alert_en_6_wd = reg_wdata[3:0];
-  assign alert_en_7_we = addr_hit[13] & reg_we & !reg_error;
+
+  assign alert_en_7_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
   assign alert_en_7_wd = reg_wdata[3:0];
-  assign alert_en_8_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign alert_en_8_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign alert_en_8_wd = reg_wdata[3:0];
-  assign alert_en_9_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign alert_en_9_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign alert_en_9_wd = reg_wdata[3:0];
-  assign alert_en_10_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign alert_en_10_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign alert_en_10_wd = reg_wdata[3:0];
-  assign fatal_alert_en_we = addr_hit[17] & reg_we & !reg_error;
+
+  assign fatal_alert_en_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
   assign fatal_alert_en_val_0_wd = reg_wdata[0];
-
   assign fatal_alert_en_val_1_wd = reg_wdata[1];
-
   assign fatal_alert_en_val_2_wd = reg_wdata[2];
-
   assign fatal_alert_en_val_3_wd = reg_wdata[3];
-
   assign fatal_alert_en_val_4_wd = reg_wdata[4];
-
   assign fatal_alert_en_val_5_wd = reg_wdata[5];
-
   assign fatal_alert_en_val_6_wd = reg_wdata[6];
-
   assign fatal_alert_en_val_7_wd = reg_wdata[7];
-
   assign fatal_alert_en_val_8_wd = reg_wdata[8];
-
   assign fatal_alert_en_val_9_wd = reg_wdata[9];
-
   assign fatal_alert_en_val_10_wd = reg_wdata[10];
-  assign recov_alert_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign recov_alert_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign recov_alert_val_0_wd = reg_wdata[0];
-
   assign recov_alert_val_1_wd = reg_wdata[1];
-
   assign recov_alert_val_2_wd = reg_wdata[2];
-
   assign recov_alert_val_3_wd = reg_wdata[3];
-
   assign recov_alert_val_4_wd = reg_wdata[4];
-
   assign recov_alert_val_5_wd = reg_wdata[5];
-
   assign recov_alert_val_6_wd = reg_wdata[6];
-
   assign recov_alert_val_7_wd = reg_wdata[7];
-
   assign recov_alert_val_8_wd = reg_wdata[8];
-
   assign recov_alert_val_9_wd = reg_wdata[9];
-
   assign recov_alert_val_10_wd = reg_wdata[10];
-  assign manual_pad_attr_regwen_0_we = addr_hit[21] & reg_we & !reg_error;
+
+
+
+  assign manual_pad_attr_regwen_0_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
   assign manual_pad_attr_regwen_0_wd = reg_wdata[0];
-  assign manual_pad_attr_regwen_1_we = addr_hit[22] & reg_we & !reg_error;
+
+  assign manual_pad_attr_regwen_1_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign manual_pad_attr_regwen_1_wd = reg_wdata[0];
-  assign manual_pad_attr_regwen_2_we = addr_hit[23] & reg_we & !reg_error;
+
+  assign manual_pad_attr_regwen_2_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign manual_pad_attr_regwen_2_wd = reg_wdata[0];
-  assign manual_pad_attr_regwen_3_we = addr_hit[24] & reg_we & !reg_error;
+
+  assign manual_pad_attr_regwen_3_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
   assign manual_pad_attr_regwen_3_wd = reg_wdata[0];
-  assign manual_pad_attr_0_re = addr_hit[25] & reg_re & !reg_error;
-  assign manual_pad_attr_0_we = addr_hit[25] & reg_we & !reg_error;
+
+  assign manual_pad_attr_0_re = addr_valid & (addr_idx == 25) & reg_re & !reg_error;
+  assign manual_pad_attr_0_we = addr_valid & (addr_idx == 25) & reg_we & !reg_error;
 
   assign manual_pad_attr_0_pull_en_0_wd = reg_wdata[2];
-
   assign manual_pad_attr_0_pull_select_0_wd = reg_wdata[3];
-
   assign manual_pad_attr_0_input_disable_0_wd = reg_wdata[7];
-  assign manual_pad_attr_1_re = addr_hit[26] & reg_re & !reg_error;
-  assign manual_pad_attr_1_we = addr_hit[26] & reg_we & !reg_error;
+
+  assign manual_pad_attr_1_re = addr_valid & (addr_idx == 26) & reg_re & !reg_error;
+  assign manual_pad_attr_1_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
   assign manual_pad_attr_1_pull_en_1_wd = reg_wdata[2];
-
   assign manual_pad_attr_1_pull_select_1_wd = reg_wdata[3];
-
   assign manual_pad_attr_1_input_disable_1_wd = reg_wdata[7];
-  assign manual_pad_attr_2_re = addr_hit[27] & reg_re & !reg_error;
-  assign manual_pad_attr_2_we = addr_hit[27] & reg_we & !reg_error;
+
+  assign manual_pad_attr_2_re = addr_valid & (addr_idx == 27) & reg_re & !reg_error;
+  assign manual_pad_attr_2_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
   assign manual_pad_attr_2_pull_en_2_wd = reg_wdata[2];
-
   assign manual_pad_attr_2_pull_select_2_wd = reg_wdata[3];
-
   assign manual_pad_attr_2_input_disable_2_wd = reg_wdata[7];
-  assign manual_pad_attr_3_re = addr_hit[28] & reg_re & !reg_error;
-  assign manual_pad_attr_3_we = addr_hit[28] & reg_we & !reg_error;
+
+  assign manual_pad_attr_3_re = addr_valid & (addr_idx == 28) & reg_re & !reg_error;
+  assign manual_pad_attr_3_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
   assign manual_pad_attr_3_pull_en_3_wd = reg_wdata[2];
-
   assign manual_pad_attr_3_pull_select_3_wd = reg_wdata[3];
-
   assign manual_pad_attr_3_input_disable_3_wd = reg_wdata[7];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -2774,182 +2774,182 @@ module sensor_ctrl_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_io_status_change_qs;
-        reg_rdata_next[1] = intr_state_init_status_change_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_io_status_change_qs;
+          reg_rdata_next[1] = intr_state_init_status_change_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_io_status_change_qs;
-        reg_rdata_next[1] = intr_enable_init_status_change_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_io_status_change_qs;
+          reg_rdata_next[1] = intr_enable_init_status_change_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        2,3: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        4: begin
+          reg_rdata_next[0] = cfg_regwen_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = cfg_regwen_qs;
-      end
+        5: begin
+          reg_rdata_next[0] = alert_trig_val_0_qs;
+          reg_rdata_next[1] = alert_trig_val_1_qs;
+          reg_rdata_next[2] = alert_trig_val_2_qs;
+          reg_rdata_next[3] = alert_trig_val_3_qs;
+          reg_rdata_next[4] = alert_trig_val_4_qs;
+          reg_rdata_next[5] = alert_trig_val_5_qs;
+          reg_rdata_next[6] = alert_trig_val_6_qs;
+          reg_rdata_next[7] = alert_trig_val_7_qs;
+          reg_rdata_next[8] = alert_trig_val_8_qs;
+          reg_rdata_next[9] = alert_trig_val_9_qs;
+          reg_rdata_next[10] = alert_trig_val_10_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[0] = alert_trig_val_0_qs;
-        reg_rdata_next[1] = alert_trig_val_1_qs;
-        reg_rdata_next[2] = alert_trig_val_2_qs;
-        reg_rdata_next[3] = alert_trig_val_3_qs;
-        reg_rdata_next[4] = alert_trig_val_4_qs;
-        reg_rdata_next[5] = alert_trig_val_5_qs;
-        reg_rdata_next[6] = alert_trig_val_6_qs;
-        reg_rdata_next[7] = alert_trig_val_7_qs;
-        reg_rdata_next[8] = alert_trig_val_8_qs;
-        reg_rdata_next[9] = alert_trig_val_9_qs;
-        reg_rdata_next[10] = alert_trig_val_10_qs;
-      end
+        6: begin
+          reg_rdata_next[3:0] = alert_en_0_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[3:0] = alert_en_0_qs;
-      end
+        7: begin
+          reg_rdata_next[3:0] = alert_en_1_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[3:0] = alert_en_1_qs;
-      end
+        8: begin
+          reg_rdata_next[3:0] = alert_en_2_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[3:0] = alert_en_2_qs;
-      end
+        9: begin
+          reg_rdata_next[3:0] = alert_en_3_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[3:0] = alert_en_3_qs;
-      end
+        10: begin
+          reg_rdata_next[3:0] = alert_en_4_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[3:0] = alert_en_4_qs;
-      end
+        11: begin
+          reg_rdata_next[3:0] = alert_en_5_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[3:0] = alert_en_5_qs;
-      end
+        12: begin
+          reg_rdata_next[3:0] = alert_en_6_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[3:0] = alert_en_6_qs;
-      end
+        13: begin
+          reg_rdata_next[3:0] = alert_en_7_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[3:0] = alert_en_7_qs;
-      end
+        14: begin
+          reg_rdata_next[3:0] = alert_en_8_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[3:0] = alert_en_8_qs;
-      end
+        15: begin
+          reg_rdata_next[3:0] = alert_en_9_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[3:0] = alert_en_9_qs;
-      end
+        16: begin
+          reg_rdata_next[3:0] = alert_en_10_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[3:0] = alert_en_10_qs;
-      end
+        17: begin
+          reg_rdata_next[0] = fatal_alert_en_val_0_qs;
+          reg_rdata_next[1] = fatal_alert_en_val_1_qs;
+          reg_rdata_next[2] = fatal_alert_en_val_2_qs;
+          reg_rdata_next[3] = fatal_alert_en_val_3_qs;
+          reg_rdata_next[4] = fatal_alert_en_val_4_qs;
+          reg_rdata_next[5] = fatal_alert_en_val_5_qs;
+          reg_rdata_next[6] = fatal_alert_en_val_6_qs;
+          reg_rdata_next[7] = fatal_alert_en_val_7_qs;
+          reg_rdata_next[8] = fatal_alert_en_val_8_qs;
+          reg_rdata_next[9] = fatal_alert_en_val_9_qs;
+          reg_rdata_next[10] = fatal_alert_en_val_10_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[0] = fatal_alert_en_val_0_qs;
-        reg_rdata_next[1] = fatal_alert_en_val_1_qs;
-        reg_rdata_next[2] = fatal_alert_en_val_2_qs;
-        reg_rdata_next[3] = fatal_alert_en_val_3_qs;
-        reg_rdata_next[4] = fatal_alert_en_val_4_qs;
-        reg_rdata_next[5] = fatal_alert_en_val_5_qs;
-        reg_rdata_next[6] = fatal_alert_en_val_6_qs;
-        reg_rdata_next[7] = fatal_alert_en_val_7_qs;
-        reg_rdata_next[8] = fatal_alert_en_val_8_qs;
-        reg_rdata_next[9] = fatal_alert_en_val_9_qs;
-        reg_rdata_next[10] = fatal_alert_en_val_10_qs;
-      end
+        18: begin
+          reg_rdata_next[0] = recov_alert_val_0_qs;
+          reg_rdata_next[1] = recov_alert_val_1_qs;
+          reg_rdata_next[2] = recov_alert_val_2_qs;
+          reg_rdata_next[3] = recov_alert_val_3_qs;
+          reg_rdata_next[4] = recov_alert_val_4_qs;
+          reg_rdata_next[5] = recov_alert_val_5_qs;
+          reg_rdata_next[6] = recov_alert_val_6_qs;
+          reg_rdata_next[7] = recov_alert_val_7_qs;
+          reg_rdata_next[8] = recov_alert_val_8_qs;
+          reg_rdata_next[9] = recov_alert_val_9_qs;
+          reg_rdata_next[10] = recov_alert_val_10_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[0] = recov_alert_val_0_qs;
-        reg_rdata_next[1] = recov_alert_val_1_qs;
-        reg_rdata_next[2] = recov_alert_val_2_qs;
-        reg_rdata_next[3] = recov_alert_val_3_qs;
-        reg_rdata_next[4] = recov_alert_val_4_qs;
-        reg_rdata_next[5] = recov_alert_val_5_qs;
-        reg_rdata_next[6] = recov_alert_val_6_qs;
-        reg_rdata_next[7] = recov_alert_val_7_qs;
-        reg_rdata_next[8] = recov_alert_val_8_qs;
-        reg_rdata_next[9] = recov_alert_val_9_qs;
-        reg_rdata_next[10] = recov_alert_val_10_qs;
-      end
+        19: begin
+          reg_rdata_next[0] = fatal_alert_val_0_qs;
+          reg_rdata_next[1] = fatal_alert_val_1_qs;
+          reg_rdata_next[2] = fatal_alert_val_2_qs;
+          reg_rdata_next[3] = fatal_alert_val_3_qs;
+          reg_rdata_next[4] = fatal_alert_val_4_qs;
+          reg_rdata_next[5] = fatal_alert_val_5_qs;
+          reg_rdata_next[6] = fatal_alert_val_6_qs;
+          reg_rdata_next[7] = fatal_alert_val_7_qs;
+          reg_rdata_next[8] = fatal_alert_val_8_qs;
+          reg_rdata_next[9] = fatal_alert_val_9_qs;
+          reg_rdata_next[10] = fatal_alert_val_10_qs;
+          reg_rdata_next[11] = fatal_alert_val_11_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[0] = fatal_alert_val_0_qs;
-        reg_rdata_next[1] = fatal_alert_val_1_qs;
-        reg_rdata_next[2] = fatal_alert_val_2_qs;
-        reg_rdata_next[3] = fatal_alert_val_3_qs;
-        reg_rdata_next[4] = fatal_alert_val_4_qs;
-        reg_rdata_next[5] = fatal_alert_val_5_qs;
-        reg_rdata_next[6] = fatal_alert_val_6_qs;
-        reg_rdata_next[7] = fatal_alert_val_7_qs;
-        reg_rdata_next[8] = fatal_alert_val_8_qs;
-        reg_rdata_next[9] = fatal_alert_val_9_qs;
-        reg_rdata_next[10] = fatal_alert_val_10_qs;
-        reg_rdata_next[11] = fatal_alert_val_11_qs;
-      end
+        20: begin
+          reg_rdata_next[0] = status_ast_init_done_qs;
+          reg_rdata_next[2:1] = status_io_pok_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[0] = status_ast_init_done_qs;
-        reg_rdata_next[2:1] = status_io_pok_qs;
-      end
+        21: begin
+          reg_rdata_next[0] = manual_pad_attr_regwen_0_qs;
+        end
 
-      addr_hit[21]: begin
-        reg_rdata_next[0] = manual_pad_attr_regwen_0_qs;
-      end
+        22: begin
+          reg_rdata_next[0] = manual_pad_attr_regwen_1_qs;
+        end
 
-      addr_hit[22]: begin
-        reg_rdata_next[0] = manual_pad_attr_regwen_1_qs;
-      end
+        23: begin
+          reg_rdata_next[0] = manual_pad_attr_regwen_2_qs;
+        end
 
-      addr_hit[23]: begin
-        reg_rdata_next[0] = manual_pad_attr_regwen_2_qs;
-      end
+        24: begin
+          reg_rdata_next[0] = manual_pad_attr_regwen_3_qs;
+        end
 
-      addr_hit[24]: begin
-        reg_rdata_next[0] = manual_pad_attr_regwen_3_qs;
-      end
+        25: begin
+          reg_rdata_next[2] = manual_pad_attr_0_pull_en_0_qs;
+          reg_rdata_next[3] = manual_pad_attr_0_pull_select_0_qs;
+          reg_rdata_next[7] = manual_pad_attr_0_input_disable_0_qs;
+        end
 
-      addr_hit[25]: begin
-        reg_rdata_next[2] = manual_pad_attr_0_pull_en_0_qs;
-        reg_rdata_next[3] = manual_pad_attr_0_pull_select_0_qs;
-        reg_rdata_next[7] = manual_pad_attr_0_input_disable_0_qs;
-      end
+        26: begin
+          reg_rdata_next[2] = manual_pad_attr_1_pull_en_1_qs;
+          reg_rdata_next[3] = manual_pad_attr_1_pull_select_1_qs;
+          reg_rdata_next[7] = manual_pad_attr_1_input_disable_1_qs;
+        end
 
-      addr_hit[26]: begin
-        reg_rdata_next[2] = manual_pad_attr_1_pull_en_1_qs;
-        reg_rdata_next[3] = manual_pad_attr_1_pull_select_1_qs;
-        reg_rdata_next[7] = manual_pad_attr_1_input_disable_1_qs;
-      end
+        27: begin
+          reg_rdata_next[2] = manual_pad_attr_2_pull_en_2_qs;
+          reg_rdata_next[3] = manual_pad_attr_2_pull_select_2_qs;
+          reg_rdata_next[7] = manual_pad_attr_2_input_disable_2_qs;
+        end
 
-      addr_hit[27]: begin
-        reg_rdata_next[2] = manual_pad_attr_2_pull_en_2_qs;
-        reg_rdata_next[3] = manual_pad_attr_2_pull_select_2_qs;
-        reg_rdata_next[7] = manual_pad_attr_2_input_disable_2_qs;
-      end
-
-      addr_hit[28]: begin
-        reg_rdata_next[2] = manual_pad_attr_3_pull_en_3_qs;
-        reg_rdata_next[3] = manual_pad_attr_3_pull_select_3_qs;
-        reg_rdata_next[7] = manual_pad_attr_3_input_disable_3_qs;
-      end
+        28: begin
+          reg_rdata_next[2] = manual_pad_attr_3_pull_en_3_qs;
+          reg_rdata_next[3] = manual_pad_attr_3_pull_select_3_qs;
+          reg_rdata_next[7] = manual_pad_attr_3_input_disable_3_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -2974,7 +2974,7 @@ module sensor_ctrl_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

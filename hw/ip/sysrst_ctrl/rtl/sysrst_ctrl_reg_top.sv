@@ -6553,328 +6553,265 @@ module sysrst_ctrl_reg_top (
 
 
 
-  logic [42:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == SYSRST_CTRL_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == SYSRST_CTRL_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == SYSRST_CTRL_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == SYSRST_CTRL_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == SYSRST_CTRL_REGWEN_OFFSET);
-    addr_hit[ 5] = (reg_addr == SYSRST_CTRL_EC_RST_CTL_OFFSET);
-    addr_hit[ 6] = (reg_addr == SYSRST_CTRL_ULP_AC_DEBOUNCE_CTL_OFFSET);
-    addr_hit[ 7] = (reg_addr == SYSRST_CTRL_ULP_LID_DEBOUNCE_CTL_OFFSET);
-    addr_hit[ 8] = (reg_addr == SYSRST_CTRL_ULP_PWRB_DEBOUNCE_CTL_OFFSET);
-    addr_hit[ 9] = (reg_addr == SYSRST_CTRL_ULP_CTL_OFFSET);
-    addr_hit[10] = (reg_addr == SYSRST_CTRL_ULP_STATUS_OFFSET);
-    addr_hit[11] = (reg_addr == SYSRST_CTRL_WKUP_STATUS_OFFSET);
-    addr_hit[12] = (reg_addr == SYSRST_CTRL_KEY_INVERT_CTL_OFFSET);
-    addr_hit[13] = (reg_addr == SYSRST_CTRL_PIN_ALLOWED_CTL_OFFSET);
-    addr_hit[14] = (reg_addr == SYSRST_CTRL_PIN_OUT_CTL_OFFSET);
-    addr_hit[15] = (reg_addr == SYSRST_CTRL_PIN_OUT_VALUE_OFFSET);
-    addr_hit[16] = (reg_addr == SYSRST_CTRL_PIN_IN_VALUE_OFFSET);
-    addr_hit[17] = (reg_addr == SYSRST_CTRL_KEY_INTR_CTL_OFFSET);
-    addr_hit[18] = (reg_addr == SYSRST_CTRL_KEY_INTR_DEBOUNCE_CTL_OFFSET);
-    addr_hit[19] = (reg_addr == SYSRST_CTRL_AUTO_BLOCK_DEBOUNCE_CTL_OFFSET);
-    addr_hit[20] = (reg_addr == SYSRST_CTRL_AUTO_BLOCK_OUT_CTL_OFFSET);
-    addr_hit[21] = (reg_addr == SYSRST_CTRL_COM_PRE_SEL_CTL_0_OFFSET);
-    addr_hit[22] = (reg_addr == SYSRST_CTRL_COM_PRE_SEL_CTL_1_OFFSET);
-    addr_hit[23] = (reg_addr == SYSRST_CTRL_COM_PRE_SEL_CTL_2_OFFSET);
-    addr_hit[24] = (reg_addr == SYSRST_CTRL_COM_PRE_SEL_CTL_3_OFFSET);
-    addr_hit[25] = (reg_addr == SYSRST_CTRL_COM_PRE_DET_CTL_0_OFFSET);
-    addr_hit[26] = (reg_addr == SYSRST_CTRL_COM_PRE_DET_CTL_1_OFFSET);
-    addr_hit[27] = (reg_addr == SYSRST_CTRL_COM_PRE_DET_CTL_2_OFFSET);
-    addr_hit[28] = (reg_addr == SYSRST_CTRL_COM_PRE_DET_CTL_3_OFFSET);
-    addr_hit[29] = (reg_addr == SYSRST_CTRL_COM_SEL_CTL_0_OFFSET);
-    addr_hit[30] = (reg_addr == SYSRST_CTRL_COM_SEL_CTL_1_OFFSET);
-    addr_hit[31] = (reg_addr == SYSRST_CTRL_COM_SEL_CTL_2_OFFSET);
-    addr_hit[32] = (reg_addr == SYSRST_CTRL_COM_SEL_CTL_3_OFFSET);
-    addr_hit[33] = (reg_addr == SYSRST_CTRL_COM_DET_CTL_0_OFFSET);
-    addr_hit[34] = (reg_addr == SYSRST_CTRL_COM_DET_CTL_1_OFFSET);
-    addr_hit[35] = (reg_addr == SYSRST_CTRL_COM_DET_CTL_2_OFFSET);
-    addr_hit[36] = (reg_addr == SYSRST_CTRL_COM_DET_CTL_3_OFFSET);
-    addr_hit[37] = (reg_addr == SYSRST_CTRL_COM_OUT_CTL_0_OFFSET);
-    addr_hit[38] = (reg_addr == SYSRST_CTRL_COM_OUT_CTL_1_OFFSET);
-    addr_hit[39] = (reg_addr == SYSRST_CTRL_COM_OUT_CTL_2_OFFSET);
-    addr_hit[40] = (reg_addr == SYSRST_CTRL_COM_OUT_CTL_3_OFFSET);
-    addr_hit[41] = (reg_addr == SYSRST_CTRL_COMBO_INTR_STATUS_OFFSET);
-    addr_hit[42] = (reg_addr == SYSRST_CTRL_KEY_INTR_STATUS_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SYSRST_CTRL_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SYSRST_CTRL_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      SYSRST_CTRL_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      SYSRST_CTRL_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      SYSRST_CTRL_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      SYSRST_CTRL_EC_RST_CTL_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      SYSRST_CTRL_ULP_AC_DEBOUNCE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      SYSRST_CTRL_ULP_LID_DEBOUNCE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      SYSRST_CTRL_ULP_PWRB_DEBOUNCE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      SYSRST_CTRL_ULP_CTL_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      SYSRST_CTRL_ULP_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      SYSRST_CTRL_WKUP_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      SYSRST_CTRL_KEY_INVERT_CTL_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      SYSRST_CTRL_PIN_ALLOWED_CTL_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      SYSRST_CTRL_PIN_OUT_CTL_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      SYSRST_CTRL_PIN_OUT_VALUE_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      SYSRST_CTRL_PIN_IN_VALUE_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      SYSRST_CTRL_KEY_INTR_CTL_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      SYSRST_CTRL_KEY_INTR_DEBOUNCE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      SYSRST_CTRL_AUTO_BLOCK_DEBOUNCE_CTL_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      SYSRST_CTRL_AUTO_BLOCK_OUT_CTL_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      SYSRST_CTRL_COM_PRE_SEL_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      SYSRST_CTRL_COM_PRE_SEL_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      SYSRST_CTRL_COM_PRE_SEL_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      SYSRST_CTRL_COM_PRE_SEL_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      SYSRST_CTRL_COM_PRE_DET_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      SYSRST_CTRL_COM_PRE_DET_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      SYSRST_CTRL_COM_PRE_DET_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      SYSRST_CTRL_COM_PRE_DET_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      SYSRST_CTRL_COM_SEL_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      SYSRST_CTRL_COM_SEL_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      SYSRST_CTRL_COM_SEL_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      SYSRST_CTRL_COM_SEL_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      SYSRST_CTRL_COM_DET_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      SYSRST_CTRL_COM_DET_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      SYSRST_CTRL_COM_DET_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      SYSRST_CTRL_COM_DET_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      SYSRST_CTRL_COM_OUT_CTL_0_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      SYSRST_CTRL_COM_OUT_CTL_1_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      SYSRST_CTRL_COM_OUT_CTL_2_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      SYSRST_CTRL_COM_OUT_CTL_3_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      SYSRST_CTRL_COMBO_INTR_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      SYSRST_CTRL_KEY_INTR_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(SYSRST_CTRL_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(SYSRST_CTRL_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(SYSRST_CTRL_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(SYSRST_CTRL_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(SYSRST_CTRL_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(SYSRST_CTRL_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(SYSRST_CTRL_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(SYSRST_CTRL_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(SYSRST_CTRL_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(SYSRST_CTRL_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(SYSRST_CTRL_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(SYSRST_CTRL_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(SYSRST_CTRL_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(SYSRST_CTRL_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(SYSRST_CTRL_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(SYSRST_CTRL_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(SYSRST_CTRL_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(SYSRST_CTRL_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(SYSRST_CTRL_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(SYSRST_CTRL_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(SYSRST_CTRL_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(SYSRST_CTRL_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(SYSRST_CTRL_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(SYSRST_CTRL_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(SYSRST_CTRL_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(SYSRST_CTRL_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(SYSRST_CTRL_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(SYSRST_CTRL_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(SYSRST_CTRL_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(SYSRST_CTRL_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(SYSRST_CTRL_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(SYSRST_CTRL_PERMIT[31] & ~reg_be))) |
-               (addr_hit[32] & (|(SYSRST_CTRL_PERMIT[32] & ~reg_be))) |
-               (addr_hit[33] & (|(SYSRST_CTRL_PERMIT[33] & ~reg_be))) |
-               (addr_hit[34] & (|(SYSRST_CTRL_PERMIT[34] & ~reg_be))) |
-               (addr_hit[35] & (|(SYSRST_CTRL_PERMIT[35] & ~reg_be))) |
-               (addr_hit[36] & (|(SYSRST_CTRL_PERMIT[36] & ~reg_be))) |
-               (addr_hit[37] & (|(SYSRST_CTRL_PERMIT[37] & ~reg_be))) |
-               (addr_hit[38] & (|(SYSRST_CTRL_PERMIT[38] & ~reg_be))) |
-               (addr_hit[39] & (|(SYSRST_CTRL_PERMIT[39] & ~reg_be))) |
-               (addr_hit[40] & (|(SYSRST_CTRL_PERMIT[40] & ~reg_be))) |
-               (addr_hit[41] & (|(SYSRST_CTRL_PERMIT[41] & ~reg_be))) |
-               (addr_hit[42] & (|(SYSRST_CTRL_PERMIT[42] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(SYSRST_CTRL_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(SYSRST_CTRL_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(SYSRST_CTRL_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(SYSRST_CTRL_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(SYSRST_CTRL_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(SYSRST_CTRL_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(SYSRST_CTRL_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(SYSRST_CTRL_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(SYSRST_CTRL_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(SYSRST_CTRL_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(SYSRST_CTRL_PERMIT[10] & ~reg_be);
+        11: wr_err = |(SYSRST_CTRL_PERMIT[11] & ~reg_be);
+        12: wr_err = |(SYSRST_CTRL_PERMIT[12] & ~reg_be);
+        13: wr_err = |(SYSRST_CTRL_PERMIT[13] & ~reg_be);
+        14: wr_err = |(SYSRST_CTRL_PERMIT[14] & ~reg_be);
+        15: wr_err = |(SYSRST_CTRL_PERMIT[15] & ~reg_be);
+        16: wr_err = |(SYSRST_CTRL_PERMIT[16] & ~reg_be);
+        17: wr_err = |(SYSRST_CTRL_PERMIT[17] & ~reg_be);
+        18: wr_err = |(SYSRST_CTRL_PERMIT[18] & ~reg_be);
+        19: wr_err = |(SYSRST_CTRL_PERMIT[19] & ~reg_be);
+        20: wr_err = |(SYSRST_CTRL_PERMIT[20] & ~reg_be);
+        21: wr_err = |(SYSRST_CTRL_PERMIT[21] & ~reg_be);
+        22: wr_err = |(SYSRST_CTRL_PERMIT[22] & ~reg_be);
+        23: wr_err = |(SYSRST_CTRL_PERMIT[23] & ~reg_be);
+        24: wr_err = |(SYSRST_CTRL_PERMIT[24] & ~reg_be);
+        25: wr_err = |(SYSRST_CTRL_PERMIT[25] & ~reg_be);
+        26: wr_err = |(SYSRST_CTRL_PERMIT[26] & ~reg_be);
+        27: wr_err = |(SYSRST_CTRL_PERMIT[27] & ~reg_be);
+        28: wr_err = |(SYSRST_CTRL_PERMIT[28] & ~reg_be);
+        29: wr_err = |(SYSRST_CTRL_PERMIT[29] & ~reg_be);
+        30: wr_err = |(SYSRST_CTRL_PERMIT[30] & ~reg_be);
+        31: wr_err = |(SYSRST_CTRL_PERMIT[31] & ~reg_be);
+        32: wr_err = |(SYSRST_CTRL_PERMIT[32] & ~reg_be);
+        33: wr_err = |(SYSRST_CTRL_PERMIT[33] & ~reg_be);
+        34: wr_err = |(SYSRST_CTRL_PERMIT[34] & ~reg_be);
+        35: wr_err = |(SYSRST_CTRL_PERMIT[35] & ~reg_be);
+        36: wr_err = |(SYSRST_CTRL_PERMIT[36] & ~reg_be);
+        37: wr_err = |(SYSRST_CTRL_PERMIT[37] & ~reg_be);
+        38: wr_err = |(SYSRST_CTRL_PERMIT[38] & ~reg_be);
+        39: wr_err = |(SYSRST_CTRL_PERMIT[39] & ~reg_be);
+        40: wr_err = |(SYSRST_CTRL_PERMIT[40] & ~reg_be);
+        41: wr_err = |(SYSRST_CTRL_PERMIT[41] & ~reg_be);
+        42: wr_err = |(SYSRST_CTRL_PERMIT[42] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_wd = reg_wdata[0];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_wd = reg_wdata[0];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign regwen_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign regwen_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign regwen_wd = reg_wdata[0];
-  assign ec_rst_ctl_we = addr_hit[5] & reg_we & !reg_error;
 
-  assign ulp_ac_debounce_ctl_we = addr_hit[6] & reg_we & !reg_error;
+  assign ec_rst_ctl_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
-  assign ulp_lid_debounce_ctl_we = addr_hit[7] & reg_we & !reg_error;
 
-  assign ulp_pwrb_debounce_ctl_we = addr_hit[8] & reg_we & !reg_error;
+  assign ulp_ac_debounce_ctl_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
-  assign ulp_ctl_we = addr_hit[9] & reg_we & !reg_error;
 
-  assign ulp_status_we = addr_hit[10] & reg_we & !reg_error;
+  assign ulp_lid_debounce_ctl_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
+
+
+  assign ulp_pwrb_debounce_ctl_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
+
+
+  assign ulp_ctl_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
+
+
+  assign ulp_status_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign ulp_status_wd = reg_wdata[0];
-  assign wkup_status_we = addr_hit[11] & reg_we & !reg_error;
 
-  assign key_invert_ctl_we = addr_hit[12] & reg_we & !reg_error;
+  assign wkup_status_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
 
+  assign key_invert_ctl_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
 
+  assign pin_allowed_ctl_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
 
+  assign pin_out_ctl_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
 
+  assign pin_out_value_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
 
 
+  assign key_intr_ctl_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
-  assign pin_allowed_ctl_we = addr_hit[13] & reg_we & !reg_error;
 
+  assign key_intr_debounce_ctl_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
 
+  assign auto_block_debounce_ctl_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
 
+  assign auto_block_out_ctl_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
 
+  assign com_pre_sel_ctl_0_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
 
+  assign com_pre_sel_ctl_1_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
 
+  assign com_pre_sel_ctl_2_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
 
+  assign com_pre_sel_ctl_3_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
 
+  assign com_pre_det_ctl_0_we = addr_valid & (addr_idx == 25) & reg_we & !reg_error;
 
-  assign pin_out_ctl_we = addr_hit[14] & reg_we & !reg_error;
 
+  assign com_pre_det_ctl_1_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
 
+  assign com_pre_det_ctl_2_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
 
+  assign com_pre_det_ctl_3_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
 
+  assign com_sel_ctl_0_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
-  assign pin_out_value_we = addr_hit[15] & reg_we & !reg_error;
 
+  assign com_sel_ctl_1_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
 
+  assign com_sel_ctl_2_we = addr_valid & (addr_idx == 31) & reg_we & !reg_error;
 
 
+  assign com_sel_ctl_3_we = addr_valid & (addr_idx == 32) & reg_we & !reg_error;
 
 
+  assign com_det_ctl_0_we = addr_valid & (addr_idx == 33) & reg_we & !reg_error;
 
-  assign key_intr_ctl_we = addr_hit[17] & reg_we & !reg_error;
 
+  assign com_det_ctl_1_we = addr_valid & (addr_idx == 34) & reg_we & !reg_error;
 
 
+  assign com_det_ctl_2_we = addr_valid & (addr_idx == 35) & reg_we & !reg_error;
 
 
+  assign com_det_ctl_3_we = addr_valid & (addr_idx == 36) & reg_we & !reg_error;
 
 
+  assign com_out_ctl_0_we = addr_valid & (addr_idx == 37) & reg_we & !reg_error;
 
 
+  assign com_out_ctl_1_we = addr_valid & (addr_idx == 38) & reg_we & !reg_error;
 
 
+  assign com_out_ctl_2_we = addr_valid & (addr_idx == 39) & reg_we & !reg_error;
 
 
+  assign com_out_ctl_3_we = addr_valid & (addr_idx == 40) & reg_we & !reg_error;
 
-  assign key_intr_debounce_ctl_we = addr_hit[18] & reg_we & !reg_error;
 
-  assign auto_block_debounce_ctl_we = addr_hit[19] & reg_we & !reg_error;
-
-
-  assign auto_block_out_ctl_we = addr_hit[20] & reg_we & !reg_error;
-
-
-
-
-
-
-  assign com_pre_sel_ctl_0_we = addr_hit[21] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_pre_sel_ctl_1_we = addr_hit[22] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_pre_sel_ctl_2_we = addr_hit[23] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_pre_sel_ctl_3_we = addr_hit[24] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_pre_det_ctl_0_we = addr_hit[25] & reg_we & !reg_error;
-
-  assign com_pre_det_ctl_1_we = addr_hit[26] & reg_we & !reg_error;
-
-  assign com_pre_det_ctl_2_we = addr_hit[27] & reg_we & !reg_error;
-
-  assign com_pre_det_ctl_3_we = addr_hit[28] & reg_we & !reg_error;
-
-  assign com_sel_ctl_0_we = addr_hit[29] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_sel_ctl_1_we = addr_hit[30] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_sel_ctl_2_we = addr_hit[31] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_sel_ctl_3_we = addr_hit[32] & reg_we & !reg_error;
-
-
-
-
-
-  assign com_det_ctl_0_we = addr_hit[33] & reg_we & !reg_error;
-
-  assign com_det_ctl_1_we = addr_hit[34] & reg_we & !reg_error;
-
-  assign com_det_ctl_2_we = addr_hit[35] & reg_we & !reg_error;
-
-  assign com_det_ctl_3_we = addr_hit[36] & reg_we & !reg_error;
-
-  assign com_out_ctl_0_we = addr_hit[37] & reg_we & !reg_error;
-
-
-
-
-  assign com_out_ctl_1_we = addr_hit[38] & reg_we & !reg_error;
-
-
-
-
-  assign com_out_ctl_2_we = addr_hit[39] & reg_we & !reg_error;
-
-
-
-
-  assign com_out_ctl_3_we = addr_hit[40] & reg_we & !reg_error;
-
-
-
-
-  assign combo_intr_status_we = addr_hit[41] & reg_we & !reg_error;
+  assign combo_intr_status_we = addr_valid & (addr_idx == 41) & reg_we & !reg_error;
 
   assign combo_intr_status_combo0_h2l_wd = reg_wdata[0];
-
   assign combo_intr_status_combo1_h2l_wd = reg_wdata[1];
-
   assign combo_intr_status_combo2_h2l_wd = reg_wdata[2];
-
   assign combo_intr_status_combo3_h2l_wd = reg_wdata[3];
-  assign key_intr_status_we = addr_hit[42] & reg_we & !reg_error;
+
+  assign key_intr_status_we = addr_valid & (addr_idx == 42) & reg_we & !reg_error;
 
   assign key_intr_status_pwrb_h2l_wd = reg_wdata[0];
-
   assign key_intr_status_key0_in_h2l_wd = reg_wdata[1];
-
   assign key_intr_status_key1_in_h2l_wd = reg_wdata[2];
-
   assign key_intr_status_key2_in_h2l_wd = reg_wdata[3];
-
   assign key_intr_status_ac_present_h2l_wd = reg_wdata[4];
-
   assign key_intr_status_ec_rst_l_h2l_wd = reg_wdata[5];
-
   assign key_intr_status_flash_wp_l_h2l_wd = reg_wdata[6];
-
   assign key_intr_status_pwrb_l2h_wd = reg_wdata[7];
-
   assign key_intr_status_key0_in_l2h_wd = reg_wdata[8];
-
   assign key_intr_status_key1_in_l2h_wd = reg_wdata[9];
-
   assign key_intr_status_key2_in_l2h_wd = reg_wdata[10];
-
   assign key_intr_status_ac_present_l2h_wd = reg_wdata[11];
-
   assign key_intr_status_ec_rst_l_l2h_wd = reg_wdata[12];
-
   assign key_intr_status_flash_wp_l_l2h_wd = reg_wdata[13];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -6925,173 +6862,208 @@ module sysrst_ctrl_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-      end
+        2,3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        4: begin
+          reg_rdata_next[0] = regwen_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = regwen_qs;
-      end
+        5: begin
+          reg_rdata_next = DW'(ec_rst_ctl_qs);
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next = DW'(ec_rst_ctl_qs);
-      end
-      addr_hit[6]: begin
-        reg_rdata_next = DW'(ulp_ac_debounce_ctl_qs);
-      end
-      addr_hit[7]: begin
-        reg_rdata_next = DW'(ulp_lid_debounce_ctl_qs);
-      end
-      addr_hit[8]: begin
-        reg_rdata_next = DW'(ulp_pwrb_debounce_ctl_qs);
-      end
-      addr_hit[9]: begin
-        reg_rdata_next = DW'(ulp_ctl_qs);
-      end
-      addr_hit[10]: begin
-        reg_rdata_next[0] = ulp_status_qs;
-      end
+        6: begin
+          reg_rdata_next = DW'(ulp_ac_debounce_ctl_qs);
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next = DW'(wkup_status_qs);
-      end
-      addr_hit[12]: begin
-        reg_rdata_next = DW'(key_invert_ctl_qs);
-      end
-      addr_hit[13]: begin
-        reg_rdata_next = DW'(pin_allowed_ctl_qs);
-      end
-      addr_hit[14]: begin
-        reg_rdata_next = DW'(pin_out_ctl_qs);
-      end
-      addr_hit[15]: begin
-        reg_rdata_next = DW'(pin_out_value_qs);
-      end
-      addr_hit[16]: begin
-        reg_rdata_next[0] = pin_in_value_pwrb_in_qs;
-        reg_rdata_next[1] = pin_in_value_key0_in_qs;
-        reg_rdata_next[2] = pin_in_value_key1_in_qs;
-        reg_rdata_next[3] = pin_in_value_key2_in_qs;
-        reg_rdata_next[4] = pin_in_value_lid_open_qs;
-        reg_rdata_next[5] = pin_in_value_ac_present_qs;
-        reg_rdata_next[6] = pin_in_value_ec_rst_l_qs;
-        reg_rdata_next[7] = pin_in_value_flash_wp_l_qs;
-      end
+        7: begin
+          reg_rdata_next = DW'(ulp_lid_debounce_ctl_qs);
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next = DW'(key_intr_ctl_qs);
-      end
-      addr_hit[18]: begin
-        reg_rdata_next = DW'(key_intr_debounce_ctl_qs);
-      end
-      addr_hit[19]: begin
-        reg_rdata_next = DW'(auto_block_debounce_ctl_qs);
-      end
-      addr_hit[20]: begin
-        reg_rdata_next = DW'(auto_block_out_ctl_qs);
-      end
-      addr_hit[21]: begin
-        reg_rdata_next = DW'(com_pre_sel_ctl_0_qs);
-      end
-      addr_hit[22]: begin
-        reg_rdata_next = DW'(com_pre_sel_ctl_1_qs);
-      end
-      addr_hit[23]: begin
-        reg_rdata_next = DW'(com_pre_sel_ctl_2_qs);
-      end
-      addr_hit[24]: begin
-        reg_rdata_next = DW'(com_pre_sel_ctl_3_qs);
-      end
-      addr_hit[25]: begin
-        reg_rdata_next = DW'(com_pre_det_ctl_0_qs);
-      end
-      addr_hit[26]: begin
-        reg_rdata_next = DW'(com_pre_det_ctl_1_qs);
-      end
-      addr_hit[27]: begin
-        reg_rdata_next = DW'(com_pre_det_ctl_2_qs);
-      end
-      addr_hit[28]: begin
-        reg_rdata_next = DW'(com_pre_det_ctl_3_qs);
-      end
-      addr_hit[29]: begin
-        reg_rdata_next = DW'(com_sel_ctl_0_qs);
-      end
-      addr_hit[30]: begin
-        reg_rdata_next = DW'(com_sel_ctl_1_qs);
-      end
-      addr_hit[31]: begin
-        reg_rdata_next = DW'(com_sel_ctl_2_qs);
-      end
-      addr_hit[32]: begin
-        reg_rdata_next = DW'(com_sel_ctl_3_qs);
-      end
-      addr_hit[33]: begin
-        reg_rdata_next = DW'(com_det_ctl_0_qs);
-      end
-      addr_hit[34]: begin
-        reg_rdata_next = DW'(com_det_ctl_1_qs);
-      end
-      addr_hit[35]: begin
-        reg_rdata_next = DW'(com_det_ctl_2_qs);
-      end
-      addr_hit[36]: begin
-        reg_rdata_next = DW'(com_det_ctl_3_qs);
-      end
-      addr_hit[37]: begin
-        reg_rdata_next = DW'(com_out_ctl_0_qs);
-      end
-      addr_hit[38]: begin
-        reg_rdata_next = DW'(com_out_ctl_1_qs);
-      end
-      addr_hit[39]: begin
-        reg_rdata_next = DW'(com_out_ctl_2_qs);
-      end
-      addr_hit[40]: begin
-        reg_rdata_next = DW'(com_out_ctl_3_qs);
-      end
-      addr_hit[41]: begin
-        reg_rdata_next[0] = combo_intr_status_combo0_h2l_qs;
-        reg_rdata_next[1] = combo_intr_status_combo1_h2l_qs;
-        reg_rdata_next[2] = combo_intr_status_combo2_h2l_qs;
-        reg_rdata_next[3] = combo_intr_status_combo3_h2l_qs;
-      end
+        8: begin
+          reg_rdata_next = DW'(ulp_pwrb_debounce_ctl_qs);
+        end
 
-      addr_hit[42]: begin
-        reg_rdata_next[0] = key_intr_status_pwrb_h2l_qs;
-        reg_rdata_next[1] = key_intr_status_key0_in_h2l_qs;
-        reg_rdata_next[2] = key_intr_status_key1_in_h2l_qs;
-        reg_rdata_next[3] = key_intr_status_key2_in_h2l_qs;
-        reg_rdata_next[4] = key_intr_status_ac_present_h2l_qs;
-        reg_rdata_next[5] = key_intr_status_ec_rst_l_h2l_qs;
-        reg_rdata_next[6] = key_intr_status_flash_wp_l_h2l_qs;
-        reg_rdata_next[7] = key_intr_status_pwrb_l2h_qs;
-        reg_rdata_next[8] = key_intr_status_key0_in_l2h_qs;
-        reg_rdata_next[9] = key_intr_status_key1_in_l2h_qs;
-        reg_rdata_next[10] = key_intr_status_key2_in_l2h_qs;
-        reg_rdata_next[11] = key_intr_status_ac_present_l2h_qs;
-        reg_rdata_next[12] = key_intr_status_ec_rst_l_l2h_qs;
-        reg_rdata_next[13] = key_intr_status_flash_wp_l_l2h_qs;
-      end
+        9: begin
+          reg_rdata_next = DW'(ulp_ctl_qs);
+        end
+
+        10: begin
+          reg_rdata_next[0] = ulp_status_qs;
+        end
+
+        11: begin
+          reg_rdata_next = DW'(wkup_status_qs);
+        end
+
+        12: begin
+          reg_rdata_next = DW'(key_invert_ctl_qs);
+        end
+
+        13: begin
+          reg_rdata_next = DW'(pin_allowed_ctl_qs);
+        end
+
+        14: begin
+          reg_rdata_next = DW'(pin_out_ctl_qs);
+        end
+
+        15: begin
+          reg_rdata_next = DW'(pin_out_value_qs);
+        end
+
+        16: begin
+          reg_rdata_next[0] = pin_in_value_pwrb_in_qs;
+          reg_rdata_next[1] = pin_in_value_key0_in_qs;
+          reg_rdata_next[2] = pin_in_value_key1_in_qs;
+          reg_rdata_next[3] = pin_in_value_key2_in_qs;
+          reg_rdata_next[4] = pin_in_value_lid_open_qs;
+          reg_rdata_next[5] = pin_in_value_ac_present_qs;
+          reg_rdata_next[6] = pin_in_value_ec_rst_l_qs;
+          reg_rdata_next[7] = pin_in_value_flash_wp_l_qs;
+        end
+
+        17: begin
+          reg_rdata_next = DW'(key_intr_ctl_qs);
+        end
+
+        18: begin
+          reg_rdata_next = DW'(key_intr_debounce_ctl_qs);
+        end
+
+        19: begin
+          reg_rdata_next = DW'(auto_block_debounce_ctl_qs);
+        end
+
+        20: begin
+          reg_rdata_next = DW'(auto_block_out_ctl_qs);
+        end
+
+        21: begin
+          reg_rdata_next = DW'(com_pre_sel_ctl_0_qs);
+        end
+
+        22: begin
+          reg_rdata_next = DW'(com_pre_sel_ctl_1_qs);
+        end
+
+        23: begin
+          reg_rdata_next = DW'(com_pre_sel_ctl_2_qs);
+        end
+
+        24: begin
+          reg_rdata_next = DW'(com_pre_sel_ctl_3_qs);
+        end
+
+        25: begin
+          reg_rdata_next = DW'(com_pre_det_ctl_0_qs);
+        end
+
+        26: begin
+          reg_rdata_next = DW'(com_pre_det_ctl_1_qs);
+        end
+
+        27: begin
+          reg_rdata_next = DW'(com_pre_det_ctl_2_qs);
+        end
+
+        28: begin
+          reg_rdata_next = DW'(com_pre_det_ctl_3_qs);
+        end
+
+        29: begin
+          reg_rdata_next = DW'(com_sel_ctl_0_qs);
+        end
+
+        30: begin
+          reg_rdata_next = DW'(com_sel_ctl_1_qs);
+        end
+
+        31: begin
+          reg_rdata_next = DW'(com_sel_ctl_2_qs);
+        end
+
+        32: begin
+          reg_rdata_next = DW'(com_sel_ctl_3_qs);
+        end
+
+        33: begin
+          reg_rdata_next = DW'(com_det_ctl_0_qs);
+        end
+
+        34: begin
+          reg_rdata_next = DW'(com_det_ctl_1_qs);
+        end
+
+        35: begin
+          reg_rdata_next = DW'(com_det_ctl_2_qs);
+        end
+
+        36: begin
+          reg_rdata_next = DW'(com_det_ctl_3_qs);
+        end
+
+        37: begin
+          reg_rdata_next = DW'(com_out_ctl_0_qs);
+        end
+
+        38: begin
+          reg_rdata_next = DW'(com_out_ctl_1_qs);
+        end
+
+        39: begin
+          reg_rdata_next = DW'(com_out_ctl_2_qs);
+        end
+
+        40: begin
+          reg_rdata_next = DW'(com_out_ctl_3_qs);
+        end
+
+        41: begin
+          reg_rdata_next[0] = combo_intr_status_combo0_h2l_qs;
+          reg_rdata_next[1] = combo_intr_status_combo1_h2l_qs;
+          reg_rdata_next[2] = combo_intr_status_combo2_h2l_qs;
+          reg_rdata_next[3] = combo_intr_status_combo3_h2l_qs;
+        end
+
+        42: begin
+          reg_rdata_next[0] = key_intr_status_pwrb_h2l_qs;
+          reg_rdata_next[1] = key_intr_status_key0_in_h2l_qs;
+          reg_rdata_next[2] = key_intr_status_key1_in_h2l_qs;
+          reg_rdata_next[3] = key_intr_status_key2_in_h2l_qs;
+          reg_rdata_next[4] = key_intr_status_ac_present_h2l_qs;
+          reg_rdata_next[5] = key_intr_status_ec_rst_l_h2l_qs;
+          reg_rdata_next[6] = key_intr_status_flash_wp_l_h2l_qs;
+          reg_rdata_next[7] = key_intr_status_pwrb_l2h_qs;
+          reg_rdata_next[8] = key_intr_status_key0_in_l2h_qs;
+          reg_rdata_next[9] = key_intr_status_key1_in_l2h_qs;
+          reg_rdata_next[10] = key_intr_status_key2_in_l2h_qs;
+          reg_rdata_next[11] = key_intr_status_ac_present_l2h_qs;
+          reg_rdata_next[12] = key_intr_status_ec_rst_l_l2h_qs;
+          reg_rdata_next[13] = key_intr_status_flash_wp_l_l2h_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -7103,113 +7075,112 @@ module sysrst_ctrl_reg_top (
   assign reg_busy = (reg_busy_sel | shadow_busy) & tl_i.a_valid;
   always_comb begin
     reg_busy_sel = '0;
-    unique case (1'b1)
-      addr_hit[5]: begin
-        reg_busy_sel = ec_rst_ctl_busy;
-      end
-      addr_hit[6]: begin
-        reg_busy_sel = ulp_ac_debounce_ctl_busy;
-      end
-      addr_hit[7]: begin
-        reg_busy_sel = ulp_lid_debounce_ctl_busy;
-      end
-      addr_hit[8]: begin
-        reg_busy_sel = ulp_pwrb_debounce_ctl_busy;
-      end
-      addr_hit[9]: begin
-        reg_busy_sel = ulp_ctl_busy;
-      end
-      addr_hit[11]: begin
-        reg_busy_sel = wkup_status_busy;
-      end
-      addr_hit[12]: begin
-        reg_busy_sel = key_invert_ctl_busy;
-      end
-      addr_hit[13]: begin
-        reg_busy_sel = pin_allowed_ctl_busy;
-      end
-      addr_hit[14]: begin
-        reg_busy_sel = pin_out_ctl_busy;
-      end
-      addr_hit[15]: begin
-        reg_busy_sel = pin_out_value_busy;
-      end
-      addr_hit[17]: begin
-        reg_busy_sel = key_intr_ctl_busy;
-      end
-      addr_hit[18]: begin
-        reg_busy_sel = key_intr_debounce_ctl_busy;
-      end
-      addr_hit[19]: begin
-        reg_busy_sel = auto_block_debounce_ctl_busy;
-      end
-      addr_hit[20]: begin
-        reg_busy_sel = auto_block_out_ctl_busy;
-      end
-      addr_hit[21]: begin
-        reg_busy_sel = com_pre_sel_ctl_0_busy;
-      end
-      addr_hit[22]: begin
-        reg_busy_sel = com_pre_sel_ctl_1_busy;
-      end
-      addr_hit[23]: begin
-        reg_busy_sel = com_pre_sel_ctl_2_busy;
-      end
-      addr_hit[24]: begin
-        reg_busy_sel = com_pre_sel_ctl_3_busy;
-      end
-      addr_hit[25]: begin
-        reg_busy_sel = com_pre_det_ctl_0_busy;
-      end
-      addr_hit[26]: begin
-        reg_busy_sel = com_pre_det_ctl_1_busy;
-      end
-      addr_hit[27]: begin
-        reg_busy_sel = com_pre_det_ctl_2_busy;
-      end
-      addr_hit[28]: begin
-        reg_busy_sel = com_pre_det_ctl_3_busy;
-      end
-      addr_hit[29]: begin
-        reg_busy_sel = com_sel_ctl_0_busy;
-      end
-      addr_hit[30]: begin
-        reg_busy_sel = com_sel_ctl_1_busy;
-      end
-      addr_hit[31]: begin
-        reg_busy_sel = com_sel_ctl_2_busy;
-      end
-      addr_hit[32]: begin
-        reg_busy_sel = com_sel_ctl_3_busy;
-      end
-      addr_hit[33]: begin
-        reg_busy_sel = com_det_ctl_0_busy;
-      end
-      addr_hit[34]: begin
-        reg_busy_sel = com_det_ctl_1_busy;
-      end
-      addr_hit[35]: begin
-        reg_busy_sel = com_det_ctl_2_busy;
-      end
-      addr_hit[36]: begin
-        reg_busy_sel = com_det_ctl_3_busy;
-      end
-      addr_hit[37]: begin
-        reg_busy_sel = com_out_ctl_0_busy;
-      end
-      addr_hit[38]: begin
-        reg_busy_sel = com_out_ctl_1_busy;
-      end
-      addr_hit[39]: begin
-        reg_busy_sel = com_out_ctl_2_busy;
-      end
-      addr_hit[40]: begin
-        reg_busy_sel = com_out_ctl_3_busy;
-      end
-      default: begin
-        reg_busy_sel  = '0;
-      end
-    endcase
+    if (addr_valid) begin
+      unique case (addr_idx)
+        5: begin
+          reg_busy_sel = ec_rst_ctl_busy;
+        end
+        6: begin
+          reg_busy_sel = ulp_ac_debounce_ctl_busy;
+        end
+        7: begin
+          reg_busy_sel = ulp_lid_debounce_ctl_busy;
+        end
+        8: begin
+          reg_busy_sel = ulp_pwrb_debounce_ctl_busy;
+        end
+        9: begin
+          reg_busy_sel = ulp_ctl_busy;
+        end
+        11: begin
+          reg_busy_sel = wkup_status_busy;
+        end
+        12: begin
+          reg_busy_sel = key_invert_ctl_busy;
+        end
+        13: begin
+          reg_busy_sel = pin_allowed_ctl_busy;
+        end
+        14: begin
+          reg_busy_sel = pin_out_ctl_busy;
+        end
+        15: begin
+          reg_busy_sel = pin_out_value_busy;
+        end
+        17: begin
+          reg_busy_sel = key_intr_ctl_busy;
+        end
+        18: begin
+          reg_busy_sel = key_intr_debounce_ctl_busy;
+        end
+        19: begin
+          reg_busy_sel = auto_block_debounce_ctl_busy;
+        end
+        20: begin
+          reg_busy_sel = auto_block_out_ctl_busy;
+        end
+        21: begin
+          reg_busy_sel = com_pre_sel_ctl_0_busy;
+        end
+        22: begin
+          reg_busy_sel = com_pre_sel_ctl_1_busy;
+        end
+        23: begin
+          reg_busy_sel = com_pre_sel_ctl_2_busy;
+        end
+        24: begin
+          reg_busy_sel = com_pre_sel_ctl_3_busy;
+        end
+        25: begin
+          reg_busy_sel = com_pre_det_ctl_0_busy;
+        end
+        26: begin
+          reg_busy_sel = com_pre_det_ctl_1_busy;
+        end
+        27: begin
+          reg_busy_sel = com_pre_det_ctl_2_busy;
+        end
+        28: begin
+          reg_busy_sel = com_pre_det_ctl_3_busy;
+        end
+        29: begin
+          reg_busy_sel = com_sel_ctl_0_busy;
+        end
+        30: begin
+          reg_busy_sel = com_sel_ctl_1_busy;
+        end
+        31: begin
+          reg_busy_sel = com_sel_ctl_2_busy;
+        end
+        32: begin
+          reg_busy_sel = com_sel_ctl_3_busy;
+        end
+        33: begin
+          reg_busy_sel = com_det_ctl_0_busy;
+        end
+        34: begin
+          reg_busy_sel = com_det_ctl_1_busy;
+        end
+        35: begin
+          reg_busy_sel = com_det_ctl_2_busy;
+        end
+        36: begin
+          reg_busy_sel = com_det_ctl_3_busy;
+        end
+        37: begin
+          reg_busy_sel = com_out_ctl_0_busy;
+        end
+        38: begin
+          reg_busy_sel = com_out_ctl_1_busy;
+        end
+        39: begin
+          reg_busy_sel = com_out_ctl_2_busy;
+        end
+        40: begin
+          reg_busy_sel = com_out_ctl_3_busy;
+        end
+      endcase
+    end
   end
 
 
@@ -7228,7 +7199,7 @@ module sysrst_ctrl_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

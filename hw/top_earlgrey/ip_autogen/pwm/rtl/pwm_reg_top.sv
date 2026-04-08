@@ -3097,12 +3097,15 @@ module pwm_reg_top
 
 
 
-  logic [22:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [22:0] racl_addr_hit_read;
-  logic [22:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -3121,51 +3124,61 @@ module pwm_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[ 0] = (reg_addr == PWM_ALERT_TEST_OFFSET);
-    addr_hit[ 1] = (reg_addr == PWM_REGWEN_OFFSET);
-    addr_hit[ 2] = (reg_addr == PWM_CFG_OFFSET);
-    addr_hit[ 3] = (reg_addr == PWM_PWM_EN_OFFSET);
-    addr_hit[ 4] = (reg_addr == PWM_INVERT_OFFSET);
-    addr_hit[ 5] = (reg_addr == PWM_PWM_PARAM_0_OFFSET);
-    addr_hit[ 6] = (reg_addr == PWM_PWM_PARAM_1_OFFSET);
-    addr_hit[ 7] = (reg_addr == PWM_PWM_PARAM_2_OFFSET);
-    addr_hit[ 8] = (reg_addr == PWM_PWM_PARAM_3_OFFSET);
-    addr_hit[ 9] = (reg_addr == PWM_PWM_PARAM_4_OFFSET);
-    addr_hit[10] = (reg_addr == PWM_PWM_PARAM_5_OFFSET);
-    addr_hit[11] = (reg_addr == PWM_DUTY_CYCLE_0_OFFSET);
-    addr_hit[12] = (reg_addr == PWM_DUTY_CYCLE_1_OFFSET);
-    addr_hit[13] = (reg_addr == PWM_DUTY_CYCLE_2_OFFSET);
-    addr_hit[14] = (reg_addr == PWM_DUTY_CYCLE_3_OFFSET);
-    addr_hit[15] = (reg_addr == PWM_DUTY_CYCLE_4_OFFSET);
-    addr_hit[16] = (reg_addr == PWM_DUTY_CYCLE_5_OFFSET);
-    addr_hit[17] = (reg_addr == PWM_BLINK_PARAM_0_OFFSET);
-    addr_hit[18] = (reg_addr == PWM_BLINK_PARAM_1_OFFSET);
-    addr_hit[19] = (reg_addr == PWM_BLINK_PARAM_2_OFFSET);
-    addr_hit[20] = (reg_addr == PWM_BLINK_PARAM_3_OFFSET);
-    addr_hit[21] = (reg_addr == PWM_BLINK_PARAM_4_OFFSET);
-    addr_hit[22] = (reg_addr == PWM_BLINK_PARAM_5_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      PWM_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      PWM_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      PWM_CFG_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      PWM_PWM_EN_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      PWM_INVERT_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      PWM_PWM_PARAM_0_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      PWM_PWM_PARAM_1_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      PWM_PWM_PARAM_2_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      PWM_PWM_PARAM_3_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      PWM_PWM_PARAM_4_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      PWM_PWM_PARAM_5_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      PWM_DUTY_CYCLE_0_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      PWM_DUTY_CYCLE_1_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      PWM_DUTY_CYCLE_2_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      PWM_DUTY_CYCLE_3_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      PWM_DUTY_CYCLE_4_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      PWM_DUTY_CYCLE_5_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      PWM_BLINK_PARAM_0_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      PWM_BLINK_PARAM_1_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      PWM_BLINK_PARAM_2_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      PWM_BLINK_PARAM_3_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      PWM_BLINK_PARAM_4_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      PWM_BLINK_PARAM_5_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 23; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -3180,115 +3193,108 @@ module pwm_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[ 0] & (|(PWM_PERMIT[ 0] & ~reg_be))) |
-               (racl_addr_hit_write[ 1] & (|(PWM_PERMIT[ 1] & ~reg_be))) |
-               (racl_addr_hit_write[ 2] & (|(PWM_PERMIT[ 2] & ~reg_be))) |
-               (racl_addr_hit_write[ 3] & (|(PWM_PERMIT[ 3] & ~reg_be))) |
-               (racl_addr_hit_write[ 4] & (|(PWM_PERMIT[ 4] & ~reg_be))) |
-               (racl_addr_hit_write[ 5] & (|(PWM_PERMIT[ 5] & ~reg_be))) |
-               (racl_addr_hit_write[ 6] & (|(PWM_PERMIT[ 6] & ~reg_be))) |
-               (racl_addr_hit_write[ 7] & (|(PWM_PERMIT[ 7] & ~reg_be))) |
-               (racl_addr_hit_write[ 8] & (|(PWM_PERMIT[ 8] & ~reg_be))) |
-               (racl_addr_hit_write[ 9] & (|(PWM_PERMIT[ 9] & ~reg_be))) |
-               (racl_addr_hit_write[10] & (|(PWM_PERMIT[10] & ~reg_be))) |
-               (racl_addr_hit_write[11] & (|(PWM_PERMIT[11] & ~reg_be))) |
-               (racl_addr_hit_write[12] & (|(PWM_PERMIT[12] & ~reg_be))) |
-               (racl_addr_hit_write[13] & (|(PWM_PERMIT[13] & ~reg_be))) |
-               (racl_addr_hit_write[14] & (|(PWM_PERMIT[14] & ~reg_be))) |
-               (racl_addr_hit_write[15] & (|(PWM_PERMIT[15] & ~reg_be))) |
-               (racl_addr_hit_write[16] & (|(PWM_PERMIT[16] & ~reg_be))) |
-               (racl_addr_hit_write[17] & (|(PWM_PERMIT[17] & ~reg_be))) |
-               (racl_addr_hit_write[18] & (|(PWM_PERMIT[18] & ~reg_be))) |
-               (racl_addr_hit_write[19] & (|(PWM_PERMIT[19] & ~reg_be))) |
-               (racl_addr_hit_write[20] & (|(PWM_PERMIT[20] & ~reg_be))) |
-               (racl_addr_hit_write[21] & (|(PWM_PERMIT[21] & ~reg_be))) |
-               (racl_addr_hit_write[22] & (|(PWM_PERMIT[22] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(PWM_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(PWM_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(PWM_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(PWM_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(PWM_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(PWM_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(PWM_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(PWM_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(PWM_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(PWM_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(PWM_PERMIT[10] & ~reg_be);
+        11: wr_err = |(PWM_PERMIT[11] & ~reg_be);
+        12: wr_err = |(PWM_PERMIT[12] & ~reg_be);
+        13: wr_err = |(PWM_PERMIT[13] & ~reg_be);
+        14: wr_err = |(PWM_PERMIT[14] & ~reg_be);
+        15: wr_err = |(PWM_PERMIT[15] & ~reg_be);
+        16: wr_err = |(PWM_PERMIT[16] & ~reg_be);
+        17: wr_err = |(PWM_PERMIT[17] & ~reg_be);
+        18: wr_err = |(PWM_PERMIT[18] & ~reg_be);
+        19: wr_err = |(PWM_PERMIT[19] & ~reg_be);
+        20: wr_err = |(PWM_PERMIT[20] & ~reg_be);
+        21: wr_err = |(PWM_PERMIT[21] & ~reg_be);
+        22: wr_err = |(PWM_PERMIT[22] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign alert_test_we = racl_addr_hit_write[0] & reg_we & !reg_error;
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign regwen_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign regwen_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign regwen_wd = reg_wdata[0];
-  assign cfg_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign cfg_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
 
-
-  assign pwm_en_we = racl_addr_hit_write[3] & reg_we & !reg_error;
-
+  assign pwm_en_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
 
+  assign invert_we = racl_addr_write_valid & (racl_addr_write_idx == 4) & reg_we & !reg_error;
 
 
-
-  assign invert_we = racl_addr_hit_write[4] & reg_we & !reg_error;
-
+  assign pwm_param_0_we = racl_addr_write_valid & (racl_addr_write_idx == 5) & reg_we & !reg_error;
 
 
+  assign pwm_param_1_we = racl_addr_write_valid & (racl_addr_write_idx == 6) & reg_we & !reg_error;
 
 
-
-  assign pwm_param_0_we = racl_addr_hit_write[5] & reg_we & !reg_error;
-
+  assign pwm_param_2_we = racl_addr_write_valid & (racl_addr_write_idx == 7) & reg_we & !reg_error;
 
 
-  assign pwm_param_1_we = racl_addr_hit_write[6] & reg_we & !reg_error;
+  assign pwm_param_3_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
 
-
-  assign pwm_param_2_we = racl_addr_hit_write[7] & reg_we & !reg_error;
-
+  assign pwm_param_4_we = racl_addr_write_valid & (racl_addr_write_idx == 9) & reg_we & !reg_error;
 
 
-  assign pwm_param_3_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+  assign pwm_param_5_we = racl_addr_write_valid & (racl_addr_write_idx == 10) & reg_we & !reg_error;
 
 
-
-  assign pwm_param_4_we = racl_addr_hit_write[9] & reg_we & !reg_error;
-
+  assign duty_cycle_0_we = racl_addr_write_valid & (racl_addr_write_idx == 11) & reg_we & !reg_error;
 
 
-  assign pwm_param_5_we = racl_addr_hit_write[10] & reg_we & !reg_error;
+  assign duty_cycle_1_we = racl_addr_write_valid & (racl_addr_write_idx == 12) & reg_we & !reg_error;
 
 
-
-  assign duty_cycle_0_we = racl_addr_hit_write[11] & reg_we & !reg_error;
-
-
-  assign duty_cycle_1_we = racl_addr_hit_write[12] & reg_we & !reg_error;
+  assign duty_cycle_2_we = racl_addr_write_valid & (racl_addr_write_idx == 13) & reg_we & !reg_error;
 
 
-  assign duty_cycle_2_we = racl_addr_hit_write[13] & reg_we & !reg_error;
+  assign duty_cycle_3_we = racl_addr_write_valid & (racl_addr_write_idx == 14) & reg_we & !reg_error;
 
 
-  assign duty_cycle_3_we = racl_addr_hit_write[14] & reg_we & !reg_error;
+  assign duty_cycle_4_we = racl_addr_write_valid & (racl_addr_write_idx == 15) & reg_we & !reg_error;
 
 
-  assign duty_cycle_4_we = racl_addr_hit_write[15] & reg_we & !reg_error;
+  assign duty_cycle_5_we = racl_addr_write_valid & (racl_addr_write_idx == 16) & reg_we & !reg_error;
 
 
-  assign duty_cycle_5_we = racl_addr_hit_write[16] & reg_we & !reg_error;
+  assign blink_param_0_we = racl_addr_write_valid & (racl_addr_write_idx == 17) & reg_we & !reg_error;
 
 
-  assign blink_param_0_we = racl_addr_hit_write[17] & reg_we & !reg_error;
+  assign blink_param_1_we = racl_addr_write_valid & (racl_addr_write_idx == 18) & reg_we & !reg_error;
 
 
-  assign blink_param_1_we = racl_addr_hit_write[18] & reg_we & !reg_error;
+  assign blink_param_2_we = racl_addr_write_valid & (racl_addr_write_idx == 19) & reg_we & !reg_error;
 
 
-  assign blink_param_2_we = racl_addr_hit_write[19] & reg_we & !reg_error;
+  assign blink_param_3_we = racl_addr_write_valid & (racl_addr_write_idx == 20) & reg_we & !reg_error;
 
 
-  assign blink_param_3_we = racl_addr_hit_write[20] & reg_we & !reg_error;
+  assign blink_param_4_we = racl_addr_write_valid & (racl_addr_write_idx == 21) & reg_we & !reg_error;
 
 
-  assign blink_param_4_we = racl_addr_hit_write[21] & reg_we & !reg_error;
-
-
-  assign blink_param_5_we = racl_addr_hit_write[22] & reg_we & !reg_error;
+  assign blink_param_5_we = racl_addr_write_valid & (racl_addr_write_idx == 22) & reg_we & !reg_error;
 
 
 
@@ -3321,83 +3327,109 @@ module pwm_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = '0;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = regwen_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = regwen_qs;
+        end
 
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next = DW'(cfg_qs);
-      end
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next = DW'(pwm_en_qs);
-      end
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next = DW'(invert_qs);
-      end
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next = DW'(pwm_param_0_qs);
-      end
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next = DW'(pwm_param_1_qs);
-      end
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next = DW'(pwm_param_2_qs);
-      end
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next = DW'(pwm_param_3_qs);
-      end
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next = DW'(pwm_param_4_qs);
-      end
-      racl_addr_hit_read[10]: begin
-        reg_rdata_next = DW'(pwm_param_5_qs);
-      end
-      racl_addr_hit_read[11]: begin
-        reg_rdata_next = DW'(duty_cycle_0_qs);
-      end
-      racl_addr_hit_read[12]: begin
-        reg_rdata_next = DW'(duty_cycle_1_qs);
-      end
-      racl_addr_hit_read[13]: begin
-        reg_rdata_next = DW'(duty_cycle_2_qs);
-      end
-      racl_addr_hit_read[14]: begin
-        reg_rdata_next = DW'(duty_cycle_3_qs);
-      end
-      racl_addr_hit_read[15]: begin
-        reg_rdata_next = DW'(duty_cycle_4_qs);
-      end
-      racl_addr_hit_read[16]: begin
-        reg_rdata_next = DW'(duty_cycle_5_qs);
-      end
-      racl_addr_hit_read[17]: begin
-        reg_rdata_next = DW'(blink_param_0_qs);
-      end
-      racl_addr_hit_read[18]: begin
-        reg_rdata_next = DW'(blink_param_1_qs);
-      end
-      racl_addr_hit_read[19]: begin
-        reg_rdata_next = DW'(blink_param_2_qs);
-      end
-      racl_addr_hit_read[20]: begin
-        reg_rdata_next = DW'(blink_param_3_qs);
-      end
-      racl_addr_hit_read[21]: begin
-        reg_rdata_next = DW'(blink_param_4_qs);
-      end
-      racl_addr_hit_read[22]: begin
-        reg_rdata_next = DW'(blink_param_5_qs);
-      end
+        2: begin
+          reg_rdata_next = DW'(cfg_qs);
+        end
+
+        3: begin
+          reg_rdata_next = DW'(pwm_en_qs);
+        end
+
+        4: begin
+          reg_rdata_next = DW'(invert_qs);
+        end
+
+        5: begin
+          reg_rdata_next = DW'(pwm_param_0_qs);
+        end
+
+        6: begin
+          reg_rdata_next = DW'(pwm_param_1_qs);
+        end
+
+        7: begin
+          reg_rdata_next = DW'(pwm_param_2_qs);
+        end
+
+        8: begin
+          reg_rdata_next = DW'(pwm_param_3_qs);
+        end
+
+        9: begin
+          reg_rdata_next = DW'(pwm_param_4_qs);
+        end
+
+        10: begin
+          reg_rdata_next = DW'(pwm_param_5_qs);
+        end
+
+        11: begin
+          reg_rdata_next = DW'(duty_cycle_0_qs);
+        end
+
+        12: begin
+          reg_rdata_next = DW'(duty_cycle_1_qs);
+        end
+
+        13: begin
+          reg_rdata_next = DW'(duty_cycle_2_qs);
+        end
+
+        14: begin
+          reg_rdata_next = DW'(duty_cycle_3_qs);
+        end
+
+        15: begin
+          reg_rdata_next = DW'(duty_cycle_4_qs);
+        end
+
+        16: begin
+          reg_rdata_next = DW'(duty_cycle_5_qs);
+        end
+
+        17: begin
+          reg_rdata_next = DW'(blink_param_0_qs);
+        end
+
+        18: begin
+          reg_rdata_next = DW'(blink_param_1_qs);
+        end
+
+        19: begin
+          reg_rdata_next = DW'(blink_param_2_qs);
+        end
+
+        20: begin
+          reg_rdata_next = DW'(blink_param_3_qs);
+        end
+
+        21: begin
+          reg_rdata_next = DW'(blink_param_4_qs);
+        end
+
+        22: begin
+          reg_rdata_next = DW'(blink_param_5_qs);
+        end
+
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -3409,74 +3441,73 @@ module pwm_reg_top
   assign reg_busy = (reg_busy_sel | shadow_busy) & tl_i.a_valid;
   always_comb begin
     reg_busy_sel = '0;
-    unique case (1'b1)
-      addr_hit[2]: begin
-        reg_busy_sel = cfg_busy;
-      end
-      addr_hit[3]: begin
-        reg_busy_sel = pwm_en_busy;
-      end
-      addr_hit[4]: begin
-        reg_busy_sel = invert_busy;
-      end
-      addr_hit[5]: begin
-        reg_busy_sel = pwm_param_0_busy;
-      end
-      addr_hit[6]: begin
-        reg_busy_sel = pwm_param_1_busy;
-      end
-      addr_hit[7]: begin
-        reg_busy_sel = pwm_param_2_busy;
-      end
-      addr_hit[8]: begin
-        reg_busy_sel = pwm_param_3_busy;
-      end
-      addr_hit[9]: begin
-        reg_busy_sel = pwm_param_4_busy;
-      end
-      addr_hit[10]: begin
-        reg_busy_sel = pwm_param_5_busy;
-      end
-      addr_hit[11]: begin
-        reg_busy_sel = duty_cycle_0_busy;
-      end
-      addr_hit[12]: begin
-        reg_busy_sel = duty_cycle_1_busy;
-      end
-      addr_hit[13]: begin
-        reg_busy_sel = duty_cycle_2_busy;
-      end
-      addr_hit[14]: begin
-        reg_busy_sel = duty_cycle_3_busy;
-      end
-      addr_hit[15]: begin
-        reg_busy_sel = duty_cycle_4_busy;
-      end
-      addr_hit[16]: begin
-        reg_busy_sel = duty_cycle_5_busy;
-      end
-      addr_hit[17]: begin
-        reg_busy_sel = blink_param_0_busy;
-      end
-      addr_hit[18]: begin
-        reg_busy_sel = blink_param_1_busy;
-      end
-      addr_hit[19]: begin
-        reg_busy_sel = blink_param_2_busy;
-      end
-      addr_hit[20]: begin
-        reg_busy_sel = blink_param_3_busy;
-      end
-      addr_hit[21]: begin
-        reg_busy_sel = blink_param_4_busy;
-      end
-      addr_hit[22]: begin
-        reg_busy_sel = blink_param_5_busy;
-      end
-      default: begin
-        reg_busy_sel  = '0;
-      end
-    endcase
+    if (addr_valid) begin
+      unique case (addr_idx)
+        2: begin
+          reg_busy_sel = cfg_busy;
+        end
+        3: begin
+          reg_busy_sel = pwm_en_busy;
+        end
+        4: begin
+          reg_busy_sel = invert_busy;
+        end
+        5: begin
+          reg_busy_sel = pwm_param_0_busy;
+        end
+        6: begin
+          reg_busy_sel = pwm_param_1_busy;
+        end
+        7: begin
+          reg_busy_sel = pwm_param_2_busy;
+        end
+        8: begin
+          reg_busy_sel = pwm_param_3_busy;
+        end
+        9: begin
+          reg_busy_sel = pwm_param_4_busy;
+        end
+        10: begin
+          reg_busy_sel = pwm_param_5_busy;
+        end
+        11: begin
+          reg_busy_sel = duty_cycle_0_busy;
+        end
+        12: begin
+          reg_busy_sel = duty_cycle_1_busy;
+        end
+        13: begin
+          reg_busy_sel = duty_cycle_2_busy;
+        end
+        14: begin
+          reg_busy_sel = duty_cycle_3_busy;
+        end
+        15: begin
+          reg_busy_sel = duty_cycle_4_busy;
+        end
+        16: begin
+          reg_busy_sel = duty_cycle_5_busy;
+        end
+        17: begin
+          reg_busy_sel = blink_param_0_busy;
+        end
+        18: begin
+          reg_busy_sel = blink_param_1_busy;
+        end
+        19: begin
+          reg_busy_sel = blink_param_2_busy;
+        end
+        20: begin
+          reg_busy_sel = blink_param_3_busy;
+        end
+        21: begin
+          reg_busy_sel = blink_param_4_busy;
+        end
+        22: begin
+          reg_busy_sel = blink_param_5_busy;
+        end
+      endcase
+    end
   end
 
 
@@ -3497,7 +3528,7 @@ module pwm_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

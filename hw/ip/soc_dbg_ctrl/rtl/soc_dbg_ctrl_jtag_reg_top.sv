@@ -474,36 +474,55 @@ module soc_dbg_ctrl_jtag_reg_top (
 
 
 
-  logic [5:0] addr_hit;
+  logic [$clog2(NumRegsJtag)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[0] = (reg_addr == SOC_DBG_CTRL_JTAG_TRACE_DEBUG_POLICY_CATEGORY_OFFSET);
-    addr_hit[1] = (reg_addr == SOC_DBG_CTRL_JTAG_TRACE_DEBUG_POLICY_VALID_RELOCKED_OFFSET);
-    addr_hit[2] = (reg_addr == SOC_DBG_CTRL_JTAG_CONTROL_OFFSET);
-    addr_hit[3] = (reg_addr == SOC_DBG_CTRL_JTAG_STATUS_OFFSET);
-    addr_hit[4] = (reg_addr == SOC_DBG_CTRL_JTAG_BOOT_STATUS_OFFSET);
-    addr_hit[5] = (reg_addr == SOC_DBG_CTRL_JTAG_TRACE_SOC_DBG_STATE_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SOC_DBG_CTRL_JTAG_TRACE_DEBUG_POLICY_CATEGORY_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SOC_DBG_CTRL_JTAG_TRACE_DEBUG_POLICY_VALID_RELOCKED_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      SOC_DBG_CTRL_JTAG_CONTROL_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      SOC_DBG_CTRL_JTAG_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      SOC_DBG_CTRL_JTAG_BOOT_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      SOC_DBG_CTRL_JTAG_TRACE_SOC_DBG_STATE_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[0] & (|(SOC_DBG_CTRL_JTAG_PERMIT[0] & ~reg_be))) |
-               (addr_hit[1] & (|(SOC_DBG_CTRL_JTAG_PERMIT[1] & ~reg_be))) |
-               (addr_hit[2] & (|(SOC_DBG_CTRL_JTAG_PERMIT[2] & ~reg_be))) |
-               (addr_hit[3] & (|(SOC_DBG_CTRL_JTAG_PERMIT[3] & ~reg_be))) |
-               (addr_hit[4] & (|(SOC_DBG_CTRL_JTAG_PERMIT[4] & ~reg_be))) |
-               (addr_hit[5] & (|(SOC_DBG_CTRL_JTAG_PERMIT[5] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: wr_err = |(SOC_DBG_CTRL_JTAG_PERMIT[0] & ~reg_be);
+        1: wr_err = |(SOC_DBG_CTRL_JTAG_PERMIT[1] & ~reg_be);
+        2: wr_err = |(SOC_DBG_CTRL_JTAG_PERMIT[2] & ~reg_be);
+        3: wr_err = |(SOC_DBG_CTRL_JTAG_PERMIT[3] & ~reg_be);
+        4: wr_err = |(SOC_DBG_CTRL_JTAG_PERMIT[4] & ~reg_be);
+        5: wr_err = |(SOC_DBG_CTRL_JTAG_PERMIT[5] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign jtag_control_we = addr_hit[2] & reg_we & !reg_error;
+
+
+  assign jtag_control_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign jtag_control_wd = reg_wdata[0];
-  assign jtag_status_re = addr_hit[3] & reg_re & !reg_error;
-  assign jtag_boot_status_re = addr_hit[4] & reg_re & !reg_error;
-  assign jtag_trace_soc_dbg_state_re = addr_hit[5] & reg_re & !reg_error;
+
+  assign jtag_status_re = addr_valid & (addr_idx == 3) & reg_re & !reg_error;
+
+  assign jtag_boot_status_re = addr_valid & (addr_idx == 4) & reg_re & !reg_error;
+
+  assign jtag_trace_soc_dbg_state_re = addr_valid & (addr_idx == 5) & reg_re & !reg_error;
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -517,48 +536,53 @@ module soc_dbg_ctrl_jtag_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[6:0] = jtag_trace_debug_policy_category_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[6:0] = jtag_trace_debug_policy_category_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[3:0] = jtag_trace_debug_policy_valid_relocked_valid_qs;
-        reg_rdata_next[7:4] = jtag_trace_debug_policy_valid_relocked_relocked_qs;
-      end
+        1: begin
+          reg_rdata_next[3:0] = jtag_trace_debug_policy_valid_relocked_valid_qs;
+          reg_rdata_next[7:4] = jtag_trace_debug_policy_valid_relocked_relocked_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = jtag_control_qs;
-      end
+        2: begin
+          reg_rdata_next[0] = jtag_control_qs;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = jtag_status_auth_debug_intent_set_qs;
-        reg_rdata_next[4] = jtag_status_auth_window_open_qs;
-        reg_rdata_next[5] = jtag_status_auth_window_closed_qs;
-        reg_rdata_next[6] = jtag_status_auth_unlock_success_qs;
-        reg_rdata_next[7] = jtag_status_auth_unlock_failed_qs;
-      end
+        3: begin
+          reg_rdata_next[0] = jtag_status_auth_debug_intent_set_qs;
+          reg_rdata_next[4] = jtag_status_auth_window_open_qs;
+          reg_rdata_next[5] = jtag_status_auth_window_closed_qs;
+          reg_rdata_next[6] = jtag_status_auth_unlock_success_qs;
+          reg_rdata_next[7] = jtag_status_auth_unlock_failed_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = jtag_boot_status_main_clk_status_qs;
-        reg_rdata_next[1] = jtag_boot_status_io_clk_status_qs;
-        reg_rdata_next[2] = jtag_boot_status_otp_done_qs;
-        reg_rdata_next[3] = jtag_boot_status_lc_done_qs;
-        reg_rdata_next[4] = jtag_boot_status_cpu_fetch_en_qs;
-        reg_rdata_next[10:5] = jtag_boot_status_halt_fsm_state_qs;
-        reg_rdata_next[13:11] = jtag_boot_status_boot_greenlight_done_qs;
-        reg_rdata_next[16:14] = jtag_boot_status_boot_greenlight_good_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = jtag_boot_status_main_clk_status_qs;
+          reg_rdata_next[1] = jtag_boot_status_io_clk_status_qs;
+          reg_rdata_next[2] = jtag_boot_status_otp_done_qs;
+          reg_rdata_next[3] = jtag_boot_status_lc_done_qs;
+          reg_rdata_next[4] = jtag_boot_status_cpu_fetch_en_qs;
+          reg_rdata_next[10:5] = jtag_boot_status_halt_fsm_state_qs;
+          reg_rdata_next[13:11] = jtag_boot_status_boot_greenlight_done_qs;
+          reg_rdata_next[16:14] = jtag_boot_status_boot_greenlight_good_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[31:0] = jtag_trace_soc_dbg_state_qs;
-      end
+        5: begin
+          reg_rdata_next[31:0] = jtag_trace_soc_dbg_state_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -583,7 +607,7 @@ module soc_dbg_ctrl_jtag_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

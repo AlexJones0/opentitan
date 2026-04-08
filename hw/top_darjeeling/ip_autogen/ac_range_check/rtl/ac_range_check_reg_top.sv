@@ -11948,12 +11948,15 @@ module ac_range_check_reg_top
 
 
 
-  logic [167:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [167:0] racl_addr_hit_read;
-  logic [167:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -11972,196 +11975,206 @@ module ac_range_check_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[  0] = (reg_addr == AC_RANGE_CHECK_INTR_STATE_OFFSET);
-    addr_hit[  1] = (reg_addr == AC_RANGE_CHECK_INTR_ENABLE_OFFSET);
-    addr_hit[  2] = (reg_addr == AC_RANGE_CHECK_INTR_TEST_OFFSET);
-    addr_hit[  3] = (reg_addr == AC_RANGE_CHECK_ALERT_TEST_OFFSET);
-    addr_hit[  4] = (reg_addr == AC_RANGE_CHECK_ALERT_STATUS_OFFSET);
-    addr_hit[  5] = (reg_addr == AC_RANGE_CHECK_LOG_CONFIG_OFFSET);
-    addr_hit[  6] = (reg_addr == AC_RANGE_CHECK_LOG_STATUS_OFFSET);
-    addr_hit[  7] = (reg_addr == AC_RANGE_CHECK_LOG_ADDRESS_OFFSET);
-    addr_hit[  8] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_0_OFFSET);
-    addr_hit[  9] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_1_OFFSET);
-    addr_hit[ 10] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_2_OFFSET);
-    addr_hit[ 11] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_3_OFFSET);
-    addr_hit[ 12] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_4_OFFSET);
-    addr_hit[ 13] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_5_OFFSET);
-    addr_hit[ 14] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_6_OFFSET);
-    addr_hit[ 15] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_7_OFFSET);
-    addr_hit[ 16] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_8_OFFSET);
-    addr_hit[ 17] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_9_OFFSET);
-    addr_hit[ 18] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_10_OFFSET);
-    addr_hit[ 19] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_11_OFFSET);
-    addr_hit[ 20] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_12_OFFSET);
-    addr_hit[ 21] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_13_OFFSET);
-    addr_hit[ 22] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_14_OFFSET);
-    addr_hit[ 23] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_15_OFFSET);
-    addr_hit[ 24] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_16_OFFSET);
-    addr_hit[ 25] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_17_OFFSET);
-    addr_hit[ 26] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_18_OFFSET);
-    addr_hit[ 27] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_19_OFFSET);
-    addr_hit[ 28] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_20_OFFSET);
-    addr_hit[ 29] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_21_OFFSET);
-    addr_hit[ 30] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_22_OFFSET);
-    addr_hit[ 31] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_23_OFFSET);
-    addr_hit[ 32] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_24_OFFSET);
-    addr_hit[ 33] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_25_OFFSET);
-    addr_hit[ 34] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_26_OFFSET);
-    addr_hit[ 35] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_27_OFFSET);
-    addr_hit[ 36] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_28_OFFSET);
-    addr_hit[ 37] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_29_OFFSET);
-    addr_hit[ 38] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_30_OFFSET);
-    addr_hit[ 39] = (reg_addr == AC_RANGE_CHECK_RANGE_REGWEN_31_OFFSET);
-    addr_hit[ 40] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_0_OFFSET);
-    addr_hit[ 41] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_1_OFFSET);
-    addr_hit[ 42] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_2_OFFSET);
-    addr_hit[ 43] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_3_OFFSET);
-    addr_hit[ 44] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_4_OFFSET);
-    addr_hit[ 45] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_5_OFFSET);
-    addr_hit[ 46] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_6_OFFSET);
-    addr_hit[ 47] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_7_OFFSET);
-    addr_hit[ 48] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_8_OFFSET);
-    addr_hit[ 49] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_9_OFFSET);
-    addr_hit[ 50] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_10_OFFSET);
-    addr_hit[ 51] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_11_OFFSET);
-    addr_hit[ 52] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_12_OFFSET);
-    addr_hit[ 53] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_13_OFFSET);
-    addr_hit[ 54] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_14_OFFSET);
-    addr_hit[ 55] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_15_OFFSET);
-    addr_hit[ 56] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_16_OFFSET);
-    addr_hit[ 57] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_17_OFFSET);
-    addr_hit[ 58] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_18_OFFSET);
-    addr_hit[ 59] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_19_OFFSET);
-    addr_hit[ 60] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_20_OFFSET);
-    addr_hit[ 61] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_21_OFFSET);
-    addr_hit[ 62] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_22_OFFSET);
-    addr_hit[ 63] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_23_OFFSET);
-    addr_hit[ 64] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_24_OFFSET);
-    addr_hit[ 65] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_25_OFFSET);
-    addr_hit[ 66] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_26_OFFSET);
-    addr_hit[ 67] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_27_OFFSET);
-    addr_hit[ 68] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_28_OFFSET);
-    addr_hit[ 69] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_29_OFFSET);
-    addr_hit[ 70] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_30_OFFSET);
-    addr_hit[ 71] = (reg_addr == AC_RANGE_CHECK_RANGE_BASE_31_OFFSET);
-    addr_hit[ 72] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_0_OFFSET);
-    addr_hit[ 73] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_1_OFFSET);
-    addr_hit[ 74] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_2_OFFSET);
-    addr_hit[ 75] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_3_OFFSET);
-    addr_hit[ 76] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_4_OFFSET);
-    addr_hit[ 77] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_5_OFFSET);
-    addr_hit[ 78] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_6_OFFSET);
-    addr_hit[ 79] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_7_OFFSET);
-    addr_hit[ 80] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_8_OFFSET);
-    addr_hit[ 81] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_9_OFFSET);
-    addr_hit[ 82] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_10_OFFSET);
-    addr_hit[ 83] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_11_OFFSET);
-    addr_hit[ 84] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_12_OFFSET);
-    addr_hit[ 85] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_13_OFFSET);
-    addr_hit[ 86] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_14_OFFSET);
-    addr_hit[ 87] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_15_OFFSET);
-    addr_hit[ 88] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_16_OFFSET);
-    addr_hit[ 89] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_17_OFFSET);
-    addr_hit[ 90] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_18_OFFSET);
-    addr_hit[ 91] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_19_OFFSET);
-    addr_hit[ 92] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_20_OFFSET);
-    addr_hit[ 93] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_21_OFFSET);
-    addr_hit[ 94] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_22_OFFSET);
-    addr_hit[ 95] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_23_OFFSET);
-    addr_hit[ 96] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_24_OFFSET);
-    addr_hit[ 97] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_25_OFFSET);
-    addr_hit[ 98] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_26_OFFSET);
-    addr_hit[ 99] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_27_OFFSET);
-    addr_hit[100] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_28_OFFSET);
-    addr_hit[101] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_29_OFFSET);
-    addr_hit[102] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_30_OFFSET);
-    addr_hit[103] = (reg_addr == AC_RANGE_CHECK_RANGE_LIMIT_31_OFFSET);
-    addr_hit[104] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_0_OFFSET);
-    addr_hit[105] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_1_OFFSET);
-    addr_hit[106] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_2_OFFSET);
-    addr_hit[107] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_3_OFFSET);
-    addr_hit[108] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_4_OFFSET);
-    addr_hit[109] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_5_OFFSET);
-    addr_hit[110] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_6_OFFSET);
-    addr_hit[111] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_7_OFFSET);
-    addr_hit[112] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_8_OFFSET);
-    addr_hit[113] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_9_OFFSET);
-    addr_hit[114] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_10_OFFSET);
-    addr_hit[115] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_11_OFFSET);
-    addr_hit[116] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_12_OFFSET);
-    addr_hit[117] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_13_OFFSET);
-    addr_hit[118] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_14_OFFSET);
-    addr_hit[119] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_15_OFFSET);
-    addr_hit[120] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_16_OFFSET);
-    addr_hit[121] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_17_OFFSET);
-    addr_hit[122] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_18_OFFSET);
-    addr_hit[123] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_19_OFFSET);
-    addr_hit[124] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_20_OFFSET);
-    addr_hit[125] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_21_OFFSET);
-    addr_hit[126] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_22_OFFSET);
-    addr_hit[127] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_23_OFFSET);
-    addr_hit[128] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_24_OFFSET);
-    addr_hit[129] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_25_OFFSET);
-    addr_hit[130] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_26_OFFSET);
-    addr_hit[131] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_27_OFFSET);
-    addr_hit[132] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_28_OFFSET);
-    addr_hit[133] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_29_OFFSET);
-    addr_hit[134] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_30_OFFSET);
-    addr_hit[135] = (reg_addr == AC_RANGE_CHECK_RANGE_ATTR_31_OFFSET);
-    addr_hit[136] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_0_OFFSET);
-    addr_hit[137] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_1_OFFSET);
-    addr_hit[138] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_2_OFFSET);
-    addr_hit[139] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_3_OFFSET);
-    addr_hit[140] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_4_OFFSET);
-    addr_hit[141] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_5_OFFSET);
-    addr_hit[142] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_6_OFFSET);
-    addr_hit[143] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_7_OFFSET);
-    addr_hit[144] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_8_OFFSET);
-    addr_hit[145] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_9_OFFSET);
-    addr_hit[146] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_10_OFFSET);
-    addr_hit[147] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_11_OFFSET);
-    addr_hit[148] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_12_OFFSET);
-    addr_hit[149] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_13_OFFSET);
-    addr_hit[150] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_14_OFFSET);
-    addr_hit[151] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_15_OFFSET);
-    addr_hit[152] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_16_OFFSET);
-    addr_hit[153] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_17_OFFSET);
-    addr_hit[154] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_18_OFFSET);
-    addr_hit[155] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_19_OFFSET);
-    addr_hit[156] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_20_OFFSET);
-    addr_hit[157] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_21_OFFSET);
-    addr_hit[158] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_22_OFFSET);
-    addr_hit[159] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_23_OFFSET);
-    addr_hit[160] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_24_OFFSET);
-    addr_hit[161] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_25_OFFSET);
-    addr_hit[162] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_26_OFFSET);
-    addr_hit[163] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_27_OFFSET);
-    addr_hit[164] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_28_OFFSET);
-    addr_hit[165] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_29_OFFSET);
-    addr_hit[166] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_30_OFFSET);
-    addr_hit[167] = (reg_addr == AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_31_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      AC_RANGE_CHECK_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      AC_RANGE_CHECK_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      AC_RANGE_CHECK_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      AC_RANGE_CHECK_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      AC_RANGE_CHECK_ALERT_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      AC_RANGE_CHECK_LOG_CONFIG_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      AC_RANGE_CHECK_LOG_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      AC_RANGE_CHECK_LOG_ADDRESS_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      AC_RANGE_CHECK_RANGE_REGWEN_0_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      AC_RANGE_CHECK_RANGE_REGWEN_1_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      AC_RANGE_CHECK_RANGE_REGWEN_2_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      AC_RANGE_CHECK_RANGE_REGWEN_3_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      AC_RANGE_CHECK_RANGE_REGWEN_4_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      AC_RANGE_CHECK_RANGE_REGWEN_5_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      AC_RANGE_CHECK_RANGE_REGWEN_6_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      AC_RANGE_CHECK_RANGE_REGWEN_7_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      AC_RANGE_CHECK_RANGE_REGWEN_8_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      AC_RANGE_CHECK_RANGE_REGWEN_9_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      AC_RANGE_CHECK_RANGE_REGWEN_10_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      AC_RANGE_CHECK_RANGE_REGWEN_11_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      AC_RANGE_CHECK_RANGE_REGWEN_12_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      AC_RANGE_CHECK_RANGE_REGWEN_13_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      AC_RANGE_CHECK_RANGE_REGWEN_14_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      AC_RANGE_CHECK_RANGE_REGWEN_15_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      AC_RANGE_CHECK_RANGE_REGWEN_16_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      AC_RANGE_CHECK_RANGE_REGWEN_17_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      AC_RANGE_CHECK_RANGE_REGWEN_18_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      AC_RANGE_CHECK_RANGE_REGWEN_19_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      AC_RANGE_CHECK_RANGE_REGWEN_20_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      AC_RANGE_CHECK_RANGE_REGWEN_21_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      AC_RANGE_CHECK_RANGE_REGWEN_22_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      AC_RANGE_CHECK_RANGE_REGWEN_23_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      AC_RANGE_CHECK_RANGE_REGWEN_24_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      AC_RANGE_CHECK_RANGE_REGWEN_25_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      AC_RANGE_CHECK_RANGE_REGWEN_26_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      AC_RANGE_CHECK_RANGE_REGWEN_27_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      AC_RANGE_CHECK_RANGE_REGWEN_28_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      AC_RANGE_CHECK_RANGE_REGWEN_29_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      AC_RANGE_CHECK_RANGE_REGWEN_30_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      AC_RANGE_CHECK_RANGE_REGWEN_31_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      AC_RANGE_CHECK_RANGE_BASE_0_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      AC_RANGE_CHECK_RANGE_BASE_1_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      AC_RANGE_CHECK_RANGE_BASE_2_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      AC_RANGE_CHECK_RANGE_BASE_3_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      AC_RANGE_CHECK_RANGE_BASE_4_OFFSET: begin addr_valid = 1; addr_idx = 44; end
+      AC_RANGE_CHECK_RANGE_BASE_5_OFFSET: begin addr_valid = 1; addr_idx = 45; end
+      AC_RANGE_CHECK_RANGE_BASE_6_OFFSET: begin addr_valid = 1; addr_idx = 46; end
+      AC_RANGE_CHECK_RANGE_BASE_7_OFFSET: begin addr_valid = 1; addr_idx = 47; end
+      AC_RANGE_CHECK_RANGE_BASE_8_OFFSET: begin addr_valid = 1; addr_idx = 48; end
+      AC_RANGE_CHECK_RANGE_BASE_9_OFFSET: begin addr_valid = 1; addr_idx = 49; end
+      AC_RANGE_CHECK_RANGE_BASE_10_OFFSET: begin addr_valid = 1; addr_idx = 50; end
+      AC_RANGE_CHECK_RANGE_BASE_11_OFFSET: begin addr_valid = 1; addr_idx = 51; end
+      AC_RANGE_CHECK_RANGE_BASE_12_OFFSET: begin addr_valid = 1; addr_idx = 52; end
+      AC_RANGE_CHECK_RANGE_BASE_13_OFFSET: begin addr_valid = 1; addr_idx = 53; end
+      AC_RANGE_CHECK_RANGE_BASE_14_OFFSET: begin addr_valid = 1; addr_idx = 54; end
+      AC_RANGE_CHECK_RANGE_BASE_15_OFFSET: begin addr_valid = 1; addr_idx = 55; end
+      AC_RANGE_CHECK_RANGE_BASE_16_OFFSET: begin addr_valid = 1; addr_idx = 56; end
+      AC_RANGE_CHECK_RANGE_BASE_17_OFFSET: begin addr_valid = 1; addr_idx = 57; end
+      AC_RANGE_CHECK_RANGE_BASE_18_OFFSET: begin addr_valid = 1; addr_idx = 58; end
+      AC_RANGE_CHECK_RANGE_BASE_19_OFFSET: begin addr_valid = 1; addr_idx = 59; end
+      AC_RANGE_CHECK_RANGE_BASE_20_OFFSET: begin addr_valid = 1; addr_idx = 60; end
+      AC_RANGE_CHECK_RANGE_BASE_21_OFFSET: begin addr_valid = 1; addr_idx = 61; end
+      AC_RANGE_CHECK_RANGE_BASE_22_OFFSET: begin addr_valid = 1; addr_idx = 62; end
+      AC_RANGE_CHECK_RANGE_BASE_23_OFFSET: begin addr_valid = 1; addr_idx = 63; end
+      AC_RANGE_CHECK_RANGE_BASE_24_OFFSET: begin addr_valid = 1; addr_idx = 64; end
+      AC_RANGE_CHECK_RANGE_BASE_25_OFFSET: begin addr_valid = 1; addr_idx = 65; end
+      AC_RANGE_CHECK_RANGE_BASE_26_OFFSET: begin addr_valid = 1; addr_idx = 66; end
+      AC_RANGE_CHECK_RANGE_BASE_27_OFFSET: begin addr_valid = 1; addr_idx = 67; end
+      AC_RANGE_CHECK_RANGE_BASE_28_OFFSET: begin addr_valid = 1; addr_idx = 68; end
+      AC_RANGE_CHECK_RANGE_BASE_29_OFFSET: begin addr_valid = 1; addr_idx = 69; end
+      AC_RANGE_CHECK_RANGE_BASE_30_OFFSET: begin addr_valid = 1; addr_idx = 70; end
+      AC_RANGE_CHECK_RANGE_BASE_31_OFFSET: begin addr_valid = 1; addr_idx = 71; end
+      AC_RANGE_CHECK_RANGE_LIMIT_0_OFFSET: begin addr_valid = 1; addr_idx = 72; end
+      AC_RANGE_CHECK_RANGE_LIMIT_1_OFFSET: begin addr_valid = 1; addr_idx = 73; end
+      AC_RANGE_CHECK_RANGE_LIMIT_2_OFFSET: begin addr_valid = 1; addr_idx = 74; end
+      AC_RANGE_CHECK_RANGE_LIMIT_3_OFFSET: begin addr_valid = 1; addr_idx = 75; end
+      AC_RANGE_CHECK_RANGE_LIMIT_4_OFFSET: begin addr_valid = 1; addr_idx = 76; end
+      AC_RANGE_CHECK_RANGE_LIMIT_5_OFFSET: begin addr_valid = 1; addr_idx = 77; end
+      AC_RANGE_CHECK_RANGE_LIMIT_6_OFFSET: begin addr_valid = 1; addr_idx = 78; end
+      AC_RANGE_CHECK_RANGE_LIMIT_7_OFFSET: begin addr_valid = 1; addr_idx = 79; end
+      AC_RANGE_CHECK_RANGE_LIMIT_8_OFFSET: begin addr_valid = 1; addr_idx = 80; end
+      AC_RANGE_CHECK_RANGE_LIMIT_9_OFFSET: begin addr_valid = 1; addr_idx = 81; end
+      AC_RANGE_CHECK_RANGE_LIMIT_10_OFFSET: begin addr_valid = 1; addr_idx = 82; end
+      AC_RANGE_CHECK_RANGE_LIMIT_11_OFFSET: begin addr_valid = 1; addr_idx = 83; end
+      AC_RANGE_CHECK_RANGE_LIMIT_12_OFFSET: begin addr_valid = 1; addr_idx = 84; end
+      AC_RANGE_CHECK_RANGE_LIMIT_13_OFFSET: begin addr_valid = 1; addr_idx = 85; end
+      AC_RANGE_CHECK_RANGE_LIMIT_14_OFFSET: begin addr_valid = 1; addr_idx = 86; end
+      AC_RANGE_CHECK_RANGE_LIMIT_15_OFFSET: begin addr_valid = 1; addr_idx = 87; end
+      AC_RANGE_CHECK_RANGE_LIMIT_16_OFFSET: begin addr_valid = 1; addr_idx = 88; end
+      AC_RANGE_CHECK_RANGE_LIMIT_17_OFFSET: begin addr_valid = 1; addr_idx = 89; end
+      AC_RANGE_CHECK_RANGE_LIMIT_18_OFFSET: begin addr_valid = 1; addr_idx = 90; end
+      AC_RANGE_CHECK_RANGE_LIMIT_19_OFFSET: begin addr_valid = 1; addr_idx = 91; end
+      AC_RANGE_CHECK_RANGE_LIMIT_20_OFFSET: begin addr_valid = 1; addr_idx = 92; end
+      AC_RANGE_CHECK_RANGE_LIMIT_21_OFFSET: begin addr_valid = 1; addr_idx = 93; end
+      AC_RANGE_CHECK_RANGE_LIMIT_22_OFFSET: begin addr_valid = 1; addr_idx = 94; end
+      AC_RANGE_CHECK_RANGE_LIMIT_23_OFFSET: begin addr_valid = 1; addr_idx = 95; end
+      AC_RANGE_CHECK_RANGE_LIMIT_24_OFFSET: begin addr_valid = 1; addr_idx = 96; end
+      AC_RANGE_CHECK_RANGE_LIMIT_25_OFFSET: begin addr_valid = 1; addr_idx = 97; end
+      AC_RANGE_CHECK_RANGE_LIMIT_26_OFFSET: begin addr_valid = 1; addr_idx = 98; end
+      AC_RANGE_CHECK_RANGE_LIMIT_27_OFFSET: begin addr_valid = 1; addr_idx = 99; end
+      AC_RANGE_CHECK_RANGE_LIMIT_28_OFFSET: begin addr_valid = 1; addr_idx = 100; end
+      AC_RANGE_CHECK_RANGE_LIMIT_29_OFFSET: begin addr_valid = 1; addr_idx = 101; end
+      AC_RANGE_CHECK_RANGE_LIMIT_30_OFFSET: begin addr_valid = 1; addr_idx = 102; end
+      AC_RANGE_CHECK_RANGE_LIMIT_31_OFFSET: begin addr_valid = 1; addr_idx = 103; end
+      AC_RANGE_CHECK_RANGE_ATTR_0_OFFSET: begin addr_valid = 1; addr_idx = 104; end
+      AC_RANGE_CHECK_RANGE_ATTR_1_OFFSET: begin addr_valid = 1; addr_idx = 105; end
+      AC_RANGE_CHECK_RANGE_ATTR_2_OFFSET: begin addr_valid = 1; addr_idx = 106; end
+      AC_RANGE_CHECK_RANGE_ATTR_3_OFFSET: begin addr_valid = 1; addr_idx = 107; end
+      AC_RANGE_CHECK_RANGE_ATTR_4_OFFSET: begin addr_valid = 1; addr_idx = 108; end
+      AC_RANGE_CHECK_RANGE_ATTR_5_OFFSET: begin addr_valid = 1; addr_idx = 109; end
+      AC_RANGE_CHECK_RANGE_ATTR_6_OFFSET: begin addr_valid = 1; addr_idx = 110; end
+      AC_RANGE_CHECK_RANGE_ATTR_7_OFFSET: begin addr_valid = 1; addr_idx = 111; end
+      AC_RANGE_CHECK_RANGE_ATTR_8_OFFSET: begin addr_valid = 1; addr_idx = 112; end
+      AC_RANGE_CHECK_RANGE_ATTR_9_OFFSET: begin addr_valid = 1; addr_idx = 113; end
+      AC_RANGE_CHECK_RANGE_ATTR_10_OFFSET: begin addr_valid = 1; addr_idx = 114; end
+      AC_RANGE_CHECK_RANGE_ATTR_11_OFFSET: begin addr_valid = 1; addr_idx = 115; end
+      AC_RANGE_CHECK_RANGE_ATTR_12_OFFSET: begin addr_valid = 1; addr_idx = 116; end
+      AC_RANGE_CHECK_RANGE_ATTR_13_OFFSET: begin addr_valid = 1; addr_idx = 117; end
+      AC_RANGE_CHECK_RANGE_ATTR_14_OFFSET: begin addr_valid = 1; addr_idx = 118; end
+      AC_RANGE_CHECK_RANGE_ATTR_15_OFFSET: begin addr_valid = 1; addr_idx = 119; end
+      AC_RANGE_CHECK_RANGE_ATTR_16_OFFSET: begin addr_valid = 1; addr_idx = 120; end
+      AC_RANGE_CHECK_RANGE_ATTR_17_OFFSET: begin addr_valid = 1; addr_idx = 121; end
+      AC_RANGE_CHECK_RANGE_ATTR_18_OFFSET: begin addr_valid = 1; addr_idx = 122; end
+      AC_RANGE_CHECK_RANGE_ATTR_19_OFFSET: begin addr_valid = 1; addr_idx = 123; end
+      AC_RANGE_CHECK_RANGE_ATTR_20_OFFSET: begin addr_valid = 1; addr_idx = 124; end
+      AC_RANGE_CHECK_RANGE_ATTR_21_OFFSET: begin addr_valid = 1; addr_idx = 125; end
+      AC_RANGE_CHECK_RANGE_ATTR_22_OFFSET: begin addr_valid = 1; addr_idx = 126; end
+      AC_RANGE_CHECK_RANGE_ATTR_23_OFFSET: begin addr_valid = 1; addr_idx = 127; end
+      AC_RANGE_CHECK_RANGE_ATTR_24_OFFSET: begin addr_valid = 1; addr_idx = 128; end
+      AC_RANGE_CHECK_RANGE_ATTR_25_OFFSET: begin addr_valid = 1; addr_idx = 129; end
+      AC_RANGE_CHECK_RANGE_ATTR_26_OFFSET: begin addr_valid = 1; addr_idx = 130; end
+      AC_RANGE_CHECK_RANGE_ATTR_27_OFFSET: begin addr_valid = 1; addr_idx = 131; end
+      AC_RANGE_CHECK_RANGE_ATTR_28_OFFSET: begin addr_valid = 1; addr_idx = 132; end
+      AC_RANGE_CHECK_RANGE_ATTR_29_OFFSET: begin addr_valid = 1; addr_idx = 133; end
+      AC_RANGE_CHECK_RANGE_ATTR_30_OFFSET: begin addr_valid = 1; addr_idx = 134; end
+      AC_RANGE_CHECK_RANGE_ATTR_31_OFFSET: begin addr_valid = 1; addr_idx = 135; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_0_OFFSET: begin addr_valid = 1; addr_idx = 136; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_1_OFFSET: begin addr_valid = 1; addr_idx = 137; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_2_OFFSET: begin addr_valid = 1; addr_idx = 138; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_3_OFFSET: begin addr_valid = 1; addr_idx = 139; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_4_OFFSET: begin addr_valid = 1; addr_idx = 140; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_5_OFFSET: begin addr_valid = 1; addr_idx = 141; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_6_OFFSET: begin addr_valid = 1; addr_idx = 142; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_7_OFFSET: begin addr_valid = 1; addr_idx = 143; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_8_OFFSET: begin addr_valid = 1; addr_idx = 144; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_9_OFFSET: begin addr_valid = 1; addr_idx = 145; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_10_OFFSET: begin addr_valid = 1; addr_idx = 146; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_11_OFFSET: begin addr_valid = 1; addr_idx = 147; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_12_OFFSET: begin addr_valid = 1; addr_idx = 148; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_13_OFFSET: begin addr_valid = 1; addr_idx = 149; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_14_OFFSET: begin addr_valid = 1; addr_idx = 150; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_15_OFFSET: begin addr_valid = 1; addr_idx = 151; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_16_OFFSET: begin addr_valid = 1; addr_idx = 152; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_17_OFFSET: begin addr_valid = 1; addr_idx = 153; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_18_OFFSET: begin addr_valid = 1; addr_idx = 154; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_19_OFFSET: begin addr_valid = 1; addr_idx = 155; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_20_OFFSET: begin addr_valid = 1; addr_idx = 156; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_21_OFFSET: begin addr_valid = 1; addr_idx = 157; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_22_OFFSET: begin addr_valid = 1; addr_idx = 158; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_23_OFFSET: begin addr_valid = 1; addr_idx = 159; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_24_OFFSET: begin addr_valid = 1; addr_idx = 160; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_25_OFFSET: begin addr_valid = 1; addr_idx = 161; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_26_OFFSET: begin addr_valid = 1; addr_idx = 162; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_27_OFFSET: begin addr_valid = 1; addr_idx = 163; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_28_OFFSET: begin addr_valid = 1; addr_idx = 164; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_29_OFFSET: begin addr_valid = 1; addr_idx = 165; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_30_OFFSET: begin addr_valid = 1; addr_idx = 166; end
+      AC_RANGE_CHECK_RANGE_RACL_POLICY_SHADOWED_31_OFFSET: begin addr_valid = 1; addr_idx = 167; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 168; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -12176,1032 +12189,1043 @@ module ac_range_check_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[  0] & (|(AC_RANGE_CHECK_PERMIT[  0] & ~reg_be))) |
-               (racl_addr_hit_write[  1] & (|(AC_RANGE_CHECK_PERMIT[  1] & ~reg_be))) |
-               (racl_addr_hit_write[  2] & (|(AC_RANGE_CHECK_PERMIT[  2] & ~reg_be))) |
-               (racl_addr_hit_write[  3] & (|(AC_RANGE_CHECK_PERMIT[  3] & ~reg_be))) |
-               (racl_addr_hit_write[  4] & (|(AC_RANGE_CHECK_PERMIT[  4] & ~reg_be))) |
-               (racl_addr_hit_write[  5] & (|(AC_RANGE_CHECK_PERMIT[  5] & ~reg_be))) |
-               (racl_addr_hit_write[  6] & (|(AC_RANGE_CHECK_PERMIT[  6] & ~reg_be))) |
-               (racl_addr_hit_write[  7] & (|(AC_RANGE_CHECK_PERMIT[  7] & ~reg_be))) |
-               (racl_addr_hit_write[  8] & (|(AC_RANGE_CHECK_PERMIT[  8] & ~reg_be))) |
-               (racl_addr_hit_write[  9] & (|(AC_RANGE_CHECK_PERMIT[  9] & ~reg_be))) |
-               (racl_addr_hit_write[ 10] & (|(AC_RANGE_CHECK_PERMIT[ 10] & ~reg_be))) |
-               (racl_addr_hit_write[ 11] & (|(AC_RANGE_CHECK_PERMIT[ 11] & ~reg_be))) |
-               (racl_addr_hit_write[ 12] & (|(AC_RANGE_CHECK_PERMIT[ 12] & ~reg_be))) |
-               (racl_addr_hit_write[ 13] & (|(AC_RANGE_CHECK_PERMIT[ 13] & ~reg_be))) |
-               (racl_addr_hit_write[ 14] & (|(AC_RANGE_CHECK_PERMIT[ 14] & ~reg_be))) |
-               (racl_addr_hit_write[ 15] & (|(AC_RANGE_CHECK_PERMIT[ 15] & ~reg_be))) |
-               (racl_addr_hit_write[ 16] & (|(AC_RANGE_CHECK_PERMIT[ 16] & ~reg_be))) |
-               (racl_addr_hit_write[ 17] & (|(AC_RANGE_CHECK_PERMIT[ 17] & ~reg_be))) |
-               (racl_addr_hit_write[ 18] & (|(AC_RANGE_CHECK_PERMIT[ 18] & ~reg_be))) |
-               (racl_addr_hit_write[ 19] & (|(AC_RANGE_CHECK_PERMIT[ 19] & ~reg_be))) |
-               (racl_addr_hit_write[ 20] & (|(AC_RANGE_CHECK_PERMIT[ 20] & ~reg_be))) |
-               (racl_addr_hit_write[ 21] & (|(AC_RANGE_CHECK_PERMIT[ 21] & ~reg_be))) |
-               (racl_addr_hit_write[ 22] & (|(AC_RANGE_CHECK_PERMIT[ 22] & ~reg_be))) |
-               (racl_addr_hit_write[ 23] & (|(AC_RANGE_CHECK_PERMIT[ 23] & ~reg_be))) |
-               (racl_addr_hit_write[ 24] & (|(AC_RANGE_CHECK_PERMIT[ 24] & ~reg_be))) |
-               (racl_addr_hit_write[ 25] & (|(AC_RANGE_CHECK_PERMIT[ 25] & ~reg_be))) |
-               (racl_addr_hit_write[ 26] & (|(AC_RANGE_CHECK_PERMIT[ 26] & ~reg_be))) |
-               (racl_addr_hit_write[ 27] & (|(AC_RANGE_CHECK_PERMIT[ 27] & ~reg_be))) |
-               (racl_addr_hit_write[ 28] & (|(AC_RANGE_CHECK_PERMIT[ 28] & ~reg_be))) |
-               (racl_addr_hit_write[ 29] & (|(AC_RANGE_CHECK_PERMIT[ 29] & ~reg_be))) |
-               (racl_addr_hit_write[ 30] & (|(AC_RANGE_CHECK_PERMIT[ 30] & ~reg_be))) |
-               (racl_addr_hit_write[ 31] & (|(AC_RANGE_CHECK_PERMIT[ 31] & ~reg_be))) |
-               (racl_addr_hit_write[ 32] & (|(AC_RANGE_CHECK_PERMIT[ 32] & ~reg_be))) |
-               (racl_addr_hit_write[ 33] & (|(AC_RANGE_CHECK_PERMIT[ 33] & ~reg_be))) |
-               (racl_addr_hit_write[ 34] & (|(AC_RANGE_CHECK_PERMIT[ 34] & ~reg_be))) |
-               (racl_addr_hit_write[ 35] & (|(AC_RANGE_CHECK_PERMIT[ 35] & ~reg_be))) |
-               (racl_addr_hit_write[ 36] & (|(AC_RANGE_CHECK_PERMIT[ 36] & ~reg_be))) |
-               (racl_addr_hit_write[ 37] & (|(AC_RANGE_CHECK_PERMIT[ 37] & ~reg_be))) |
-               (racl_addr_hit_write[ 38] & (|(AC_RANGE_CHECK_PERMIT[ 38] & ~reg_be))) |
-               (racl_addr_hit_write[ 39] & (|(AC_RANGE_CHECK_PERMIT[ 39] & ~reg_be))) |
-               (racl_addr_hit_write[ 40] & (|(AC_RANGE_CHECK_PERMIT[ 40] & ~reg_be))) |
-               (racl_addr_hit_write[ 41] & (|(AC_RANGE_CHECK_PERMIT[ 41] & ~reg_be))) |
-               (racl_addr_hit_write[ 42] & (|(AC_RANGE_CHECK_PERMIT[ 42] & ~reg_be))) |
-               (racl_addr_hit_write[ 43] & (|(AC_RANGE_CHECK_PERMIT[ 43] & ~reg_be))) |
-               (racl_addr_hit_write[ 44] & (|(AC_RANGE_CHECK_PERMIT[ 44] & ~reg_be))) |
-               (racl_addr_hit_write[ 45] & (|(AC_RANGE_CHECK_PERMIT[ 45] & ~reg_be))) |
-               (racl_addr_hit_write[ 46] & (|(AC_RANGE_CHECK_PERMIT[ 46] & ~reg_be))) |
-               (racl_addr_hit_write[ 47] & (|(AC_RANGE_CHECK_PERMIT[ 47] & ~reg_be))) |
-               (racl_addr_hit_write[ 48] & (|(AC_RANGE_CHECK_PERMIT[ 48] & ~reg_be))) |
-               (racl_addr_hit_write[ 49] & (|(AC_RANGE_CHECK_PERMIT[ 49] & ~reg_be))) |
-               (racl_addr_hit_write[ 50] & (|(AC_RANGE_CHECK_PERMIT[ 50] & ~reg_be))) |
-               (racl_addr_hit_write[ 51] & (|(AC_RANGE_CHECK_PERMIT[ 51] & ~reg_be))) |
-               (racl_addr_hit_write[ 52] & (|(AC_RANGE_CHECK_PERMIT[ 52] & ~reg_be))) |
-               (racl_addr_hit_write[ 53] & (|(AC_RANGE_CHECK_PERMIT[ 53] & ~reg_be))) |
-               (racl_addr_hit_write[ 54] & (|(AC_RANGE_CHECK_PERMIT[ 54] & ~reg_be))) |
-               (racl_addr_hit_write[ 55] & (|(AC_RANGE_CHECK_PERMIT[ 55] & ~reg_be))) |
-               (racl_addr_hit_write[ 56] & (|(AC_RANGE_CHECK_PERMIT[ 56] & ~reg_be))) |
-               (racl_addr_hit_write[ 57] & (|(AC_RANGE_CHECK_PERMIT[ 57] & ~reg_be))) |
-               (racl_addr_hit_write[ 58] & (|(AC_RANGE_CHECK_PERMIT[ 58] & ~reg_be))) |
-               (racl_addr_hit_write[ 59] & (|(AC_RANGE_CHECK_PERMIT[ 59] & ~reg_be))) |
-               (racl_addr_hit_write[ 60] & (|(AC_RANGE_CHECK_PERMIT[ 60] & ~reg_be))) |
-               (racl_addr_hit_write[ 61] & (|(AC_RANGE_CHECK_PERMIT[ 61] & ~reg_be))) |
-               (racl_addr_hit_write[ 62] & (|(AC_RANGE_CHECK_PERMIT[ 62] & ~reg_be))) |
-               (racl_addr_hit_write[ 63] & (|(AC_RANGE_CHECK_PERMIT[ 63] & ~reg_be))) |
-               (racl_addr_hit_write[ 64] & (|(AC_RANGE_CHECK_PERMIT[ 64] & ~reg_be))) |
-               (racl_addr_hit_write[ 65] & (|(AC_RANGE_CHECK_PERMIT[ 65] & ~reg_be))) |
-               (racl_addr_hit_write[ 66] & (|(AC_RANGE_CHECK_PERMIT[ 66] & ~reg_be))) |
-               (racl_addr_hit_write[ 67] & (|(AC_RANGE_CHECK_PERMIT[ 67] & ~reg_be))) |
-               (racl_addr_hit_write[ 68] & (|(AC_RANGE_CHECK_PERMIT[ 68] & ~reg_be))) |
-               (racl_addr_hit_write[ 69] & (|(AC_RANGE_CHECK_PERMIT[ 69] & ~reg_be))) |
-               (racl_addr_hit_write[ 70] & (|(AC_RANGE_CHECK_PERMIT[ 70] & ~reg_be))) |
-               (racl_addr_hit_write[ 71] & (|(AC_RANGE_CHECK_PERMIT[ 71] & ~reg_be))) |
-               (racl_addr_hit_write[ 72] & (|(AC_RANGE_CHECK_PERMIT[ 72] & ~reg_be))) |
-               (racl_addr_hit_write[ 73] & (|(AC_RANGE_CHECK_PERMIT[ 73] & ~reg_be))) |
-               (racl_addr_hit_write[ 74] & (|(AC_RANGE_CHECK_PERMIT[ 74] & ~reg_be))) |
-               (racl_addr_hit_write[ 75] & (|(AC_RANGE_CHECK_PERMIT[ 75] & ~reg_be))) |
-               (racl_addr_hit_write[ 76] & (|(AC_RANGE_CHECK_PERMIT[ 76] & ~reg_be))) |
-               (racl_addr_hit_write[ 77] & (|(AC_RANGE_CHECK_PERMIT[ 77] & ~reg_be))) |
-               (racl_addr_hit_write[ 78] & (|(AC_RANGE_CHECK_PERMIT[ 78] & ~reg_be))) |
-               (racl_addr_hit_write[ 79] & (|(AC_RANGE_CHECK_PERMIT[ 79] & ~reg_be))) |
-               (racl_addr_hit_write[ 80] & (|(AC_RANGE_CHECK_PERMIT[ 80] & ~reg_be))) |
-               (racl_addr_hit_write[ 81] & (|(AC_RANGE_CHECK_PERMIT[ 81] & ~reg_be))) |
-               (racl_addr_hit_write[ 82] & (|(AC_RANGE_CHECK_PERMIT[ 82] & ~reg_be))) |
-               (racl_addr_hit_write[ 83] & (|(AC_RANGE_CHECK_PERMIT[ 83] & ~reg_be))) |
-               (racl_addr_hit_write[ 84] & (|(AC_RANGE_CHECK_PERMIT[ 84] & ~reg_be))) |
-               (racl_addr_hit_write[ 85] & (|(AC_RANGE_CHECK_PERMIT[ 85] & ~reg_be))) |
-               (racl_addr_hit_write[ 86] & (|(AC_RANGE_CHECK_PERMIT[ 86] & ~reg_be))) |
-               (racl_addr_hit_write[ 87] & (|(AC_RANGE_CHECK_PERMIT[ 87] & ~reg_be))) |
-               (racl_addr_hit_write[ 88] & (|(AC_RANGE_CHECK_PERMIT[ 88] & ~reg_be))) |
-               (racl_addr_hit_write[ 89] & (|(AC_RANGE_CHECK_PERMIT[ 89] & ~reg_be))) |
-               (racl_addr_hit_write[ 90] & (|(AC_RANGE_CHECK_PERMIT[ 90] & ~reg_be))) |
-               (racl_addr_hit_write[ 91] & (|(AC_RANGE_CHECK_PERMIT[ 91] & ~reg_be))) |
-               (racl_addr_hit_write[ 92] & (|(AC_RANGE_CHECK_PERMIT[ 92] & ~reg_be))) |
-               (racl_addr_hit_write[ 93] & (|(AC_RANGE_CHECK_PERMIT[ 93] & ~reg_be))) |
-               (racl_addr_hit_write[ 94] & (|(AC_RANGE_CHECK_PERMIT[ 94] & ~reg_be))) |
-               (racl_addr_hit_write[ 95] & (|(AC_RANGE_CHECK_PERMIT[ 95] & ~reg_be))) |
-               (racl_addr_hit_write[ 96] & (|(AC_RANGE_CHECK_PERMIT[ 96] & ~reg_be))) |
-               (racl_addr_hit_write[ 97] & (|(AC_RANGE_CHECK_PERMIT[ 97] & ~reg_be))) |
-               (racl_addr_hit_write[ 98] & (|(AC_RANGE_CHECK_PERMIT[ 98] & ~reg_be))) |
-               (racl_addr_hit_write[ 99] & (|(AC_RANGE_CHECK_PERMIT[ 99] & ~reg_be))) |
-               (racl_addr_hit_write[100] & (|(AC_RANGE_CHECK_PERMIT[100] & ~reg_be))) |
-               (racl_addr_hit_write[101] & (|(AC_RANGE_CHECK_PERMIT[101] & ~reg_be))) |
-               (racl_addr_hit_write[102] & (|(AC_RANGE_CHECK_PERMIT[102] & ~reg_be))) |
-               (racl_addr_hit_write[103] & (|(AC_RANGE_CHECK_PERMIT[103] & ~reg_be))) |
-               (racl_addr_hit_write[104] & (|(AC_RANGE_CHECK_PERMIT[104] & ~reg_be))) |
-               (racl_addr_hit_write[105] & (|(AC_RANGE_CHECK_PERMIT[105] & ~reg_be))) |
-               (racl_addr_hit_write[106] & (|(AC_RANGE_CHECK_PERMIT[106] & ~reg_be))) |
-               (racl_addr_hit_write[107] & (|(AC_RANGE_CHECK_PERMIT[107] & ~reg_be))) |
-               (racl_addr_hit_write[108] & (|(AC_RANGE_CHECK_PERMIT[108] & ~reg_be))) |
-               (racl_addr_hit_write[109] & (|(AC_RANGE_CHECK_PERMIT[109] & ~reg_be))) |
-               (racl_addr_hit_write[110] & (|(AC_RANGE_CHECK_PERMIT[110] & ~reg_be))) |
-               (racl_addr_hit_write[111] & (|(AC_RANGE_CHECK_PERMIT[111] & ~reg_be))) |
-               (racl_addr_hit_write[112] & (|(AC_RANGE_CHECK_PERMIT[112] & ~reg_be))) |
-               (racl_addr_hit_write[113] & (|(AC_RANGE_CHECK_PERMIT[113] & ~reg_be))) |
-               (racl_addr_hit_write[114] & (|(AC_RANGE_CHECK_PERMIT[114] & ~reg_be))) |
-               (racl_addr_hit_write[115] & (|(AC_RANGE_CHECK_PERMIT[115] & ~reg_be))) |
-               (racl_addr_hit_write[116] & (|(AC_RANGE_CHECK_PERMIT[116] & ~reg_be))) |
-               (racl_addr_hit_write[117] & (|(AC_RANGE_CHECK_PERMIT[117] & ~reg_be))) |
-               (racl_addr_hit_write[118] & (|(AC_RANGE_CHECK_PERMIT[118] & ~reg_be))) |
-               (racl_addr_hit_write[119] & (|(AC_RANGE_CHECK_PERMIT[119] & ~reg_be))) |
-               (racl_addr_hit_write[120] & (|(AC_RANGE_CHECK_PERMIT[120] & ~reg_be))) |
-               (racl_addr_hit_write[121] & (|(AC_RANGE_CHECK_PERMIT[121] & ~reg_be))) |
-               (racl_addr_hit_write[122] & (|(AC_RANGE_CHECK_PERMIT[122] & ~reg_be))) |
-               (racl_addr_hit_write[123] & (|(AC_RANGE_CHECK_PERMIT[123] & ~reg_be))) |
-               (racl_addr_hit_write[124] & (|(AC_RANGE_CHECK_PERMIT[124] & ~reg_be))) |
-               (racl_addr_hit_write[125] & (|(AC_RANGE_CHECK_PERMIT[125] & ~reg_be))) |
-               (racl_addr_hit_write[126] & (|(AC_RANGE_CHECK_PERMIT[126] & ~reg_be))) |
-               (racl_addr_hit_write[127] & (|(AC_RANGE_CHECK_PERMIT[127] & ~reg_be))) |
-               (racl_addr_hit_write[128] & (|(AC_RANGE_CHECK_PERMIT[128] & ~reg_be))) |
-               (racl_addr_hit_write[129] & (|(AC_RANGE_CHECK_PERMIT[129] & ~reg_be))) |
-               (racl_addr_hit_write[130] & (|(AC_RANGE_CHECK_PERMIT[130] & ~reg_be))) |
-               (racl_addr_hit_write[131] & (|(AC_RANGE_CHECK_PERMIT[131] & ~reg_be))) |
-               (racl_addr_hit_write[132] & (|(AC_RANGE_CHECK_PERMIT[132] & ~reg_be))) |
-               (racl_addr_hit_write[133] & (|(AC_RANGE_CHECK_PERMIT[133] & ~reg_be))) |
-               (racl_addr_hit_write[134] & (|(AC_RANGE_CHECK_PERMIT[134] & ~reg_be))) |
-               (racl_addr_hit_write[135] & (|(AC_RANGE_CHECK_PERMIT[135] & ~reg_be))) |
-               (racl_addr_hit_write[136] & (|(AC_RANGE_CHECK_PERMIT[136] & ~reg_be))) |
-               (racl_addr_hit_write[137] & (|(AC_RANGE_CHECK_PERMIT[137] & ~reg_be))) |
-               (racl_addr_hit_write[138] & (|(AC_RANGE_CHECK_PERMIT[138] & ~reg_be))) |
-               (racl_addr_hit_write[139] & (|(AC_RANGE_CHECK_PERMIT[139] & ~reg_be))) |
-               (racl_addr_hit_write[140] & (|(AC_RANGE_CHECK_PERMIT[140] & ~reg_be))) |
-               (racl_addr_hit_write[141] & (|(AC_RANGE_CHECK_PERMIT[141] & ~reg_be))) |
-               (racl_addr_hit_write[142] & (|(AC_RANGE_CHECK_PERMIT[142] & ~reg_be))) |
-               (racl_addr_hit_write[143] & (|(AC_RANGE_CHECK_PERMIT[143] & ~reg_be))) |
-               (racl_addr_hit_write[144] & (|(AC_RANGE_CHECK_PERMIT[144] & ~reg_be))) |
-               (racl_addr_hit_write[145] & (|(AC_RANGE_CHECK_PERMIT[145] & ~reg_be))) |
-               (racl_addr_hit_write[146] & (|(AC_RANGE_CHECK_PERMIT[146] & ~reg_be))) |
-               (racl_addr_hit_write[147] & (|(AC_RANGE_CHECK_PERMIT[147] & ~reg_be))) |
-               (racl_addr_hit_write[148] & (|(AC_RANGE_CHECK_PERMIT[148] & ~reg_be))) |
-               (racl_addr_hit_write[149] & (|(AC_RANGE_CHECK_PERMIT[149] & ~reg_be))) |
-               (racl_addr_hit_write[150] & (|(AC_RANGE_CHECK_PERMIT[150] & ~reg_be))) |
-               (racl_addr_hit_write[151] & (|(AC_RANGE_CHECK_PERMIT[151] & ~reg_be))) |
-               (racl_addr_hit_write[152] & (|(AC_RANGE_CHECK_PERMIT[152] & ~reg_be))) |
-               (racl_addr_hit_write[153] & (|(AC_RANGE_CHECK_PERMIT[153] & ~reg_be))) |
-               (racl_addr_hit_write[154] & (|(AC_RANGE_CHECK_PERMIT[154] & ~reg_be))) |
-               (racl_addr_hit_write[155] & (|(AC_RANGE_CHECK_PERMIT[155] & ~reg_be))) |
-               (racl_addr_hit_write[156] & (|(AC_RANGE_CHECK_PERMIT[156] & ~reg_be))) |
-               (racl_addr_hit_write[157] & (|(AC_RANGE_CHECK_PERMIT[157] & ~reg_be))) |
-               (racl_addr_hit_write[158] & (|(AC_RANGE_CHECK_PERMIT[158] & ~reg_be))) |
-               (racl_addr_hit_write[159] & (|(AC_RANGE_CHECK_PERMIT[159] & ~reg_be))) |
-               (racl_addr_hit_write[160] & (|(AC_RANGE_CHECK_PERMIT[160] & ~reg_be))) |
-               (racl_addr_hit_write[161] & (|(AC_RANGE_CHECK_PERMIT[161] & ~reg_be))) |
-               (racl_addr_hit_write[162] & (|(AC_RANGE_CHECK_PERMIT[162] & ~reg_be))) |
-               (racl_addr_hit_write[163] & (|(AC_RANGE_CHECK_PERMIT[163] & ~reg_be))) |
-               (racl_addr_hit_write[164] & (|(AC_RANGE_CHECK_PERMIT[164] & ~reg_be))) |
-               (racl_addr_hit_write[165] & (|(AC_RANGE_CHECK_PERMIT[165] & ~reg_be))) |
-               (racl_addr_hit_write[166] & (|(AC_RANGE_CHECK_PERMIT[166] & ~reg_be))) |
-               (racl_addr_hit_write[167] & (|(AC_RANGE_CHECK_PERMIT[167] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0:   wr_err = |(AC_RANGE_CHECK_PERMIT[  0] & ~reg_be);
+        1:   wr_err = |(AC_RANGE_CHECK_PERMIT[  1] & ~reg_be);
+        2:   wr_err = |(AC_RANGE_CHECK_PERMIT[  2] & ~reg_be);
+        3:   wr_err = |(AC_RANGE_CHECK_PERMIT[  3] & ~reg_be);
+        4:   wr_err = |(AC_RANGE_CHECK_PERMIT[  4] & ~reg_be);
+        5:   wr_err = |(AC_RANGE_CHECK_PERMIT[  5] & ~reg_be);
+        6:   wr_err = |(AC_RANGE_CHECK_PERMIT[  6] & ~reg_be);
+        7:   wr_err = |(AC_RANGE_CHECK_PERMIT[  7] & ~reg_be);
+        8:   wr_err = |(AC_RANGE_CHECK_PERMIT[  8] & ~reg_be);
+        9:   wr_err = |(AC_RANGE_CHECK_PERMIT[  9] & ~reg_be);
+        10:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 10] & ~reg_be);
+        11:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 11] & ~reg_be);
+        12:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 12] & ~reg_be);
+        13:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 13] & ~reg_be);
+        14:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 14] & ~reg_be);
+        15:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 15] & ~reg_be);
+        16:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 16] & ~reg_be);
+        17:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 17] & ~reg_be);
+        18:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 18] & ~reg_be);
+        19:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 19] & ~reg_be);
+        20:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 20] & ~reg_be);
+        21:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 21] & ~reg_be);
+        22:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 22] & ~reg_be);
+        23:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 23] & ~reg_be);
+        24:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 24] & ~reg_be);
+        25:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 25] & ~reg_be);
+        26:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 26] & ~reg_be);
+        27:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 27] & ~reg_be);
+        28:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 28] & ~reg_be);
+        29:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 29] & ~reg_be);
+        30:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 30] & ~reg_be);
+        31:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 31] & ~reg_be);
+        32:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 32] & ~reg_be);
+        33:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 33] & ~reg_be);
+        34:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 34] & ~reg_be);
+        35:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 35] & ~reg_be);
+        36:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 36] & ~reg_be);
+        37:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 37] & ~reg_be);
+        38:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 38] & ~reg_be);
+        39:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 39] & ~reg_be);
+        40:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 40] & ~reg_be);
+        41:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 41] & ~reg_be);
+        42:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 42] & ~reg_be);
+        43:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 43] & ~reg_be);
+        44:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 44] & ~reg_be);
+        45:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 45] & ~reg_be);
+        46:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 46] & ~reg_be);
+        47:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 47] & ~reg_be);
+        48:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 48] & ~reg_be);
+        49:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 49] & ~reg_be);
+        50:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 50] & ~reg_be);
+        51:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 51] & ~reg_be);
+        52:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 52] & ~reg_be);
+        53:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 53] & ~reg_be);
+        54:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 54] & ~reg_be);
+        55:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 55] & ~reg_be);
+        56:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 56] & ~reg_be);
+        57:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 57] & ~reg_be);
+        58:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 58] & ~reg_be);
+        59:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 59] & ~reg_be);
+        60:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 60] & ~reg_be);
+        61:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 61] & ~reg_be);
+        62:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 62] & ~reg_be);
+        63:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 63] & ~reg_be);
+        64:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 64] & ~reg_be);
+        65:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 65] & ~reg_be);
+        66:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 66] & ~reg_be);
+        67:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 67] & ~reg_be);
+        68:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 68] & ~reg_be);
+        69:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 69] & ~reg_be);
+        70:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 70] & ~reg_be);
+        71:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 71] & ~reg_be);
+        72:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 72] & ~reg_be);
+        73:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 73] & ~reg_be);
+        74:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 74] & ~reg_be);
+        75:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 75] & ~reg_be);
+        76:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 76] & ~reg_be);
+        77:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 77] & ~reg_be);
+        78:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 78] & ~reg_be);
+        79:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 79] & ~reg_be);
+        80:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 80] & ~reg_be);
+        81:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 81] & ~reg_be);
+        82:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 82] & ~reg_be);
+        83:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 83] & ~reg_be);
+        84:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 84] & ~reg_be);
+        85:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 85] & ~reg_be);
+        86:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 86] & ~reg_be);
+        87:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 87] & ~reg_be);
+        88:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 88] & ~reg_be);
+        89:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 89] & ~reg_be);
+        90:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 90] & ~reg_be);
+        91:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 91] & ~reg_be);
+        92:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 92] & ~reg_be);
+        93:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 93] & ~reg_be);
+        94:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 94] & ~reg_be);
+        95:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 95] & ~reg_be);
+        96:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 96] & ~reg_be);
+        97:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 97] & ~reg_be);
+        98:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 98] & ~reg_be);
+        99:  wr_err = |(AC_RANGE_CHECK_PERMIT[ 99] & ~reg_be);
+        100: wr_err = |(AC_RANGE_CHECK_PERMIT[100] & ~reg_be);
+        101: wr_err = |(AC_RANGE_CHECK_PERMIT[101] & ~reg_be);
+        102: wr_err = |(AC_RANGE_CHECK_PERMIT[102] & ~reg_be);
+        103: wr_err = |(AC_RANGE_CHECK_PERMIT[103] & ~reg_be);
+        104: wr_err = |(AC_RANGE_CHECK_PERMIT[104] & ~reg_be);
+        105: wr_err = |(AC_RANGE_CHECK_PERMIT[105] & ~reg_be);
+        106: wr_err = |(AC_RANGE_CHECK_PERMIT[106] & ~reg_be);
+        107: wr_err = |(AC_RANGE_CHECK_PERMIT[107] & ~reg_be);
+        108: wr_err = |(AC_RANGE_CHECK_PERMIT[108] & ~reg_be);
+        109: wr_err = |(AC_RANGE_CHECK_PERMIT[109] & ~reg_be);
+        110: wr_err = |(AC_RANGE_CHECK_PERMIT[110] & ~reg_be);
+        111: wr_err = |(AC_RANGE_CHECK_PERMIT[111] & ~reg_be);
+        112: wr_err = |(AC_RANGE_CHECK_PERMIT[112] & ~reg_be);
+        113: wr_err = |(AC_RANGE_CHECK_PERMIT[113] & ~reg_be);
+        114: wr_err = |(AC_RANGE_CHECK_PERMIT[114] & ~reg_be);
+        115: wr_err = |(AC_RANGE_CHECK_PERMIT[115] & ~reg_be);
+        116: wr_err = |(AC_RANGE_CHECK_PERMIT[116] & ~reg_be);
+        117: wr_err = |(AC_RANGE_CHECK_PERMIT[117] & ~reg_be);
+        118: wr_err = |(AC_RANGE_CHECK_PERMIT[118] & ~reg_be);
+        119: wr_err = |(AC_RANGE_CHECK_PERMIT[119] & ~reg_be);
+        120: wr_err = |(AC_RANGE_CHECK_PERMIT[120] & ~reg_be);
+        121: wr_err = |(AC_RANGE_CHECK_PERMIT[121] & ~reg_be);
+        122: wr_err = |(AC_RANGE_CHECK_PERMIT[122] & ~reg_be);
+        123: wr_err = |(AC_RANGE_CHECK_PERMIT[123] & ~reg_be);
+        124: wr_err = |(AC_RANGE_CHECK_PERMIT[124] & ~reg_be);
+        125: wr_err = |(AC_RANGE_CHECK_PERMIT[125] & ~reg_be);
+        126: wr_err = |(AC_RANGE_CHECK_PERMIT[126] & ~reg_be);
+        127: wr_err = |(AC_RANGE_CHECK_PERMIT[127] & ~reg_be);
+        128: wr_err = |(AC_RANGE_CHECK_PERMIT[128] & ~reg_be);
+        129: wr_err = |(AC_RANGE_CHECK_PERMIT[129] & ~reg_be);
+        130: wr_err = |(AC_RANGE_CHECK_PERMIT[130] & ~reg_be);
+        131: wr_err = |(AC_RANGE_CHECK_PERMIT[131] & ~reg_be);
+        132: wr_err = |(AC_RANGE_CHECK_PERMIT[132] & ~reg_be);
+        133: wr_err = |(AC_RANGE_CHECK_PERMIT[133] & ~reg_be);
+        134: wr_err = |(AC_RANGE_CHECK_PERMIT[134] & ~reg_be);
+        135: wr_err = |(AC_RANGE_CHECK_PERMIT[135] & ~reg_be);
+        136: wr_err = |(AC_RANGE_CHECK_PERMIT[136] & ~reg_be);
+        137: wr_err = |(AC_RANGE_CHECK_PERMIT[137] & ~reg_be);
+        138: wr_err = |(AC_RANGE_CHECK_PERMIT[138] & ~reg_be);
+        139: wr_err = |(AC_RANGE_CHECK_PERMIT[139] & ~reg_be);
+        140: wr_err = |(AC_RANGE_CHECK_PERMIT[140] & ~reg_be);
+        141: wr_err = |(AC_RANGE_CHECK_PERMIT[141] & ~reg_be);
+        142: wr_err = |(AC_RANGE_CHECK_PERMIT[142] & ~reg_be);
+        143: wr_err = |(AC_RANGE_CHECK_PERMIT[143] & ~reg_be);
+        144: wr_err = |(AC_RANGE_CHECK_PERMIT[144] & ~reg_be);
+        145: wr_err = |(AC_RANGE_CHECK_PERMIT[145] & ~reg_be);
+        146: wr_err = |(AC_RANGE_CHECK_PERMIT[146] & ~reg_be);
+        147: wr_err = |(AC_RANGE_CHECK_PERMIT[147] & ~reg_be);
+        148: wr_err = |(AC_RANGE_CHECK_PERMIT[148] & ~reg_be);
+        149: wr_err = |(AC_RANGE_CHECK_PERMIT[149] & ~reg_be);
+        150: wr_err = |(AC_RANGE_CHECK_PERMIT[150] & ~reg_be);
+        151: wr_err = |(AC_RANGE_CHECK_PERMIT[151] & ~reg_be);
+        152: wr_err = |(AC_RANGE_CHECK_PERMIT[152] & ~reg_be);
+        153: wr_err = |(AC_RANGE_CHECK_PERMIT[153] & ~reg_be);
+        154: wr_err = |(AC_RANGE_CHECK_PERMIT[154] & ~reg_be);
+        155: wr_err = |(AC_RANGE_CHECK_PERMIT[155] & ~reg_be);
+        156: wr_err = |(AC_RANGE_CHECK_PERMIT[156] & ~reg_be);
+        157: wr_err = |(AC_RANGE_CHECK_PERMIT[157] & ~reg_be);
+        158: wr_err = |(AC_RANGE_CHECK_PERMIT[158] & ~reg_be);
+        159: wr_err = |(AC_RANGE_CHECK_PERMIT[159] & ~reg_be);
+        160: wr_err = |(AC_RANGE_CHECK_PERMIT[160] & ~reg_be);
+        161: wr_err = |(AC_RANGE_CHECK_PERMIT[161] & ~reg_be);
+        162: wr_err = |(AC_RANGE_CHECK_PERMIT[162] & ~reg_be);
+        163: wr_err = |(AC_RANGE_CHECK_PERMIT[163] & ~reg_be);
+        164: wr_err = |(AC_RANGE_CHECK_PERMIT[164] & ~reg_be);
+        165: wr_err = |(AC_RANGE_CHECK_PERMIT[165] & ~reg_be);
+        166: wr_err = |(AC_RANGE_CHECK_PERMIT[166] & ~reg_be);
+        167: wr_err = |(AC_RANGE_CHECK_PERMIT[167] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_enable_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_wd = reg_wdata[0];
-  assign intr_test_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign intr_test_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_wd = reg_wdata[0];
-  assign alert_test_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_recov_ctrl_update_err_wd = reg_wdata[0];
-
   assign alert_test_fatal_fault_wd = reg_wdata[1];
-  assign alert_status_re = racl_addr_hit_read[4] & reg_re & !reg_error;
+
+  assign alert_status_re = racl_addr_read_valid & (racl_addr_read_idx == 4) & reg_re & !reg_error;
 
   assign alert_status_shadowed_update_err_wd = '1;
-  assign log_config_re = racl_addr_hit_read[5] & reg_re & !reg_error;
-  assign log_config_we = racl_addr_hit_write[5] & reg_we & !reg_error;
+
+  assign log_config_re = racl_addr_read_valid & (racl_addr_read_idx == 5) & reg_re & !reg_error;
+  assign log_config_we = racl_addr_write_valid & (racl_addr_write_idx == 5) & reg_we & !reg_error;
 
   assign log_config_log_enable_wd = reg_wdata[0];
-
   assign log_config_log_clear_wd = reg_wdata[1];
-
   assign log_config_deny_cnt_threshold_wd = reg_wdata[9:2];
-  assign range_regwen_0_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+
+
+
+  assign range_regwen_0_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
   assign range_regwen_0_wd = reg_wdata[3:0];
-  assign range_regwen_1_we = racl_addr_hit_write[9] & reg_we & !reg_error;
+
+  assign range_regwen_1_we = racl_addr_write_valid & (racl_addr_write_idx == 9) & reg_we & !reg_error;
 
   assign range_regwen_1_wd = reg_wdata[3:0];
-  assign range_regwen_2_we = racl_addr_hit_write[10] & reg_we & !reg_error;
+
+  assign range_regwen_2_we = racl_addr_write_valid & (racl_addr_write_idx == 10) & reg_we & !reg_error;
 
   assign range_regwen_2_wd = reg_wdata[3:0];
-  assign range_regwen_3_we = racl_addr_hit_write[11] & reg_we & !reg_error;
+
+  assign range_regwen_3_we = racl_addr_write_valid & (racl_addr_write_idx == 11) & reg_we & !reg_error;
 
   assign range_regwen_3_wd = reg_wdata[3:0];
-  assign range_regwen_4_we = racl_addr_hit_write[12] & reg_we & !reg_error;
+
+  assign range_regwen_4_we = racl_addr_write_valid & (racl_addr_write_idx == 12) & reg_we & !reg_error;
 
   assign range_regwen_4_wd = reg_wdata[3:0];
-  assign range_regwen_5_we = racl_addr_hit_write[13] & reg_we & !reg_error;
+
+  assign range_regwen_5_we = racl_addr_write_valid & (racl_addr_write_idx == 13) & reg_we & !reg_error;
 
   assign range_regwen_5_wd = reg_wdata[3:0];
-  assign range_regwen_6_we = racl_addr_hit_write[14] & reg_we & !reg_error;
+
+  assign range_regwen_6_we = racl_addr_write_valid & (racl_addr_write_idx == 14) & reg_we & !reg_error;
 
   assign range_regwen_6_wd = reg_wdata[3:0];
-  assign range_regwen_7_we = racl_addr_hit_write[15] & reg_we & !reg_error;
+
+  assign range_regwen_7_we = racl_addr_write_valid & (racl_addr_write_idx == 15) & reg_we & !reg_error;
 
   assign range_regwen_7_wd = reg_wdata[3:0];
-  assign range_regwen_8_we = racl_addr_hit_write[16] & reg_we & !reg_error;
+
+  assign range_regwen_8_we = racl_addr_write_valid & (racl_addr_write_idx == 16) & reg_we & !reg_error;
 
   assign range_regwen_8_wd = reg_wdata[3:0];
-  assign range_regwen_9_we = racl_addr_hit_write[17] & reg_we & !reg_error;
+
+  assign range_regwen_9_we = racl_addr_write_valid & (racl_addr_write_idx == 17) & reg_we & !reg_error;
 
   assign range_regwen_9_wd = reg_wdata[3:0];
-  assign range_regwen_10_we = racl_addr_hit_write[18] & reg_we & !reg_error;
+
+  assign range_regwen_10_we = racl_addr_write_valid & (racl_addr_write_idx == 18) & reg_we & !reg_error;
 
   assign range_regwen_10_wd = reg_wdata[3:0];
-  assign range_regwen_11_we = racl_addr_hit_write[19] & reg_we & !reg_error;
+
+  assign range_regwen_11_we = racl_addr_write_valid & (racl_addr_write_idx == 19) & reg_we & !reg_error;
 
   assign range_regwen_11_wd = reg_wdata[3:0];
-  assign range_regwen_12_we = racl_addr_hit_write[20] & reg_we & !reg_error;
+
+  assign range_regwen_12_we = racl_addr_write_valid & (racl_addr_write_idx == 20) & reg_we & !reg_error;
 
   assign range_regwen_12_wd = reg_wdata[3:0];
-  assign range_regwen_13_we = racl_addr_hit_write[21] & reg_we & !reg_error;
+
+  assign range_regwen_13_we = racl_addr_write_valid & (racl_addr_write_idx == 21) & reg_we & !reg_error;
 
   assign range_regwen_13_wd = reg_wdata[3:0];
-  assign range_regwen_14_we = racl_addr_hit_write[22] & reg_we & !reg_error;
+
+  assign range_regwen_14_we = racl_addr_write_valid & (racl_addr_write_idx == 22) & reg_we & !reg_error;
 
   assign range_regwen_14_wd = reg_wdata[3:0];
-  assign range_regwen_15_we = racl_addr_hit_write[23] & reg_we & !reg_error;
+
+  assign range_regwen_15_we = racl_addr_write_valid & (racl_addr_write_idx == 23) & reg_we & !reg_error;
 
   assign range_regwen_15_wd = reg_wdata[3:0];
-  assign range_regwen_16_we = racl_addr_hit_write[24] & reg_we & !reg_error;
+
+  assign range_regwen_16_we = racl_addr_write_valid & (racl_addr_write_idx == 24) & reg_we & !reg_error;
 
   assign range_regwen_16_wd = reg_wdata[3:0];
-  assign range_regwen_17_we = racl_addr_hit_write[25] & reg_we & !reg_error;
+
+  assign range_regwen_17_we = racl_addr_write_valid & (racl_addr_write_idx == 25) & reg_we & !reg_error;
 
   assign range_regwen_17_wd = reg_wdata[3:0];
-  assign range_regwen_18_we = racl_addr_hit_write[26] & reg_we & !reg_error;
+
+  assign range_regwen_18_we = racl_addr_write_valid & (racl_addr_write_idx == 26) & reg_we & !reg_error;
 
   assign range_regwen_18_wd = reg_wdata[3:0];
-  assign range_regwen_19_we = racl_addr_hit_write[27] & reg_we & !reg_error;
+
+  assign range_regwen_19_we = racl_addr_write_valid & (racl_addr_write_idx == 27) & reg_we & !reg_error;
 
   assign range_regwen_19_wd = reg_wdata[3:0];
-  assign range_regwen_20_we = racl_addr_hit_write[28] & reg_we & !reg_error;
+
+  assign range_regwen_20_we = racl_addr_write_valid & (racl_addr_write_idx == 28) & reg_we & !reg_error;
 
   assign range_regwen_20_wd = reg_wdata[3:0];
-  assign range_regwen_21_we = racl_addr_hit_write[29] & reg_we & !reg_error;
+
+  assign range_regwen_21_we = racl_addr_write_valid & (racl_addr_write_idx == 29) & reg_we & !reg_error;
 
   assign range_regwen_21_wd = reg_wdata[3:0];
-  assign range_regwen_22_we = racl_addr_hit_write[30] & reg_we & !reg_error;
+
+  assign range_regwen_22_we = racl_addr_write_valid & (racl_addr_write_idx == 30) & reg_we & !reg_error;
 
   assign range_regwen_22_wd = reg_wdata[3:0];
-  assign range_regwen_23_we = racl_addr_hit_write[31] & reg_we & !reg_error;
+
+  assign range_regwen_23_we = racl_addr_write_valid & (racl_addr_write_idx == 31) & reg_we & !reg_error;
 
   assign range_regwen_23_wd = reg_wdata[3:0];
-  assign range_regwen_24_we = racl_addr_hit_write[32] & reg_we & !reg_error;
+
+  assign range_regwen_24_we = racl_addr_write_valid & (racl_addr_write_idx == 32) & reg_we & !reg_error;
 
   assign range_regwen_24_wd = reg_wdata[3:0];
-  assign range_regwen_25_we = racl_addr_hit_write[33] & reg_we & !reg_error;
+
+  assign range_regwen_25_we = racl_addr_write_valid & (racl_addr_write_idx == 33) & reg_we & !reg_error;
 
   assign range_regwen_25_wd = reg_wdata[3:0];
-  assign range_regwen_26_we = racl_addr_hit_write[34] & reg_we & !reg_error;
+
+  assign range_regwen_26_we = racl_addr_write_valid & (racl_addr_write_idx == 34) & reg_we & !reg_error;
 
   assign range_regwen_26_wd = reg_wdata[3:0];
-  assign range_regwen_27_we = racl_addr_hit_write[35] & reg_we & !reg_error;
+
+  assign range_regwen_27_we = racl_addr_write_valid & (racl_addr_write_idx == 35) & reg_we & !reg_error;
 
   assign range_regwen_27_wd = reg_wdata[3:0];
-  assign range_regwen_28_we = racl_addr_hit_write[36] & reg_we & !reg_error;
+
+  assign range_regwen_28_we = racl_addr_write_valid & (racl_addr_write_idx == 36) & reg_we & !reg_error;
 
   assign range_regwen_28_wd = reg_wdata[3:0];
-  assign range_regwen_29_we = racl_addr_hit_write[37] & reg_we & !reg_error;
+
+  assign range_regwen_29_we = racl_addr_write_valid & (racl_addr_write_idx == 37) & reg_we & !reg_error;
 
   assign range_regwen_29_wd = reg_wdata[3:0];
-  assign range_regwen_30_we = racl_addr_hit_write[38] & reg_we & !reg_error;
+
+  assign range_regwen_30_we = racl_addr_write_valid & (racl_addr_write_idx == 38) & reg_we & !reg_error;
 
   assign range_regwen_30_wd = reg_wdata[3:0];
-  assign range_regwen_31_we = racl_addr_hit_write[39] & reg_we & !reg_error;
+
+  assign range_regwen_31_we = racl_addr_write_valid & (racl_addr_write_idx == 39) & reg_we & !reg_error;
 
   assign range_regwen_31_wd = reg_wdata[3:0];
-  assign range_base_0_we = racl_addr_hit_write[40] & reg_we & !reg_error;
+
+  assign range_base_0_we = racl_addr_write_valid & (racl_addr_write_idx == 40) & reg_we & !reg_error;
 
   assign range_base_0_wd = reg_wdata[31:2];
-  assign range_base_1_we = racl_addr_hit_write[41] & reg_we & !reg_error;
+
+  assign range_base_1_we = racl_addr_write_valid & (racl_addr_write_idx == 41) & reg_we & !reg_error;
 
   assign range_base_1_wd = reg_wdata[31:2];
-  assign range_base_2_we = racl_addr_hit_write[42] & reg_we & !reg_error;
+
+  assign range_base_2_we = racl_addr_write_valid & (racl_addr_write_idx == 42) & reg_we & !reg_error;
 
   assign range_base_2_wd = reg_wdata[31:2];
-  assign range_base_3_we = racl_addr_hit_write[43] & reg_we & !reg_error;
+
+  assign range_base_3_we = racl_addr_write_valid & (racl_addr_write_idx == 43) & reg_we & !reg_error;
 
   assign range_base_3_wd = reg_wdata[31:2];
-  assign range_base_4_we = racl_addr_hit_write[44] & reg_we & !reg_error;
+
+  assign range_base_4_we = racl_addr_write_valid & (racl_addr_write_idx == 44) & reg_we & !reg_error;
 
   assign range_base_4_wd = reg_wdata[31:2];
-  assign range_base_5_we = racl_addr_hit_write[45] & reg_we & !reg_error;
+
+  assign range_base_5_we = racl_addr_write_valid & (racl_addr_write_idx == 45) & reg_we & !reg_error;
 
   assign range_base_5_wd = reg_wdata[31:2];
-  assign range_base_6_we = racl_addr_hit_write[46] & reg_we & !reg_error;
+
+  assign range_base_6_we = racl_addr_write_valid & (racl_addr_write_idx == 46) & reg_we & !reg_error;
 
   assign range_base_6_wd = reg_wdata[31:2];
-  assign range_base_7_we = racl_addr_hit_write[47] & reg_we & !reg_error;
+
+  assign range_base_7_we = racl_addr_write_valid & (racl_addr_write_idx == 47) & reg_we & !reg_error;
 
   assign range_base_7_wd = reg_wdata[31:2];
-  assign range_base_8_we = racl_addr_hit_write[48] & reg_we & !reg_error;
+
+  assign range_base_8_we = racl_addr_write_valid & (racl_addr_write_idx == 48) & reg_we & !reg_error;
 
   assign range_base_8_wd = reg_wdata[31:2];
-  assign range_base_9_we = racl_addr_hit_write[49] & reg_we & !reg_error;
+
+  assign range_base_9_we = racl_addr_write_valid & (racl_addr_write_idx == 49) & reg_we & !reg_error;
 
   assign range_base_9_wd = reg_wdata[31:2];
-  assign range_base_10_we = racl_addr_hit_write[50] & reg_we & !reg_error;
+
+  assign range_base_10_we = racl_addr_write_valid & (racl_addr_write_idx == 50) & reg_we & !reg_error;
 
   assign range_base_10_wd = reg_wdata[31:2];
-  assign range_base_11_we = racl_addr_hit_write[51] & reg_we & !reg_error;
+
+  assign range_base_11_we = racl_addr_write_valid & (racl_addr_write_idx == 51) & reg_we & !reg_error;
 
   assign range_base_11_wd = reg_wdata[31:2];
-  assign range_base_12_we = racl_addr_hit_write[52] & reg_we & !reg_error;
+
+  assign range_base_12_we = racl_addr_write_valid & (racl_addr_write_idx == 52) & reg_we & !reg_error;
 
   assign range_base_12_wd = reg_wdata[31:2];
-  assign range_base_13_we = racl_addr_hit_write[53] & reg_we & !reg_error;
+
+  assign range_base_13_we = racl_addr_write_valid & (racl_addr_write_idx == 53) & reg_we & !reg_error;
 
   assign range_base_13_wd = reg_wdata[31:2];
-  assign range_base_14_we = racl_addr_hit_write[54] & reg_we & !reg_error;
+
+  assign range_base_14_we = racl_addr_write_valid & (racl_addr_write_idx == 54) & reg_we & !reg_error;
 
   assign range_base_14_wd = reg_wdata[31:2];
-  assign range_base_15_we = racl_addr_hit_write[55] & reg_we & !reg_error;
+
+  assign range_base_15_we = racl_addr_write_valid & (racl_addr_write_idx == 55) & reg_we & !reg_error;
 
   assign range_base_15_wd = reg_wdata[31:2];
-  assign range_base_16_we = racl_addr_hit_write[56] & reg_we & !reg_error;
+
+  assign range_base_16_we = racl_addr_write_valid & (racl_addr_write_idx == 56) & reg_we & !reg_error;
 
   assign range_base_16_wd = reg_wdata[31:2];
-  assign range_base_17_we = racl_addr_hit_write[57] & reg_we & !reg_error;
+
+  assign range_base_17_we = racl_addr_write_valid & (racl_addr_write_idx == 57) & reg_we & !reg_error;
 
   assign range_base_17_wd = reg_wdata[31:2];
-  assign range_base_18_we = racl_addr_hit_write[58] & reg_we & !reg_error;
+
+  assign range_base_18_we = racl_addr_write_valid & (racl_addr_write_idx == 58) & reg_we & !reg_error;
 
   assign range_base_18_wd = reg_wdata[31:2];
-  assign range_base_19_we = racl_addr_hit_write[59] & reg_we & !reg_error;
+
+  assign range_base_19_we = racl_addr_write_valid & (racl_addr_write_idx == 59) & reg_we & !reg_error;
 
   assign range_base_19_wd = reg_wdata[31:2];
-  assign range_base_20_we = racl_addr_hit_write[60] & reg_we & !reg_error;
+
+  assign range_base_20_we = racl_addr_write_valid & (racl_addr_write_idx == 60) & reg_we & !reg_error;
 
   assign range_base_20_wd = reg_wdata[31:2];
-  assign range_base_21_we = racl_addr_hit_write[61] & reg_we & !reg_error;
+
+  assign range_base_21_we = racl_addr_write_valid & (racl_addr_write_idx == 61) & reg_we & !reg_error;
 
   assign range_base_21_wd = reg_wdata[31:2];
-  assign range_base_22_we = racl_addr_hit_write[62] & reg_we & !reg_error;
+
+  assign range_base_22_we = racl_addr_write_valid & (racl_addr_write_idx == 62) & reg_we & !reg_error;
 
   assign range_base_22_wd = reg_wdata[31:2];
-  assign range_base_23_we = racl_addr_hit_write[63] & reg_we & !reg_error;
+
+  assign range_base_23_we = racl_addr_write_valid & (racl_addr_write_idx == 63) & reg_we & !reg_error;
 
   assign range_base_23_wd = reg_wdata[31:2];
-  assign range_base_24_we = racl_addr_hit_write[64] & reg_we & !reg_error;
+
+  assign range_base_24_we = racl_addr_write_valid & (racl_addr_write_idx == 64) & reg_we & !reg_error;
 
   assign range_base_24_wd = reg_wdata[31:2];
-  assign range_base_25_we = racl_addr_hit_write[65] & reg_we & !reg_error;
+
+  assign range_base_25_we = racl_addr_write_valid & (racl_addr_write_idx == 65) & reg_we & !reg_error;
 
   assign range_base_25_wd = reg_wdata[31:2];
-  assign range_base_26_we = racl_addr_hit_write[66] & reg_we & !reg_error;
+
+  assign range_base_26_we = racl_addr_write_valid & (racl_addr_write_idx == 66) & reg_we & !reg_error;
 
   assign range_base_26_wd = reg_wdata[31:2];
-  assign range_base_27_we = racl_addr_hit_write[67] & reg_we & !reg_error;
+
+  assign range_base_27_we = racl_addr_write_valid & (racl_addr_write_idx == 67) & reg_we & !reg_error;
 
   assign range_base_27_wd = reg_wdata[31:2];
-  assign range_base_28_we = racl_addr_hit_write[68] & reg_we & !reg_error;
+
+  assign range_base_28_we = racl_addr_write_valid & (racl_addr_write_idx == 68) & reg_we & !reg_error;
 
   assign range_base_28_wd = reg_wdata[31:2];
-  assign range_base_29_we = racl_addr_hit_write[69] & reg_we & !reg_error;
+
+  assign range_base_29_we = racl_addr_write_valid & (racl_addr_write_idx == 69) & reg_we & !reg_error;
 
   assign range_base_29_wd = reg_wdata[31:2];
-  assign range_base_30_we = racl_addr_hit_write[70] & reg_we & !reg_error;
+
+  assign range_base_30_we = racl_addr_write_valid & (racl_addr_write_idx == 70) & reg_we & !reg_error;
 
   assign range_base_30_wd = reg_wdata[31:2];
-  assign range_base_31_we = racl_addr_hit_write[71] & reg_we & !reg_error;
+
+  assign range_base_31_we = racl_addr_write_valid & (racl_addr_write_idx == 71) & reg_we & !reg_error;
 
   assign range_base_31_wd = reg_wdata[31:2];
-  assign range_limit_0_we = racl_addr_hit_write[72] & reg_we & !reg_error;
+
+  assign range_limit_0_we = racl_addr_write_valid & (racl_addr_write_idx == 72) & reg_we & !reg_error;
 
   assign range_limit_0_wd = reg_wdata[31:2];
-  assign range_limit_1_we = racl_addr_hit_write[73] & reg_we & !reg_error;
+
+  assign range_limit_1_we = racl_addr_write_valid & (racl_addr_write_idx == 73) & reg_we & !reg_error;
 
   assign range_limit_1_wd = reg_wdata[31:2];
-  assign range_limit_2_we = racl_addr_hit_write[74] & reg_we & !reg_error;
+
+  assign range_limit_2_we = racl_addr_write_valid & (racl_addr_write_idx == 74) & reg_we & !reg_error;
 
   assign range_limit_2_wd = reg_wdata[31:2];
-  assign range_limit_3_we = racl_addr_hit_write[75] & reg_we & !reg_error;
+
+  assign range_limit_3_we = racl_addr_write_valid & (racl_addr_write_idx == 75) & reg_we & !reg_error;
 
   assign range_limit_3_wd = reg_wdata[31:2];
-  assign range_limit_4_we = racl_addr_hit_write[76] & reg_we & !reg_error;
+
+  assign range_limit_4_we = racl_addr_write_valid & (racl_addr_write_idx == 76) & reg_we & !reg_error;
 
   assign range_limit_4_wd = reg_wdata[31:2];
-  assign range_limit_5_we = racl_addr_hit_write[77] & reg_we & !reg_error;
+
+  assign range_limit_5_we = racl_addr_write_valid & (racl_addr_write_idx == 77) & reg_we & !reg_error;
 
   assign range_limit_5_wd = reg_wdata[31:2];
-  assign range_limit_6_we = racl_addr_hit_write[78] & reg_we & !reg_error;
+
+  assign range_limit_6_we = racl_addr_write_valid & (racl_addr_write_idx == 78) & reg_we & !reg_error;
 
   assign range_limit_6_wd = reg_wdata[31:2];
-  assign range_limit_7_we = racl_addr_hit_write[79] & reg_we & !reg_error;
+
+  assign range_limit_7_we = racl_addr_write_valid & (racl_addr_write_idx == 79) & reg_we & !reg_error;
 
   assign range_limit_7_wd = reg_wdata[31:2];
-  assign range_limit_8_we = racl_addr_hit_write[80] & reg_we & !reg_error;
+
+  assign range_limit_8_we = racl_addr_write_valid & (racl_addr_write_idx == 80) & reg_we & !reg_error;
 
   assign range_limit_8_wd = reg_wdata[31:2];
-  assign range_limit_9_we = racl_addr_hit_write[81] & reg_we & !reg_error;
+
+  assign range_limit_9_we = racl_addr_write_valid & (racl_addr_write_idx == 81) & reg_we & !reg_error;
 
   assign range_limit_9_wd = reg_wdata[31:2];
-  assign range_limit_10_we = racl_addr_hit_write[82] & reg_we & !reg_error;
+
+  assign range_limit_10_we = racl_addr_write_valid & (racl_addr_write_idx == 82) & reg_we & !reg_error;
 
   assign range_limit_10_wd = reg_wdata[31:2];
-  assign range_limit_11_we = racl_addr_hit_write[83] & reg_we & !reg_error;
+
+  assign range_limit_11_we = racl_addr_write_valid & (racl_addr_write_idx == 83) & reg_we & !reg_error;
 
   assign range_limit_11_wd = reg_wdata[31:2];
-  assign range_limit_12_we = racl_addr_hit_write[84] & reg_we & !reg_error;
+
+  assign range_limit_12_we = racl_addr_write_valid & (racl_addr_write_idx == 84) & reg_we & !reg_error;
 
   assign range_limit_12_wd = reg_wdata[31:2];
-  assign range_limit_13_we = racl_addr_hit_write[85] & reg_we & !reg_error;
+
+  assign range_limit_13_we = racl_addr_write_valid & (racl_addr_write_idx == 85) & reg_we & !reg_error;
 
   assign range_limit_13_wd = reg_wdata[31:2];
-  assign range_limit_14_we = racl_addr_hit_write[86] & reg_we & !reg_error;
+
+  assign range_limit_14_we = racl_addr_write_valid & (racl_addr_write_idx == 86) & reg_we & !reg_error;
 
   assign range_limit_14_wd = reg_wdata[31:2];
-  assign range_limit_15_we = racl_addr_hit_write[87] & reg_we & !reg_error;
+
+  assign range_limit_15_we = racl_addr_write_valid & (racl_addr_write_idx == 87) & reg_we & !reg_error;
 
   assign range_limit_15_wd = reg_wdata[31:2];
-  assign range_limit_16_we = racl_addr_hit_write[88] & reg_we & !reg_error;
+
+  assign range_limit_16_we = racl_addr_write_valid & (racl_addr_write_idx == 88) & reg_we & !reg_error;
 
   assign range_limit_16_wd = reg_wdata[31:2];
-  assign range_limit_17_we = racl_addr_hit_write[89] & reg_we & !reg_error;
+
+  assign range_limit_17_we = racl_addr_write_valid & (racl_addr_write_idx == 89) & reg_we & !reg_error;
 
   assign range_limit_17_wd = reg_wdata[31:2];
-  assign range_limit_18_we = racl_addr_hit_write[90] & reg_we & !reg_error;
+
+  assign range_limit_18_we = racl_addr_write_valid & (racl_addr_write_idx == 90) & reg_we & !reg_error;
 
   assign range_limit_18_wd = reg_wdata[31:2];
-  assign range_limit_19_we = racl_addr_hit_write[91] & reg_we & !reg_error;
+
+  assign range_limit_19_we = racl_addr_write_valid & (racl_addr_write_idx == 91) & reg_we & !reg_error;
 
   assign range_limit_19_wd = reg_wdata[31:2];
-  assign range_limit_20_we = racl_addr_hit_write[92] & reg_we & !reg_error;
+
+  assign range_limit_20_we = racl_addr_write_valid & (racl_addr_write_idx == 92) & reg_we & !reg_error;
 
   assign range_limit_20_wd = reg_wdata[31:2];
-  assign range_limit_21_we = racl_addr_hit_write[93] & reg_we & !reg_error;
+
+  assign range_limit_21_we = racl_addr_write_valid & (racl_addr_write_idx == 93) & reg_we & !reg_error;
 
   assign range_limit_21_wd = reg_wdata[31:2];
-  assign range_limit_22_we = racl_addr_hit_write[94] & reg_we & !reg_error;
+
+  assign range_limit_22_we = racl_addr_write_valid & (racl_addr_write_idx == 94) & reg_we & !reg_error;
 
   assign range_limit_22_wd = reg_wdata[31:2];
-  assign range_limit_23_we = racl_addr_hit_write[95] & reg_we & !reg_error;
+
+  assign range_limit_23_we = racl_addr_write_valid & (racl_addr_write_idx == 95) & reg_we & !reg_error;
 
   assign range_limit_23_wd = reg_wdata[31:2];
-  assign range_limit_24_we = racl_addr_hit_write[96] & reg_we & !reg_error;
+
+  assign range_limit_24_we = racl_addr_write_valid & (racl_addr_write_idx == 96) & reg_we & !reg_error;
 
   assign range_limit_24_wd = reg_wdata[31:2];
-  assign range_limit_25_we = racl_addr_hit_write[97] & reg_we & !reg_error;
+
+  assign range_limit_25_we = racl_addr_write_valid & (racl_addr_write_idx == 97) & reg_we & !reg_error;
 
   assign range_limit_25_wd = reg_wdata[31:2];
-  assign range_limit_26_we = racl_addr_hit_write[98] & reg_we & !reg_error;
+
+  assign range_limit_26_we = racl_addr_write_valid & (racl_addr_write_idx == 98) & reg_we & !reg_error;
 
   assign range_limit_26_wd = reg_wdata[31:2];
-  assign range_limit_27_we = racl_addr_hit_write[99] & reg_we & !reg_error;
+
+  assign range_limit_27_we = racl_addr_write_valid & (racl_addr_write_idx == 99) & reg_we & !reg_error;
 
   assign range_limit_27_wd = reg_wdata[31:2];
-  assign range_limit_28_we = racl_addr_hit_write[100] & reg_we & !reg_error;
+
+  assign range_limit_28_we = racl_addr_write_valid & (racl_addr_write_idx == 100) & reg_we & !reg_error;
 
   assign range_limit_28_wd = reg_wdata[31:2];
-  assign range_limit_29_we = racl_addr_hit_write[101] & reg_we & !reg_error;
+
+  assign range_limit_29_we = racl_addr_write_valid & (racl_addr_write_idx == 101) & reg_we & !reg_error;
 
   assign range_limit_29_wd = reg_wdata[31:2];
-  assign range_limit_30_we = racl_addr_hit_write[102] & reg_we & !reg_error;
+
+  assign range_limit_30_we = racl_addr_write_valid & (racl_addr_write_idx == 102) & reg_we & !reg_error;
 
   assign range_limit_30_wd = reg_wdata[31:2];
-  assign range_limit_31_we = racl_addr_hit_write[103] & reg_we & !reg_error;
+
+  assign range_limit_31_we = racl_addr_write_valid & (racl_addr_write_idx == 103) & reg_we & !reg_error;
 
   assign range_limit_31_wd = reg_wdata[31:2];
-  assign range_attr_0_we = racl_addr_hit_write[104] & reg_we & !reg_error;
+
+  assign range_attr_0_we = racl_addr_write_valid & (racl_addr_write_idx == 104) & reg_we & !reg_error;
 
   assign range_attr_0_enable_0_wd = reg_wdata[3:0];
-
   assign range_attr_0_read_access_0_wd = reg_wdata[7:4];
-
   assign range_attr_0_write_access_0_wd = reg_wdata[11:8];
-
   assign range_attr_0_execute_access_0_wd = reg_wdata[15:12];
-
   assign range_attr_0_log_denied_access_0_wd = reg_wdata[19:16];
-  assign range_attr_1_we = racl_addr_hit_write[105] & reg_we & !reg_error;
+
+  assign range_attr_1_we = racl_addr_write_valid & (racl_addr_write_idx == 105) & reg_we & !reg_error;
 
   assign range_attr_1_enable_1_wd = reg_wdata[3:0];
-
   assign range_attr_1_read_access_1_wd = reg_wdata[7:4];
-
   assign range_attr_1_write_access_1_wd = reg_wdata[11:8];
-
   assign range_attr_1_execute_access_1_wd = reg_wdata[15:12];
-
   assign range_attr_1_log_denied_access_1_wd = reg_wdata[19:16];
-  assign range_attr_2_we = racl_addr_hit_write[106] & reg_we & !reg_error;
+
+  assign range_attr_2_we = racl_addr_write_valid & (racl_addr_write_idx == 106) & reg_we & !reg_error;
 
   assign range_attr_2_enable_2_wd = reg_wdata[3:0];
-
   assign range_attr_2_read_access_2_wd = reg_wdata[7:4];
-
   assign range_attr_2_write_access_2_wd = reg_wdata[11:8];
-
   assign range_attr_2_execute_access_2_wd = reg_wdata[15:12];
-
   assign range_attr_2_log_denied_access_2_wd = reg_wdata[19:16];
-  assign range_attr_3_we = racl_addr_hit_write[107] & reg_we & !reg_error;
+
+  assign range_attr_3_we = racl_addr_write_valid & (racl_addr_write_idx == 107) & reg_we & !reg_error;
 
   assign range_attr_3_enable_3_wd = reg_wdata[3:0];
-
   assign range_attr_3_read_access_3_wd = reg_wdata[7:4];
-
   assign range_attr_3_write_access_3_wd = reg_wdata[11:8];
-
   assign range_attr_3_execute_access_3_wd = reg_wdata[15:12];
-
   assign range_attr_3_log_denied_access_3_wd = reg_wdata[19:16];
-  assign range_attr_4_we = racl_addr_hit_write[108] & reg_we & !reg_error;
+
+  assign range_attr_4_we = racl_addr_write_valid & (racl_addr_write_idx == 108) & reg_we & !reg_error;
 
   assign range_attr_4_enable_4_wd = reg_wdata[3:0];
-
   assign range_attr_4_read_access_4_wd = reg_wdata[7:4];
-
   assign range_attr_4_write_access_4_wd = reg_wdata[11:8];
-
   assign range_attr_4_execute_access_4_wd = reg_wdata[15:12];
-
   assign range_attr_4_log_denied_access_4_wd = reg_wdata[19:16];
-  assign range_attr_5_we = racl_addr_hit_write[109] & reg_we & !reg_error;
+
+  assign range_attr_5_we = racl_addr_write_valid & (racl_addr_write_idx == 109) & reg_we & !reg_error;
 
   assign range_attr_5_enable_5_wd = reg_wdata[3:0];
-
   assign range_attr_5_read_access_5_wd = reg_wdata[7:4];
-
   assign range_attr_5_write_access_5_wd = reg_wdata[11:8];
-
   assign range_attr_5_execute_access_5_wd = reg_wdata[15:12];
-
   assign range_attr_5_log_denied_access_5_wd = reg_wdata[19:16];
-  assign range_attr_6_we = racl_addr_hit_write[110] & reg_we & !reg_error;
+
+  assign range_attr_6_we = racl_addr_write_valid & (racl_addr_write_idx == 110) & reg_we & !reg_error;
 
   assign range_attr_6_enable_6_wd = reg_wdata[3:0];
-
   assign range_attr_6_read_access_6_wd = reg_wdata[7:4];
-
   assign range_attr_6_write_access_6_wd = reg_wdata[11:8];
-
   assign range_attr_6_execute_access_6_wd = reg_wdata[15:12];
-
   assign range_attr_6_log_denied_access_6_wd = reg_wdata[19:16];
-  assign range_attr_7_we = racl_addr_hit_write[111] & reg_we & !reg_error;
+
+  assign range_attr_7_we = racl_addr_write_valid & (racl_addr_write_idx == 111) & reg_we & !reg_error;
 
   assign range_attr_7_enable_7_wd = reg_wdata[3:0];
-
   assign range_attr_7_read_access_7_wd = reg_wdata[7:4];
-
   assign range_attr_7_write_access_7_wd = reg_wdata[11:8];
-
   assign range_attr_7_execute_access_7_wd = reg_wdata[15:12];
-
   assign range_attr_7_log_denied_access_7_wd = reg_wdata[19:16];
-  assign range_attr_8_we = racl_addr_hit_write[112] & reg_we & !reg_error;
+
+  assign range_attr_8_we = racl_addr_write_valid & (racl_addr_write_idx == 112) & reg_we & !reg_error;
 
   assign range_attr_8_enable_8_wd = reg_wdata[3:0];
-
   assign range_attr_8_read_access_8_wd = reg_wdata[7:4];
-
   assign range_attr_8_write_access_8_wd = reg_wdata[11:8];
-
   assign range_attr_8_execute_access_8_wd = reg_wdata[15:12];
-
   assign range_attr_8_log_denied_access_8_wd = reg_wdata[19:16];
-  assign range_attr_9_we = racl_addr_hit_write[113] & reg_we & !reg_error;
+
+  assign range_attr_9_we = racl_addr_write_valid & (racl_addr_write_idx == 113) & reg_we & !reg_error;
 
   assign range_attr_9_enable_9_wd = reg_wdata[3:0];
-
   assign range_attr_9_read_access_9_wd = reg_wdata[7:4];
-
   assign range_attr_9_write_access_9_wd = reg_wdata[11:8];
-
   assign range_attr_9_execute_access_9_wd = reg_wdata[15:12];
-
   assign range_attr_9_log_denied_access_9_wd = reg_wdata[19:16];
-  assign range_attr_10_we = racl_addr_hit_write[114] & reg_we & !reg_error;
+
+  assign range_attr_10_we = racl_addr_write_valid & (racl_addr_write_idx == 114) & reg_we & !reg_error;
 
   assign range_attr_10_enable_10_wd = reg_wdata[3:0];
-
   assign range_attr_10_read_access_10_wd = reg_wdata[7:4];
-
   assign range_attr_10_write_access_10_wd = reg_wdata[11:8];
-
   assign range_attr_10_execute_access_10_wd = reg_wdata[15:12];
-
   assign range_attr_10_log_denied_access_10_wd = reg_wdata[19:16];
-  assign range_attr_11_we = racl_addr_hit_write[115] & reg_we & !reg_error;
+
+  assign range_attr_11_we = racl_addr_write_valid & (racl_addr_write_idx == 115) & reg_we & !reg_error;
 
   assign range_attr_11_enable_11_wd = reg_wdata[3:0];
-
   assign range_attr_11_read_access_11_wd = reg_wdata[7:4];
-
   assign range_attr_11_write_access_11_wd = reg_wdata[11:8];
-
   assign range_attr_11_execute_access_11_wd = reg_wdata[15:12];
-
   assign range_attr_11_log_denied_access_11_wd = reg_wdata[19:16];
-  assign range_attr_12_we = racl_addr_hit_write[116] & reg_we & !reg_error;
+
+  assign range_attr_12_we = racl_addr_write_valid & (racl_addr_write_idx == 116) & reg_we & !reg_error;
 
   assign range_attr_12_enable_12_wd = reg_wdata[3:0];
-
   assign range_attr_12_read_access_12_wd = reg_wdata[7:4];
-
   assign range_attr_12_write_access_12_wd = reg_wdata[11:8];
-
   assign range_attr_12_execute_access_12_wd = reg_wdata[15:12];
-
   assign range_attr_12_log_denied_access_12_wd = reg_wdata[19:16];
-  assign range_attr_13_we = racl_addr_hit_write[117] & reg_we & !reg_error;
+
+  assign range_attr_13_we = racl_addr_write_valid & (racl_addr_write_idx == 117) & reg_we & !reg_error;
 
   assign range_attr_13_enable_13_wd = reg_wdata[3:0];
-
   assign range_attr_13_read_access_13_wd = reg_wdata[7:4];
-
   assign range_attr_13_write_access_13_wd = reg_wdata[11:8];
-
   assign range_attr_13_execute_access_13_wd = reg_wdata[15:12];
-
   assign range_attr_13_log_denied_access_13_wd = reg_wdata[19:16];
-  assign range_attr_14_we = racl_addr_hit_write[118] & reg_we & !reg_error;
+
+  assign range_attr_14_we = racl_addr_write_valid & (racl_addr_write_idx == 118) & reg_we & !reg_error;
 
   assign range_attr_14_enable_14_wd = reg_wdata[3:0];
-
   assign range_attr_14_read_access_14_wd = reg_wdata[7:4];
-
   assign range_attr_14_write_access_14_wd = reg_wdata[11:8];
-
   assign range_attr_14_execute_access_14_wd = reg_wdata[15:12];
-
   assign range_attr_14_log_denied_access_14_wd = reg_wdata[19:16];
-  assign range_attr_15_we = racl_addr_hit_write[119] & reg_we & !reg_error;
+
+  assign range_attr_15_we = racl_addr_write_valid & (racl_addr_write_idx == 119) & reg_we & !reg_error;
 
   assign range_attr_15_enable_15_wd = reg_wdata[3:0];
-
   assign range_attr_15_read_access_15_wd = reg_wdata[7:4];
-
   assign range_attr_15_write_access_15_wd = reg_wdata[11:8];
-
   assign range_attr_15_execute_access_15_wd = reg_wdata[15:12];
-
   assign range_attr_15_log_denied_access_15_wd = reg_wdata[19:16];
-  assign range_attr_16_we = racl_addr_hit_write[120] & reg_we & !reg_error;
+
+  assign range_attr_16_we = racl_addr_write_valid & (racl_addr_write_idx == 120) & reg_we & !reg_error;
 
   assign range_attr_16_enable_16_wd = reg_wdata[3:0];
-
   assign range_attr_16_read_access_16_wd = reg_wdata[7:4];
-
   assign range_attr_16_write_access_16_wd = reg_wdata[11:8];
-
   assign range_attr_16_execute_access_16_wd = reg_wdata[15:12];
-
   assign range_attr_16_log_denied_access_16_wd = reg_wdata[19:16];
-  assign range_attr_17_we = racl_addr_hit_write[121] & reg_we & !reg_error;
+
+  assign range_attr_17_we = racl_addr_write_valid & (racl_addr_write_idx == 121) & reg_we & !reg_error;
 
   assign range_attr_17_enable_17_wd = reg_wdata[3:0];
-
   assign range_attr_17_read_access_17_wd = reg_wdata[7:4];
-
   assign range_attr_17_write_access_17_wd = reg_wdata[11:8];
-
   assign range_attr_17_execute_access_17_wd = reg_wdata[15:12];
-
   assign range_attr_17_log_denied_access_17_wd = reg_wdata[19:16];
-  assign range_attr_18_we = racl_addr_hit_write[122] & reg_we & !reg_error;
+
+  assign range_attr_18_we = racl_addr_write_valid & (racl_addr_write_idx == 122) & reg_we & !reg_error;
 
   assign range_attr_18_enable_18_wd = reg_wdata[3:0];
-
   assign range_attr_18_read_access_18_wd = reg_wdata[7:4];
-
   assign range_attr_18_write_access_18_wd = reg_wdata[11:8];
-
   assign range_attr_18_execute_access_18_wd = reg_wdata[15:12];
-
   assign range_attr_18_log_denied_access_18_wd = reg_wdata[19:16];
-  assign range_attr_19_we = racl_addr_hit_write[123] & reg_we & !reg_error;
+
+  assign range_attr_19_we = racl_addr_write_valid & (racl_addr_write_idx == 123) & reg_we & !reg_error;
 
   assign range_attr_19_enable_19_wd = reg_wdata[3:0];
-
   assign range_attr_19_read_access_19_wd = reg_wdata[7:4];
-
   assign range_attr_19_write_access_19_wd = reg_wdata[11:8];
-
   assign range_attr_19_execute_access_19_wd = reg_wdata[15:12];
-
   assign range_attr_19_log_denied_access_19_wd = reg_wdata[19:16];
-  assign range_attr_20_we = racl_addr_hit_write[124] & reg_we & !reg_error;
+
+  assign range_attr_20_we = racl_addr_write_valid & (racl_addr_write_idx == 124) & reg_we & !reg_error;
 
   assign range_attr_20_enable_20_wd = reg_wdata[3:0];
-
   assign range_attr_20_read_access_20_wd = reg_wdata[7:4];
-
   assign range_attr_20_write_access_20_wd = reg_wdata[11:8];
-
   assign range_attr_20_execute_access_20_wd = reg_wdata[15:12];
-
   assign range_attr_20_log_denied_access_20_wd = reg_wdata[19:16];
-  assign range_attr_21_we = racl_addr_hit_write[125] & reg_we & !reg_error;
+
+  assign range_attr_21_we = racl_addr_write_valid & (racl_addr_write_idx == 125) & reg_we & !reg_error;
 
   assign range_attr_21_enable_21_wd = reg_wdata[3:0];
-
   assign range_attr_21_read_access_21_wd = reg_wdata[7:4];
-
   assign range_attr_21_write_access_21_wd = reg_wdata[11:8];
-
   assign range_attr_21_execute_access_21_wd = reg_wdata[15:12];
-
   assign range_attr_21_log_denied_access_21_wd = reg_wdata[19:16];
-  assign range_attr_22_we = racl_addr_hit_write[126] & reg_we & !reg_error;
+
+  assign range_attr_22_we = racl_addr_write_valid & (racl_addr_write_idx == 126) & reg_we & !reg_error;
 
   assign range_attr_22_enable_22_wd = reg_wdata[3:0];
-
   assign range_attr_22_read_access_22_wd = reg_wdata[7:4];
-
   assign range_attr_22_write_access_22_wd = reg_wdata[11:8];
-
   assign range_attr_22_execute_access_22_wd = reg_wdata[15:12];
-
   assign range_attr_22_log_denied_access_22_wd = reg_wdata[19:16];
-  assign range_attr_23_we = racl_addr_hit_write[127] & reg_we & !reg_error;
+
+  assign range_attr_23_we = racl_addr_write_valid & (racl_addr_write_idx == 127) & reg_we & !reg_error;
 
   assign range_attr_23_enable_23_wd = reg_wdata[3:0];
-
   assign range_attr_23_read_access_23_wd = reg_wdata[7:4];
-
   assign range_attr_23_write_access_23_wd = reg_wdata[11:8];
-
   assign range_attr_23_execute_access_23_wd = reg_wdata[15:12];
-
   assign range_attr_23_log_denied_access_23_wd = reg_wdata[19:16];
-  assign range_attr_24_we = racl_addr_hit_write[128] & reg_we & !reg_error;
+
+  assign range_attr_24_we = racl_addr_write_valid & (racl_addr_write_idx == 128) & reg_we & !reg_error;
 
   assign range_attr_24_enable_24_wd = reg_wdata[3:0];
-
   assign range_attr_24_read_access_24_wd = reg_wdata[7:4];
-
   assign range_attr_24_write_access_24_wd = reg_wdata[11:8];
-
   assign range_attr_24_execute_access_24_wd = reg_wdata[15:12];
-
   assign range_attr_24_log_denied_access_24_wd = reg_wdata[19:16];
-  assign range_attr_25_we = racl_addr_hit_write[129] & reg_we & !reg_error;
+
+  assign range_attr_25_we = racl_addr_write_valid & (racl_addr_write_idx == 129) & reg_we & !reg_error;
 
   assign range_attr_25_enable_25_wd = reg_wdata[3:0];
-
   assign range_attr_25_read_access_25_wd = reg_wdata[7:4];
-
   assign range_attr_25_write_access_25_wd = reg_wdata[11:8];
-
   assign range_attr_25_execute_access_25_wd = reg_wdata[15:12];
-
   assign range_attr_25_log_denied_access_25_wd = reg_wdata[19:16];
-  assign range_attr_26_we = racl_addr_hit_write[130] & reg_we & !reg_error;
+
+  assign range_attr_26_we = racl_addr_write_valid & (racl_addr_write_idx == 130) & reg_we & !reg_error;
 
   assign range_attr_26_enable_26_wd = reg_wdata[3:0];
-
   assign range_attr_26_read_access_26_wd = reg_wdata[7:4];
-
   assign range_attr_26_write_access_26_wd = reg_wdata[11:8];
-
   assign range_attr_26_execute_access_26_wd = reg_wdata[15:12];
-
   assign range_attr_26_log_denied_access_26_wd = reg_wdata[19:16];
-  assign range_attr_27_we = racl_addr_hit_write[131] & reg_we & !reg_error;
+
+  assign range_attr_27_we = racl_addr_write_valid & (racl_addr_write_idx == 131) & reg_we & !reg_error;
 
   assign range_attr_27_enable_27_wd = reg_wdata[3:0];
-
   assign range_attr_27_read_access_27_wd = reg_wdata[7:4];
-
   assign range_attr_27_write_access_27_wd = reg_wdata[11:8];
-
   assign range_attr_27_execute_access_27_wd = reg_wdata[15:12];
-
   assign range_attr_27_log_denied_access_27_wd = reg_wdata[19:16];
-  assign range_attr_28_we = racl_addr_hit_write[132] & reg_we & !reg_error;
+
+  assign range_attr_28_we = racl_addr_write_valid & (racl_addr_write_idx == 132) & reg_we & !reg_error;
 
   assign range_attr_28_enable_28_wd = reg_wdata[3:0];
-
   assign range_attr_28_read_access_28_wd = reg_wdata[7:4];
-
   assign range_attr_28_write_access_28_wd = reg_wdata[11:8];
-
   assign range_attr_28_execute_access_28_wd = reg_wdata[15:12];
-
   assign range_attr_28_log_denied_access_28_wd = reg_wdata[19:16];
-  assign range_attr_29_we = racl_addr_hit_write[133] & reg_we & !reg_error;
+
+  assign range_attr_29_we = racl_addr_write_valid & (racl_addr_write_idx == 133) & reg_we & !reg_error;
 
   assign range_attr_29_enable_29_wd = reg_wdata[3:0];
-
   assign range_attr_29_read_access_29_wd = reg_wdata[7:4];
-
   assign range_attr_29_write_access_29_wd = reg_wdata[11:8];
-
   assign range_attr_29_execute_access_29_wd = reg_wdata[15:12];
-
   assign range_attr_29_log_denied_access_29_wd = reg_wdata[19:16];
-  assign range_attr_30_we = racl_addr_hit_write[134] & reg_we & !reg_error;
+
+  assign range_attr_30_we = racl_addr_write_valid & (racl_addr_write_idx == 134) & reg_we & !reg_error;
 
   assign range_attr_30_enable_30_wd = reg_wdata[3:0];
-
   assign range_attr_30_read_access_30_wd = reg_wdata[7:4];
-
   assign range_attr_30_write_access_30_wd = reg_wdata[11:8];
-
   assign range_attr_30_execute_access_30_wd = reg_wdata[15:12];
-
   assign range_attr_30_log_denied_access_30_wd = reg_wdata[19:16];
-  assign range_attr_31_we = racl_addr_hit_write[135] & reg_we & !reg_error;
+
+  assign range_attr_31_we = racl_addr_write_valid & (racl_addr_write_idx == 135) & reg_we & !reg_error;
 
   assign range_attr_31_enable_31_wd = reg_wdata[3:0];
-
   assign range_attr_31_read_access_31_wd = reg_wdata[7:4];
-
   assign range_attr_31_write_access_31_wd = reg_wdata[11:8];
-
   assign range_attr_31_execute_access_31_wd = reg_wdata[15:12];
-
   assign range_attr_31_log_denied_access_31_wd = reg_wdata[19:16];
-  assign range_racl_policy_shadowed_0_re = racl_addr_hit_read[136] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_0_we = racl_addr_hit_write[136] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_0_re = racl_addr_read_valid & (racl_addr_read_idx == 136) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_0_we = racl_addr_write_valid & (racl_addr_write_idx == 136) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_0_read_perm_0_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_0_write_perm_0_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_1_re = racl_addr_hit_read[137] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_1_we = racl_addr_hit_write[137] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_1_re = racl_addr_read_valid & (racl_addr_read_idx == 137) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_1_we = racl_addr_write_valid & (racl_addr_write_idx == 137) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_1_read_perm_1_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_1_write_perm_1_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_2_re = racl_addr_hit_read[138] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_2_we = racl_addr_hit_write[138] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_2_re = racl_addr_read_valid & (racl_addr_read_idx == 138) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_2_we = racl_addr_write_valid & (racl_addr_write_idx == 138) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_2_read_perm_2_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_2_write_perm_2_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_3_re = racl_addr_hit_read[139] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_3_we = racl_addr_hit_write[139] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_3_re = racl_addr_read_valid & (racl_addr_read_idx == 139) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_3_we = racl_addr_write_valid & (racl_addr_write_idx == 139) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_3_read_perm_3_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_3_write_perm_3_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_4_re = racl_addr_hit_read[140] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_4_we = racl_addr_hit_write[140] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_4_re = racl_addr_read_valid & (racl_addr_read_idx == 140) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_4_we = racl_addr_write_valid & (racl_addr_write_idx == 140) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_4_read_perm_4_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_4_write_perm_4_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_5_re = racl_addr_hit_read[141] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_5_we = racl_addr_hit_write[141] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_5_re = racl_addr_read_valid & (racl_addr_read_idx == 141) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_5_we = racl_addr_write_valid & (racl_addr_write_idx == 141) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_5_read_perm_5_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_5_write_perm_5_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_6_re = racl_addr_hit_read[142] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_6_we = racl_addr_hit_write[142] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_6_re = racl_addr_read_valid & (racl_addr_read_idx == 142) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_6_we = racl_addr_write_valid & (racl_addr_write_idx == 142) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_6_read_perm_6_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_6_write_perm_6_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_7_re = racl_addr_hit_read[143] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_7_we = racl_addr_hit_write[143] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_7_re = racl_addr_read_valid & (racl_addr_read_idx == 143) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_7_we = racl_addr_write_valid & (racl_addr_write_idx == 143) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_7_read_perm_7_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_7_write_perm_7_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_8_re = racl_addr_hit_read[144] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_8_we = racl_addr_hit_write[144] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_8_re = racl_addr_read_valid & (racl_addr_read_idx == 144) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_8_we = racl_addr_write_valid & (racl_addr_write_idx == 144) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_8_read_perm_8_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_8_write_perm_8_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_9_re = racl_addr_hit_read[145] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_9_we = racl_addr_hit_write[145] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_9_re = racl_addr_read_valid & (racl_addr_read_idx == 145) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_9_we = racl_addr_write_valid & (racl_addr_write_idx == 145) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_9_read_perm_9_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_9_write_perm_9_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_10_re = racl_addr_hit_read[146] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_10_we = racl_addr_hit_write[146] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_10_re = racl_addr_read_valid & (racl_addr_read_idx == 146) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_10_we = racl_addr_write_valid & (racl_addr_write_idx == 146) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_10_read_perm_10_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_10_write_perm_10_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_11_re = racl_addr_hit_read[147] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_11_we = racl_addr_hit_write[147] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_11_re = racl_addr_read_valid & (racl_addr_read_idx == 147) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_11_we = racl_addr_write_valid & (racl_addr_write_idx == 147) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_11_read_perm_11_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_11_write_perm_11_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_12_re = racl_addr_hit_read[148] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_12_we = racl_addr_hit_write[148] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_12_re = racl_addr_read_valid & (racl_addr_read_idx == 148) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_12_we = racl_addr_write_valid & (racl_addr_write_idx == 148) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_12_read_perm_12_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_12_write_perm_12_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_13_re = racl_addr_hit_read[149] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_13_we = racl_addr_hit_write[149] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_13_re = racl_addr_read_valid & (racl_addr_read_idx == 149) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_13_we = racl_addr_write_valid & (racl_addr_write_idx == 149) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_13_read_perm_13_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_13_write_perm_13_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_14_re = racl_addr_hit_read[150] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_14_we = racl_addr_hit_write[150] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_14_re = racl_addr_read_valid & (racl_addr_read_idx == 150) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_14_we = racl_addr_write_valid & (racl_addr_write_idx == 150) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_14_read_perm_14_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_14_write_perm_14_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_15_re = racl_addr_hit_read[151] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_15_we = racl_addr_hit_write[151] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_15_re = racl_addr_read_valid & (racl_addr_read_idx == 151) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_15_we = racl_addr_write_valid & (racl_addr_write_idx == 151) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_15_read_perm_15_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_15_write_perm_15_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_16_re = racl_addr_hit_read[152] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_16_we = racl_addr_hit_write[152] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_16_re = racl_addr_read_valid & (racl_addr_read_idx == 152) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_16_we = racl_addr_write_valid & (racl_addr_write_idx == 152) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_16_read_perm_16_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_16_write_perm_16_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_17_re = racl_addr_hit_read[153] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_17_we = racl_addr_hit_write[153] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_17_re = racl_addr_read_valid & (racl_addr_read_idx == 153) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_17_we = racl_addr_write_valid & (racl_addr_write_idx == 153) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_17_read_perm_17_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_17_write_perm_17_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_18_re = racl_addr_hit_read[154] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_18_we = racl_addr_hit_write[154] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_18_re = racl_addr_read_valid & (racl_addr_read_idx == 154) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_18_we = racl_addr_write_valid & (racl_addr_write_idx == 154) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_18_read_perm_18_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_18_write_perm_18_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_19_re = racl_addr_hit_read[155] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_19_we = racl_addr_hit_write[155] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_19_re = racl_addr_read_valid & (racl_addr_read_idx == 155) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_19_we = racl_addr_write_valid & (racl_addr_write_idx == 155) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_19_read_perm_19_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_19_write_perm_19_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_20_re = racl_addr_hit_read[156] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_20_we = racl_addr_hit_write[156] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_20_re = racl_addr_read_valid & (racl_addr_read_idx == 156) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_20_we = racl_addr_write_valid & (racl_addr_write_idx == 156) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_20_read_perm_20_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_20_write_perm_20_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_21_re = racl_addr_hit_read[157] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_21_we = racl_addr_hit_write[157] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_21_re = racl_addr_read_valid & (racl_addr_read_idx == 157) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_21_we = racl_addr_write_valid & (racl_addr_write_idx == 157) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_21_read_perm_21_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_21_write_perm_21_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_22_re = racl_addr_hit_read[158] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_22_we = racl_addr_hit_write[158] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_22_re = racl_addr_read_valid & (racl_addr_read_idx == 158) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_22_we = racl_addr_write_valid & (racl_addr_write_idx == 158) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_22_read_perm_22_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_22_write_perm_22_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_23_re = racl_addr_hit_read[159] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_23_we = racl_addr_hit_write[159] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_23_re = racl_addr_read_valid & (racl_addr_read_idx == 159) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_23_we = racl_addr_write_valid & (racl_addr_write_idx == 159) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_23_read_perm_23_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_23_write_perm_23_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_24_re = racl_addr_hit_read[160] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_24_we = racl_addr_hit_write[160] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_24_re = racl_addr_read_valid & (racl_addr_read_idx == 160) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_24_we = racl_addr_write_valid & (racl_addr_write_idx == 160) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_24_read_perm_24_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_24_write_perm_24_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_25_re = racl_addr_hit_read[161] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_25_we = racl_addr_hit_write[161] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_25_re = racl_addr_read_valid & (racl_addr_read_idx == 161) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_25_we = racl_addr_write_valid & (racl_addr_write_idx == 161) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_25_read_perm_25_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_25_write_perm_25_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_26_re = racl_addr_hit_read[162] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_26_we = racl_addr_hit_write[162] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_26_re = racl_addr_read_valid & (racl_addr_read_idx == 162) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_26_we = racl_addr_write_valid & (racl_addr_write_idx == 162) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_26_read_perm_26_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_26_write_perm_26_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_27_re = racl_addr_hit_read[163] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_27_we = racl_addr_hit_write[163] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_27_re = racl_addr_read_valid & (racl_addr_read_idx == 163) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_27_we = racl_addr_write_valid & (racl_addr_write_idx == 163) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_27_read_perm_27_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_27_write_perm_27_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_28_re = racl_addr_hit_read[164] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_28_we = racl_addr_hit_write[164] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_28_re = racl_addr_read_valid & (racl_addr_read_idx == 164) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_28_we = racl_addr_write_valid & (racl_addr_write_idx == 164) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_28_read_perm_28_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_28_write_perm_28_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_29_re = racl_addr_hit_read[165] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_29_we = racl_addr_hit_write[165] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_29_re = racl_addr_read_valid & (racl_addr_read_idx == 165) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_29_we = racl_addr_write_valid & (racl_addr_write_idx == 165) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_29_read_perm_29_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_29_write_perm_29_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_30_re = racl_addr_hit_read[166] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_30_we = racl_addr_hit_write[166] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_30_re = racl_addr_read_valid & (racl_addr_read_idx == 166) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_30_we = racl_addr_write_valid & (racl_addr_write_idx == 166) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_30_read_perm_30_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_30_write_perm_30_wd = reg_wdata[31:16];
-  assign range_racl_policy_shadowed_31_re = racl_addr_hit_read[167] & reg_re & !reg_error;
-  assign range_racl_policy_shadowed_31_we = racl_addr_hit_write[167] & reg_we & !reg_error;
+
+  assign range_racl_policy_shadowed_31_re = racl_addr_read_valid & (racl_addr_read_idx == 167) & reg_re & !reg_error;
+  assign range_racl_policy_shadowed_31_we = racl_addr_write_valid & (racl_addr_write_idx == 167) & reg_we & !reg_error;
 
   assign range_racl_policy_shadowed_31_read_perm_31_wd = reg_wdata[15:0];
-
   assign range_racl_policy_shadowed_31_write_perm_31_wd = reg_wdata[31:16];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -13377,859 +13401,864 @@ module ac_range_check_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = intr_state_qs;
-      end
-
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = intr_enable_qs;
-      end
-
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[0] = '0;
-      end
-
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
-
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next[0] = alert_status_shadowed_update_err_qs;
-        reg_rdata_next[1] = alert_status_shadowed_storage_err_qs;
-        reg_rdata_next[2] = alert_status_reg_intg_err_qs;
-        reg_rdata_next[3] = alert_status_counter_err_qs;
-      end
-
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next[0] = log_config_log_enable_qs;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[9:2] = log_config_deny_cnt_threshold_qs;
-      end
-
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next[7:0] = log_status_deny_cnt_qs;
-        reg_rdata_next[8] = log_status_denied_read_access_qs;
-        reg_rdata_next[9] = log_status_denied_write_access_qs;
-        reg_rdata_next[10] = log_status_denied_execute_access_qs;
-        reg_rdata_next[11] = log_status_denied_no_match_qs;
-        reg_rdata_next[12] = log_status_denied_racl_read_qs;
-        reg_rdata_next[13] = log_status_denied_racl_write_qs;
-        reg_rdata_next[17:14] = log_status_denied_source_role_qs;
-        reg_rdata_next[22:18] = log_status_denied_ctn_uid_qs;
-        reg_rdata_next[27:23] = log_status_deny_range_index_qs;
-      end
-
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next[31:0] = log_address_qs;
-      end
-
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next[3:0] = range_regwen_0_qs;
-      end
-
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next[3:0] = range_regwen_1_qs;
-      end
-
-      racl_addr_hit_read[10]: begin
-        reg_rdata_next[3:0] = range_regwen_2_qs;
-      end
-
-      racl_addr_hit_read[11]: begin
-        reg_rdata_next[3:0] = range_regwen_3_qs;
-      end
-
-      racl_addr_hit_read[12]: begin
-        reg_rdata_next[3:0] = range_regwen_4_qs;
-      end
-
-      racl_addr_hit_read[13]: begin
-        reg_rdata_next[3:0] = range_regwen_5_qs;
-      end
-
-      racl_addr_hit_read[14]: begin
-        reg_rdata_next[3:0] = range_regwen_6_qs;
-      end
-
-      racl_addr_hit_read[15]: begin
-        reg_rdata_next[3:0] = range_regwen_7_qs;
-      end
-
-      racl_addr_hit_read[16]: begin
-        reg_rdata_next[3:0] = range_regwen_8_qs;
-      end
-
-      racl_addr_hit_read[17]: begin
-        reg_rdata_next[3:0] = range_regwen_9_qs;
-      end
-
-      racl_addr_hit_read[18]: begin
-        reg_rdata_next[3:0] = range_regwen_10_qs;
-      end
-
-      racl_addr_hit_read[19]: begin
-        reg_rdata_next[3:0] = range_regwen_11_qs;
-      end
-
-      racl_addr_hit_read[20]: begin
-        reg_rdata_next[3:0] = range_regwen_12_qs;
-      end
-
-      racl_addr_hit_read[21]: begin
-        reg_rdata_next[3:0] = range_regwen_13_qs;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_qs;
+        end
+
+        1: begin
+          reg_rdata_next[0] = intr_enable_qs;
+        end
+
+        2: begin
+          reg_rdata_next[0] = '0;
+        end
+
+        3: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
+
+        4: begin
+          reg_rdata_next[0] = alert_status_shadowed_update_err_qs;
+          reg_rdata_next[1] = alert_status_shadowed_storage_err_qs;
+          reg_rdata_next[2] = alert_status_reg_intg_err_qs;
+          reg_rdata_next[3] = alert_status_counter_err_qs;
+        end
+
+        5: begin
+          reg_rdata_next[0] = log_config_log_enable_qs;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[9:2] = log_config_deny_cnt_threshold_qs;
+        end
+
+        6: begin
+          reg_rdata_next[7:0] = log_status_deny_cnt_qs;
+          reg_rdata_next[8] = log_status_denied_read_access_qs;
+          reg_rdata_next[9] = log_status_denied_write_access_qs;
+          reg_rdata_next[10] = log_status_denied_execute_access_qs;
+          reg_rdata_next[11] = log_status_denied_no_match_qs;
+          reg_rdata_next[12] = log_status_denied_racl_read_qs;
+          reg_rdata_next[13] = log_status_denied_racl_write_qs;
+          reg_rdata_next[17:14] = log_status_denied_source_role_qs;
+          reg_rdata_next[22:18] = log_status_denied_ctn_uid_qs;
+          reg_rdata_next[27:23] = log_status_deny_range_index_qs;
+        end
+
+        7: begin
+          reg_rdata_next[31:0] = log_address_qs;
+        end
+
+        8: begin
+          reg_rdata_next[3:0] = range_regwen_0_qs;
+        end
+
+        9: begin
+          reg_rdata_next[3:0] = range_regwen_1_qs;
+        end
+
+        10: begin
+          reg_rdata_next[3:0] = range_regwen_2_qs;
+        end
+
+        11: begin
+          reg_rdata_next[3:0] = range_regwen_3_qs;
+        end
+
+        12: begin
+          reg_rdata_next[3:0] = range_regwen_4_qs;
+        end
+
+        13: begin
+          reg_rdata_next[3:0] = range_regwen_5_qs;
+        end
+
+        14: begin
+          reg_rdata_next[3:0] = range_regwen_6_qs;
+        end
+
+        15: begin
+          reg_rdata_next[3:0] = range_regwen_7_qs;
+        end
+
+        16: begin
+          reg_rdata_next[3:0] = range_regwen_8_qs;
+        end
+
+        17: begin
+          reg_rdata_next[3:0] = range_regwen_9_qs;
+        end
+
+        18: begin
+          reg_rdata_next[3:0] = range_regwen_10_qs;
+        end
+
+        19: begin
+          reg_rdata_next[3:0] = range_regwen_11_qs;
+        end
+
+        20: begin
+          reg_rdata_next[3:0] = range_regwen_12_qs;
+        end
 
-      racl_addr_hit_read[22]: begin
-        reg_rdata_next[3:0] = range_regwen_14_qs;
-      end
+        21: begin
+          reg_rdata_next[3:0] = range_regwen_13_qs;
+        end
 
-      racl_addr_hit_read[23]: begin
-        reg_rdata_next[3:0] = range_regwen_15_qs;
-      end
+        22: begin
+          reg_rdata_next[3:0] = range_regwen_14_qs;
+        end
 
-      racl_addr_hit_read[24]: begin
-        reg_rdata_next[3:0] = range_regwen_16_qs;
-      end
+        23: begin
+          reg_rdata_next[3:0] = range_regwen_15_qs;
+        end
 
-      racl_addr_hit_read[25]: begin
-        reg_rdata_next[3:0] = range_regwen_17_qs;
-      end
+        24: begin
+          reg_rdata_next[3:0] = range_regwen_16_qs;
+        end
 
-      racl_addr_hit_read[26]: begin
-        reg_rdata_next[3:0] = range_regwen_18_qs;
-      end
+        25: begin
+          reg_rdata_next[3:0] = range_regwen_17_qs;
+        end
 
-      racl_addr_hit_read[27]: begin
-        reg_rdata_next[3:0] = range_regwen_19_qs;
-      end
+        26: begin
+          reg_rdata_next[3:0] = range_regwen_18_qs;
+        end
 
-      racl_addr_hit_read[28]: begin
-        reg_rdata_next[3:0] = range_regwen_20_qs;
-      end
+        27: begin
+          reg_rdata_next[3:0] = range_regwen_19_qs;
+        end
 
-      racl_addr_hit_read[29]: begin
-        reg_rdata_next[3:0] = range_regwen_21_qs;
-      end
+        28: begin
+          reg_rdata_next[3:0] = range_regwen_20_qs;
+        end
 
-      racl_addr_hit_read[30]: begin
-        reg_rdata_next[3:0] = range_regwen_22_qs;
-      end
+        29: begin
+          reg_rdata_next[3:0] = range_regwen_21_qs;
+        end
 
-      racl_addr_hit_read[31]: begin
-        reg_rdata_next[3:0] = range_regwen_23_qs;
-      end
+        30: begin
+          reg_rdata_next[3:0] = range_regwen_22_qs;
+        end
 
-      racl_addr_hit_read[32]: begin
-        reg_rdata_next[3:0] = range_regwen_24_qs;
-      end
+        31: begin
+          reg_rdata_next[3:0] = range_regwen_23_qs;
+        end
 
-      racl_addr_hit_read[33]: begin
-        reg_rdata_next[3:0] = range_regwen_25_qs;
-      end
+        32: begin
+          reg_rdata_next[3:0] = range_regwen_24_qs;
+        end
 
-      racl_addr_hit_read[34]: begin
-        reg_rdata_next[3:0] = range_regwen_26_qs;
-      end
+        33: begin
+          reg_rdata_next[3:0] = range_regwen_25_qs;
+        end
 
-      racl_addr_hit_read[35]: begin
-        reg_rdata_next[3:0] = range_regwen_27_qs;
-      end
+        34: begin
+          reg_rdata_next[3:0] = range_regwen_26_qs;
+        end
 
-      racl_addr_hit_read[36]: begin
-        reg_rdata_next[3:0] = range_regwen_28_qs;
-      end
+        35: begin
+          reg_rdata_next[3:0] = range_regwen_27_qs;
+        end
 
-      racl_addr_hit_read[37]: begin
-        reg_rdata_next[3:0] = range_regwen_29_qs;
-      end
+        36: begin
+          reg_rdata_next[3:0] = range_regwen_28_qs;
+        end
 
-      racl_addr_hit_read[38]: begin
-        reg_rdata_next[3:0] = range_regwen_30_qs;
-      end
+        37: begin
+          reg_rdata_next[3:0] = range_regwen_29_qs;
+        end
 
-      racl_addr_hit_read[39]: begin
-        reg_rdata_next[3:0] = range_regwen_31_qs;
-      end
+        38: begin
+          reg_rdata_next[3:0] = range_regwen_30_qs;
+        end
 
-      racl_addr_hit_read[40]: begin
-        reg_rdata_next[31:2] = range_base_0_qs;
-      end
+        39: begin
+          reg_rdata_next[3:0] = range_regwen_31_qs;
+        end
 
-      racl_addr_hit_read[41]: begin
-        reg_rdata_next[31:2] = range_base_1_qs;
-      end
+        40: begin
+          reg_rdata_next[31:2] = range_base_0_qs;
+        end
 
-      racl_addr_hit_read[42]: begin
-        reg_rdata_next[31:2] = range_base_2_qs;
-      end
+        41: begin
+          reg_rdata_next[31:2] = range_base_1_qs;
+        end
 
-      racl_addr_hit_read[43]: begin
-        reg_rdata_next[31:2] = range_base_3_qs;
-      end
+        42: begin
+          reg_rdata_next[31:2] = range_base_2_qs;
+        end
 
-      racl_addr_hit_read[44]: begin
-        reg_rdata_next[31:2] = range_base_4_qs;
-      end
+        43: begin
+          reg_rdata_next[31:2] = range_base_3_qs;
+        end
 
-      racl_addr_hit_read[45]: begin
-        reg_rdata_next[31:2] = range_base_5_qs;
-      end
+        44: begin
+          reg_rdata_next[31:2] = range_base_4_qs;
+        end
 
-      racl_addr_hit_read[46]: begin
-        reg_rdata_next[31:2] = range_base_6_qs;
-      end
+        45: begin
+          reg_rdata_next[31:2] = range_base_5_qs;
+        end
 
-      racl_addr_hit_read[47]: begin
-        reg_rdata_next[31:2] = range_base_7_qs;
-      end
+        46: begin
+          reg_rdata_next[31:2] = range_base_6_qs;
+        end
 
-      racl_addr_hit_read[48]: begin
-        reg_rdata_next[31:2] = range_base_8_qs;
-      end
+        47: begin
+          reg_rdata_next[31:2] = range_base_7_qs;
+        end
 
-      racl_addr_hit_read[49]: begin
-        reg_rdata_next[31:2] = range_base_9_qs;
-      end
+        48: begin
+          reg_rdata_next[31:2] = range_base_8_qs;
+        end
 
-      racl_addr_hit_read[50]: begin
-        reg_rdata_next[31:2] = range_base_10_qs;
-      end
+        49: begin
+          reg_rdata_next[31:2] = range_base_9_qs;
+        end
 
-      racl_addr_hit_read[51]: begin
-        reg_rdata_next[31:2] = range_base_11_qs;
-      end
+        50: begin
+          reg_rdata_next[31:2] = range_base_10_qs;
+        end
 
-      racl_addr_hit_read[52]: begin
-        reg_rdata_next[31:2] = range_base_12_qs;
-      end
+        51: begin
+          reg_rdata_next[31:2] = range_base_11_qs;
+        end
 
-      racl_addr_hit_read[53]: begin
-        reg_rdata_next[31:2] = range_base_13_qs;
-      end
+        52: begin
+          reg_rdata_next[31:2] = range_base_12_qs;
+        end
 
-      racl_addr_hit_read[54]: begin
-        reg_rdata_next[31:2] = range_base_14_qs;
-      end
+        53: begin
+          reg_rdata_next[31:2] = range_base_13_qs;
+        end
 
-      racl_addr_hit_read[55]: begin
-        reg_rdata_next[31:2] = range_base_15_qs;
-      end
+        54: begin
+          reg_rdata_next[31:2] = range_base_14_qs;
+        end
 
-      racl_addr_hit_read[56]: begin
-        reg_rdata_next[31:2] = range_base_16_qs;
-      end
+        55: begin
+          reg_rdata_next[31:2] = range_base_15_qs;
+        end
 
-      racl_addr_hit_read[57]: begin
-        reg_rdata_next[31:2] = range_base_17_qs;
-      end
+        56: begin
+          reg_rdata_next[31:2] = range_base_16_qs;
+        end
 
-      racl_addr_hit_read[58]: begin
-        reg_rdata_next[31:2] = range_base_18_qs;
-      end
+        57: begin
+          reg_rdata_next[31:2] = range_base_17_qs;
+        end
 
-      racl_addr_hit_read[59]: begin
-        reg_rdata_next[31:2] = range_base_19_qs;
-      end
+        58: begin
+          reg_rdata_next[31:2] = range_base_18_qs;
+        end
 
-      racl_addr_hit_read[60]: begin
-        reg_rdata_next[31:2] = range_base_20_qs;
-      end
+        59: begin
+          reg_rdata_next[31:2] = range_base_19_qs;
+        end
 
-      racl_addr_hit_read[61]: begin
-        reg_rdata_next[31:2] = range_base_21_qs;
-      end
+        60: begin
+          reg_rdata_next[31:2] = range_base_20_qs;
+        end
 
-      racl_addr_hit_read[62]: begin
-        reg_rdata_next[31:2] = range_base_22_qs;
-      end
+        61: begin
+          reg_rdata_next[31:2] = range_base_21_qs;
+        end
 
-      racl_addr_hit_read[63]: begin
-        reg_rdata_next[31:2] = range_base_23_qs;
-      end
+        62: begin
+          reg_rdata_next[31:2] = range_base_22_qs;
+        end
 
-      racl_addr_hit_read[64]: begin
-        reg_rdata_next[31:2] = range_base_24_qs;
-      end
+        63: begin
+          reg_rdata_next[31:2] = range_base_23_qs;
+        end
 
-      racl_addr_hit_read[65]: begin
-        reg_rdata_next[31:2] = range_base_25_qs;
-      end
+        64: begin
+          reg_rdata_next[31:2] = range_base_24_qs;
+        end
 
-      racl_addr_hit_read[66]: begin
-        reg_rdata_next[31:2] = range_base_26_qs;
-      end
+        65: begin
+          reg_rdata_next[31:2] = range_base_25_qs;
+        end
 
-      racl_addr_hit_read[67]: begin
-        reg_rdata_next[31:2] = range_base_27_qs;
-      end
+        66: begin
+          reg_rdata_next[31:2] = range_base_26_qs;
+        end
 
-      racl_addr_hit_read[68]: begin
-        reg_rdata_next[31:2] = range_base_28_qs;
-      end
+        67: begin
+          reg_rdata_next[31:2] = range_base_27_qs;
+        end
 
-      racl_addr_hit_read[69]: begin
-        reg_rdata_next[31:2] = range_base_29_qs;
-      end
+        68: begin
+          reg_rdata_next[31:2] = range_base_28_qs;
+        end
 
-      racl_addr_hit_read[70]: begin
-        reg_rdata_next[31:2] = range_base_30_qs;
-      end
+        69: begin
+          reg_rdata_next[31:2] = range_base_29_qs;
+        end
 
-      racl_addr_hit_read[71]: begin
-        reg_rdata_next[31:2] = range_base_31_qs;
-      end
+        70: begin
+          reg_rdata_next[31:2] = range_base_30_qs;
+        end
 
-      racl_addr_hit_read[72]: begin
-        reg_rdata_next[31:2] = range_limit_0_qs;
-      end
+        71: begin
+          reg_rdata_next[31:2] = range_base_31_qs;
+        end
 
-      racl_addr_hit_read[73]: begin
-        reg_rdata_next[31:2] = range_limit_1_qs;
-      end
+        72: begin
+          reg_rdata_next[31:2] = range_limit_0_qs;
+        end
 
-      racl_addr_hit_read[74]: begin
-        reg_rdata_next[31:2] = range_limit_2_qs;
-      end
+        73: begin
+          reg_rdata_next[31:2] = range_limit_1_qs;
+        end
 
-      racl_addr_hit_read[75]: begin
-        reg_rdata_next[31:2] = range_limit_3_qs;
-      end
+        74: begin
+          reg_rdata_next[31:2] = range_limit_2_qs;
+        end
 
-      racl_addr_hit_read[76]: begin
-        reg_rdata_next[31:2] = range_limit_4_qs;
-      end
+        75: begin
+          reg_rdata_next[31:2] = range_limit_3_qs;
+        end
 
-      racl_addr_hit_read[77]: begin
-        reg_rdata_next[31:2] = range_limit_5_qs;
-      end
+        76: begin
+          reg_rdata_next[31:2] = range_limit_4_qs;
+        end
 
-      racl_addr_hit_read[78]: begin
-        reg_rdata_next[31:2] = range_limit_6_qs;
-      end
+        77: begin
+          reg_rdata_next[31:2] = range_limit_5_qs;
+        end
 
-      racl_addr_hit_read[79]: begin
-        reg_rdata_next[31:2] = range_limit_7_qs;
-      end
+        78: begin
+          reg_rdata_next[31:2] = range_limit_6_qs;
+        end
 
-      racl_addr_hit_read[80]: begin
-        reg_rdata_next[31:2] = range_limit_8_qs;
-      end
-
-      racl_addr_hit_read[81]: begin
-        reg_rdata_next[31:2] = range_limit_9_qs;
-      end
-
-      racl_addr_hit_read[82]: begin
-        reg_rdata_next[31:2] = range_limit_10_qs;
-      end
-
-      racl_addr_hit_read[83]: begin
-        reg_rdata_next[31:2] = range_limit_11_qs;
-      end
-
-      racl_addr_hit_read[84]: begin
-        reg_rdata_next[31:2] = range_limit_12_qs;
-      end
-
-      racl_addr_hit_read[85]: begin
-        reg_rdata_next[31:2] = range_limit_13_qs;
-      end
-
-      racl_addr_hit_read[86]: begin
-        reg_rdata_next[31:2] = range_limit_14_qs;
-      end
-
-      racl_addr_hit_read[87]: begin
-        reg_rdata_next[31:2] = range_limit_15_qs;
-      end
-
-      racl_addr_hit_read[88]: begin
-        reg_rdata_next[31:2] = range_limit_16_qs;
-      end
-
-      racl_addr_hit_read[89]: begin
-        reg_rdata_next[31:2] = range_limit_17_qs;
-      end
-
-      racl_addr_hit_read[90]: begin
-        reg_rdata_next[31:2] = range_limit_18_qs;
-      end
-
-      racl_addr_hit_read[91]: begin
-        reg_rdata_next[31:2] = range_limit_19_qs;
-      end
-
-      racl_addr_hit_read[92]: begin
-        reg_rdata_next[31:2] = range_limit_20_qs;
-      end
-
-      racl_addr_hit_read[93]: begin
-        reg_rdata_next[31:2] = range_limit_21_qs;
-      end
-
-      racl_addr_hit_read[94]: begin
-        reg_rdata_next[31:2] = range_limit_22_qs;
-      end
-
-      racl_addr_hit_read[95]: begin
-        reg_rdata_next[31:2] = range_limit_23_qs;
-      end
-
-      racl_addr_hit_read[96]: begin
-        reg_rdata_next[31:2] = range_limit_24_qs;
-      end
-
-      racl_addr_hit_read[97]: begin
-        reg_rdata_next[31:2] = range_limit_25_qs;
-      end
-
-      racl_addr_hit_read[98]: begin
-        reg_rdata_next[31:2] = range_limit_26_qs;
-      end
-
-      racl_addr_hit_read[99]: begin
-        reg_rdata_next[31:2] = range_limit_27_qs;
-      end
-
-      racl_addr_hit_read[100]: begin
-        reg_rdata_next[31:2] = range_limit_28_qs;
-      end
-
-      racl_addr_hit_read[101]: begin
-        reg_rdata_next[31:2] = range_limit_29_qs;
-      end
-
-      racl_addr_hit_read[102]: begin
-        reg_rdata_next[31:2] = range_limit_30_qs;
-      end
-
-      racl_addr_hit_read[103]: begin
-        reg_rdata_next[31:2] = range_limit_31_qs;
-      end
-
-      racl_addr_hit_read[104]: begin
-        reg_rdata_next[3:0] = range_attr_0_enable_0_qs;
-        reg_rdata_next[7:4] = range_attr_0_read_access_0_qs;
-        reg_rdata_next[11:8] = range_attr_0_write_access_0_qs;
-        reg_rdata_next[15:12] = range_attr_0_execute_access_0_qs;
-        reg_rdata_next[19:16] = range_attr_0_log_denied_access_0_qs;
-      end
-
-      racl_addr_hit_read[105]: begin
-        reg_rdata_next[3:0] = range_attr_1_enable_1_qs;
-        reg_rdata_next[7:4] = range_attr_1_read_access_1_qs;
-        reg_rdata_next[11:8] = range_attr_1_write_access_1_qs;
-        reg_rdata_next[15:12] = range_attr_1_execute_access_1_qs;
-        reg_rdata_next[19:16] = range_attr_1_log_denied_access_1_qs;
-      end
-
-      racl_addr_hit_read[106]: begin
-        reg_rdata_next[3:0] = range_attr_2_enable_2_qs;
-        reg_rdata_next[7:4] = range_attr_2_read_access_2_qs;
-        reg_rdata_next[11:8] = range_attr_2_write_access_2_qs;
-        reg_rdata_next[15:12] = range_attr_2_execute_access_2_qs;
-        reg_rdata_next[19:16] = range_attr_2_log_denied_access_2_qs;
-      end
-
-      racl_addr_hit_read[107]: begin
-        reg_rdata_next[3:0] = range_attr_3_enable_3_qs;
-        reg_rdata_next[7:4] = range_attr_3_read_access_3_qs;
-        reg_rdata_next[11:8] = range_attr_3_write_access_3_qs;
-        reg_rdata_next[15:12] = range_attr_3_execute_access_3_qs;
-        reg_rdata_next[19:16] = range_attr_3_log_denied_access_3_qs;
-      end
-
-      racl_addr_hit_read[108]: begin
-        reg_rdata_next[3:0] = range_attr_4_enable_4_qs;
-        reg_rdata_next[7:4] = range_attr_4_read_access_4_qs;
-        reg_rdata_next[11:8] = range_attr_4_write_access_4_qs;
-        reg_rdata_next[15:12] = range_attr_4_execute_access_4_qs;
-        reg_rdata_next[19:16] = range_attr_4_log_denied_access_4_qs;
-      end
-
-      racl_addr_hit_read[109]: begin
-        reg_rdata_next[3:0] = range_attr_5_enable_5_qs;
-        reg_rdata_next[7:4] = range_attr_5_read_access_5_qs;
-        reg_rdata_next[11:8] = range_attr_5_write_access_5_qs;
-        reg_rdata_next[15:12] = range_attr_5_execute_access_5_qs;
-        reg_rdata_next[19:16] = range_attr_5_log_denied_access_5_qs;
-      end
-
-      racl_addr_hit_read[110]: begin
-        reg_rdata_next[3:0] = range_attr_6_enable_6_qs;
-        reg_rdata_next[7:4] = range_attr_6_read_access_6_qs;
-        reg_rdata_next[11:8] = range_attr_6_write_access_6_qs;
-        reg_rdata_next[15:12] = range_attr_6_execute_access_6_qs;
-        reg_rdata_next[19:16] = range_attr_6_log_denied_access_6_qs;
-      end
-
-      racl_addr_hit_read[111]: begin
-        reg_rdata_next[3:0] = range_attr_7_enable_7_qs;
-        reg_rdata_next[7:4] = range_attr_7_read_access_7_qs;
-        reg_rdata_next[11:8] = range_attr_7_write_access_7_qs;
-        reg_rdata_next[15:12] = range_attr_7_execute_access_7_qs;
-        reg_rdata_next[19:16] = range_attr_7_log_denied_access_7_qs;
-      end
-
-      racl_addr_hit_read[112]: begin
-        reg_rdata_next[3:0] = range_attr_8_enable_8_qs;
-        reg_rdata_next[7:4] = range_attr_8_read_access_8_qs;
-        reg_rdata_next[11:8] = range_attr_8_write_access_8_qs;
-        reg_rdata_next[15:12] = range_attr_8_execute_access_8_qs;
-        reg_rdata_next[19:16] = range_attr_8_log_denied_access_8_qs;
-      end
-
-      racl_addr_hit_read[113]: begin
-        reg_rdata_next[3:0] = range_attr_9_enable_9_qs;
-        reg_rdata_next[7:4] = range_attr_9_read_access_9_qs;
-        reg_rdata_next[11:8] = range_attr_9_write_access_9_qs;
-        reg_rdata_next[15:12] = range_attr_9_execute_access_9_qs;
-        reg_rdata_next[19:16] = range_attr_9_log_denied_access_9_qs;
-      end
-
-      racl_addr_hit_read[114]: begin
-        reg_rdata_next[3:0] = range_attr_10_enable_10_qs;
-        reg_rdata_next[7:4] = range_attr_10_read_access_10_qs;
-        reg_rdata_next[11:8] = range_attr_10_write_access_10_qs;
-        reg_rdata_next[15:12] = range_attr_10_execute_access_10_qs;
-        reg_rdata_next[19:16] = range_attr_10_log_denied_access_10_qs;
-      end
-
-      racl_addr_hit_read[115]: begin
-        reg_rdata_next[3:0] = range_attr_11_enable_11_qs;
-        reg_rdata_next[7:4] = range_attr_11_read_access_11_qs;
-        reg_rdata_next[11:8] = range_attr_11_write_access_11_qs;
-        reg_rdata_next[15:12] = range_attr_11_execute_access_11_qs;
-        reg_rdata_next[19:16] = range_attr_11_log_denied_access_11_qs;
-      end
-
-      racl_addr_hit_read[116]: begin
-        reg_rdata_next[3:0] = range_attr_12_enable_12_qs;
-        reg_rdata_next[7:4] = range_attr_12_read_access_12_qs;
-        reg_rdata_next[11:8] = range_attr_12_write_access_12_qs;
-        reg_rdata_next[15:12] = range_attr_12_execute_access_12_qs;
-        reg_rdata_next[19:16] = range_attr_12_log_denied_access_12_qs;
-      end
-
-      racl_addr_hit_read[117]: begin
-        reg_rdata_next[3:0] = range_attr_13_enable_13_qs;
-        reg_rdata_next[7:4] = range_attr_13_read_access_13_qs;
-        reg_rdata_next[11:8] = range_attr_13_write_access_13_qs;
-        reg_rdata_next[15:12] = range_attr_13_execute_access_13_qs;
-        reg_rdata_next[19:16] = range_attr_13_log_denied_access_13_qs;
-      end
-
-      racl_addr_hit_read[118]: begin
-        reg_rdata_next[3:0] = range_attr_14_enable_14_qs;
-        reg_rdata_next[7:4] = range_attr_14_read_access_14_qs;
-        reg_rdata_next[11:8] = range_attr_14_write_access_14_qs;
-        reg_rdata_next[15:12] = range_attr_14_execute_access_14_qs;
-        reg_rdata_next[19:16] = range_attr_14_log_denied_access_14_qs;
-      end
-
-      racl_addr_hit_read[119]: begin
-        reg_rdata_next[3:0] = range_attr_15_enable_15_qs;
-        reg_rdata_next[7:4] = range_attr_15_read_access_15_qs;
-        reg_rdata_next[11:8] = range_attr_15_write_access_15_qs;
-        reg_rdata_next[15:12] = range_attr_15_execute_access_15_qs;
-        reg_rdata_next[19:16] = range_attr_15_log_denied_access_15_qs;
-      end
-
-      racl_addr_hit_read[120]: begin
-        reg_rdata_next[3:0] = range_attr_16_enable_16_qs;
-        reg_rdata_next[7:4] = range_attr_16_read_access_16_qs;
-        reg_rdata_next[11:8] = range_attr_16_write_access_16_qs;
-        reg_rdata_next[15:12] = range_attr_16_execute_access_16_qs;
-        reg_rdata_next[19:16] = range_attr_16_log_denied_access_16_qs;
-      end
-
-      racl_addr_hit_read[121]: begin
-        reg_rdata_next[3:0] = range_attr_17_enable_17_qs;
-        reg_rdata_next[7:4] = range_attr_17_read_access_17_qs;
-        reg_rdata_next[11:8] = range_attr_17_write_access_17_qs;
-        reg_rdata_next[15:12] = range_attr_17_execute_access_17_qs;
-        reg_rdata_next[19:16] = range_attr_17_log_denied_access_17_qs;
-      end
-
-      racl_addr_hit_read[122]: begin
-        reg_rdata_next[3:0] = range_attr_18_enable_18_qs;
-        reg_rdata_next[7:4] = range_attr_18_read_access_18_qs;
-        reg_rdata_next[11:8] = range_attr_18_write_access_18_qs;
-        reg_rdata_next[15:12] = range_attr_18_execute_access_18_qs;
-        reg_rdata_next[19:16] = range_attr_18_log_denied_access_18_qs;
-      end
-
-      racl_addr_hit_read[123]: begin
-        reg_rdata_next[3:0] = range_attr_19_enable_19_qs;
-        reg_rdata_next[7:4] = range_attr_19_read_access_19_qs;
-        reg_rdata_next[11:8] = range_attr_19_write_access_19_qs;
-        reg_rdata_next[15:12] = range_attr_19_execute_access_19_qs;
-        reg_rdata_next[19:16] = range_attr_19_log_denied_access_19_qs;
-      end
-
-      racl_addr_hit_read[124]: begin
-        reg_rdata_next[3:0] = range_attr_20_enable_20_qs;
-        reg_rdata_next[7:4] = range_attr_20_read_access_20_qs;
-        reg_rdata_next[11:8] = range_attr_20_write_access_20_qs;
-        reg_rdata_next[15:12] = range_attr_20_execute_access_20_qs;
-        reg_rdata_next[19:16] = range_attr_20_log_denied_access_20_qs;
-      end
-
-      racl_addr_hit_read[125]: begin
-        reg_rdata_next[3:0] = range_attr_21_enable_21_qs;
-        reg_rdata_next[7:4] = range_attr_21_read_access_21_qs;
-        reg_rdata_next[11:8] = range_attr_21_write_access_21_qs;
-        reg_rdata_next[15:12] = range_attr_21_execute_access_21_qs;
-        reg_rdata_next[19:16] = range_attr_21_log_denied_access_21_qs;
-      end
-
-      racl_addr_hit_read[126]: begin
-        reg_rdata_next[3:0] = range_attr_22_enable_22_qs;
-        reg_rdata_next[7:4] = range_attr_22_read_access_22_qs;
-        reg_rdata_next[11:8] = range_attr_22_write_access_22_qs;
-        reg_rdata_next[15:12] = range_attr_22_execute_access_22_qs;
-        reg_rdata_next[19:16] = range_attr_22_log_denied_access_22_qs;
-      end
-
-      racl_addr_hit_read[127]: begin
-        reg_rdata_next[3:0] = range_attr_23_enable_23_qs;
-        reg_rdata_next[7:4] = range_attr_23_read_access_23_qs;
-        reg_rdata_next[11:8] = range_attr_23_write_access_23_qs;
-        reg_rdata_next[15:12] = range_attr_23_execute_access_23_qs;
-        reg_rdata_next[19:16] = range_attr_23_log_denied_access_23_qs;
-      end
-
-      racl_addr_hit_read[128]: begin
-        reg_rdata_next[3:0] = range_attr_24_enable_24_qs;
-        reg_rdata_next[7:4] = range_attr_24_read_access_24_qs;
-        reg_rdata_next[11:8] = range_attr_24_write_access_24_qs;
-        reg_rdata_next[15:12] = range_attr_24_execute_access_24_qs;
-        reg_rdata_next[19:16] = range_attr_24_log_denied_access_24_qs;
-      end
-
-      racl_addr_hit_read[129]: begin
-        reg_rdata_next[3:0] = range_attr_25_enable_25_qs;
-        reg_rdata_next[7:4] = range_attr_25_read_access_25_qs;
-        reg_rdata_next[11:8] = range_attr_25_write_access_25_qs;
-        reg_rdata_next[15:12] = range_attr_25_execute_access_25_qs;
-        reg_rdata_next[19:16] = range_attr_25_log_denied_access_25_qs;
-      end
-
-      racl_addr_hit_read[130]: begin
-        reg_rdata_next[3:0] = range_attr_26_enable_26_qs;
-        reg_rdata_next[7:4] = range_attr_26_read_access_26_qs;
-        reg_rdata_next[11:8] = range_attr_26_write_access_26_qs;
-        reg_rdata_next[15:12] = range_attr_26_execute_access_26_qs;
-        reg_rdata_next[19:16] = range_attr_26_log_denied_access_26_qs;
-      end
-
-      racl_addr_hit_read[131]: begin
-        reg_rdata_next[3:0] = range_attr_27_enable_27_qs;
-        reg_rdata_next[7:4] = range_attr_27_read_access_27_qs;
-        reg_rdata_next[11:8] = range_attr_27_write_access_27_qs;
-        reg_rdata_next[15:12] = range_attr_27_execute_access_27_qs;
-        reg_rdata_next[19:16] = range_attr_27_log_denied_access_27_qs;
-      end
-
-      racl_addr_hit_read[132]: begin
-        reg_rdata_next[3:0] = range_attr_28_enable_28_qs;
-        reg_rdata_next[7:4] = range_attr_28_read_access_28_qs;
-        reg_rdata_next[11:8] = range_attr_28_write_access_28_qs;
-        reg_rdata_next[15:12] = range_attr_28_execute_access_28_qs;
-        reg_rdata_next[19:16] = range_attr_28_log_denied_access_28_qs;
-      end
-
-      racl_addr_hit_read[133]: begin
-        reg_rdata_next[3:0] = range_attr_29_enable_29_qs;
-        reg_rdata_next[7:4] = range_attr_29_read_access_29_qs;
-        reg_rdata_next[11:8] = range_attr_29_write_access_29_qs;
-        reg_rdata_next[15:12] = range_attr_29_execute_access_29_qs;
-        reg_rdata_next[19:16] = range_attr_29_log_denied_access_29_qs;
-      end
-
-      racl_addr_hit_read[134]: begin
-        reg_rdata_next[3:0] = range_attr_30_enable_30_qs;
-        reg_rdata_next[7:4] = range_attr_30_read_access_30_qs;
-        reg_rdata_next[11:8] = range_attr_30_write_access_30_qs;
-        reg_rdata_next[15:12] = range_attr_30_execute_access_30_qs;
-        reg_rdata_next[19:16] = range_attr_30_log_denied_access_30_qs;
-      end
-
-      racl_addr_hit_read[135]: begin
-        reg_rdata_next[3:0] = range_attr_31_enable_31_qs;
-        reg_rdata_next[7:4] = range_attr_31_read_access_31_qs;
-        reg_rdata_next[11:8] = range_attr_31_write_access_31_qs;
-        reg_rdata_next[15:12] = range_attr_31_execute_access_31_qs;
-        reg_rdata_next[19:16] = range_attr_31_log_denied_access_31_qs;
-      end
-
-      racl_addr_hit_read[136]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_0_read_perm_0_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_0_write_perm_0_qs;
-      end
-
-      racl_addr_hit_read[137]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_1_read_perm_1_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_1_write_perm_1_qs;
-      end
-
-      racl_addr_hit_read[138]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_2_read_perm_2_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_2_write_perm_2_qs;
-      end
-
-      racl_addr_hit_read[139]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_3_read_perm_3_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_3_write_perm_3_qs;
-      end
-
-      racl_addr_hit_read[140]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_4_read_perm_4_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_4_write_perm_4_qs;
-      end
-
-      racl_addr_hit_read[141]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_5_read_perm_5_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_5_write_perm_5_qs;
-      end
-
-      racl_addr_hit_read[142]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_6_read_perm_6_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_6_write_perm_6_qs;
-      end
-
-      racl_addr_hit_read[143]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_7_read_perm_7_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_7_write_perm_7_qs;
-      end
-
-      racl_addr_hit_read[144]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_8_read_perm_8_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_8_write_perm_8_qs;
-      end
-
-      racl_addr_hit_read[145]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_9_read_perm_9_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_9_write_perm_9_qs;
-      end
-
-      racl_addr_hit_read[146]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_10_read_perm_10_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_10_write_perm_10_qs;
-      end
-
-      racl_addr_hit_read[147]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_11_read_perm_11_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_11_write_perm_11_qs;
-      end
-
-      racl_addr_hit_read[148]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_12_read_perm_12_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_12_write_perm_12_qs;
-      end
-
-      racl_addr_hit_read[149]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_13_read_perm_13_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_13_write_perm_13_qs;
-      end
-
-      racl_addr_hit_read[150]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_14_read_perm_14_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_14_write_perm_14_qs;
-      end
-
-      racl_addr_hit_read[151]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_15_read_perm_15_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_15_write_perm_15_qs;
-      end
-
-      racl_addr_hit_read[152]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_16_read_perm_16_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_16_write_perm_16_qs;
-      end
-
-      racl_addr_hit_read[153]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_17_read_perm_17_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_17_write_perm_17_qs;
-      end
-
-      racl_addr_hit_read[154]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_18_read_perm_18_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_18_write_perm_18_qs;
-      end
-
-      racl_addr_hit_read[155]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_19_read_perm_19_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_19_write_perm_19_qs;
-      end
-
-      racl_addr_hit_read[156]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_20_read_perm_20_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_20_write_perm_20_qs;
-      end
-
-      racl_addr_hit_read[157]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_21_read_perm_21_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_21_write_perm_21_qs;
-      end
-
-      racl_addr_hit_read[158]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_22_read_perm_22_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_22_write_perm_22_qs;
-      end
-
-      racl_addr_hit_read[159]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_23_read_perm_23_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_23_write_perm_23_qs;
-      end
-
-      racl_addr_hit_read[160]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_24_read_perm_24_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_24_write_perm_24_qs;
-      end
-
-      racl_addr_hit_read[161]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_25_read_perm_25_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_25_write_perm_25_qs;
-      end
-
-      racl_addr_hit_read[162]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_26_read_perm_26_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_26_write_perm_26_qs;
-      end
-
-      racl_addr_hit_read[163]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_27_read_perm_27_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_27_write_perm_27_qs;
-      end
-
-      racl_addr_hit_read[164]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_28_read_perm_28_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_28_write_perm_28_qs;
-      end
-
-      racl_addr_hit_read[165]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_29_read_perm_29_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_29_write_perm_29_qs;
-      end
-
-      racl_addr_hit_read[166]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_30_read_perm_30_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_30_write_perm_30_qs;
-      end
-
-      racl_addr_hit_read[167]: begin
-        reg_rdata_next[15:0] = range_racl_policy_shadowed_31_read_perm_31_qs;
-        reg_rdata_next[31:16] = range_racl_policy_shadowed_31_write_perm_31_qs;
-      end
+        79: begin
+          reg_rdata_next[31:2] = range_limit_7_qs;
+        end
+
+        80: begin
+          reg_rdata_next[31:2] = range_limit_8_qs;
+        end
+
+        81: begin
+          reg_rdata_next[31:2] = range_limit_9_qs;
+        end
+
+        82: begin
+          reg_rdata_next[31:2] = range_limit_10_qs;
+        end
+
+        83: begin
+          reg_rdata_next[31:2] = range_limit_11_qs;
+        end
+
+        84: begin
+          reg_rdata_next[31:2] = range_limit_12_qs;
+        end
+
+        85: begin
+          reg_rdata_next[31:2] = range_limit_13_qs;
+        end
+
+        86: begin
+          reg_rdata_next[31:2] = range_limit_14_qs;
+        end
+
+        87: begin
+          reg_rdata_next[31:2] = range_limit_15_qs;
+        end
+
+        88: begin
+          reg_rdata_next[31:2] = range_limit_16_qs;
+        end
+
+        89: begin
+          reg_rdata_next[31:2] = range_limit_17_qs;
+        end
+
+        90: begin
+          reg_rdata_next[31:2] = range_limit_18_qs;
+        end
+
+        91: begin
+          reg_rdata_next[31:2] = range_limit_19_qs;
+        end
+
+        92: begin
+          reg_rdata_next[31:2] = range_limit_20_qs;
+        end
+
+        93: begin
+          reg_rdata_next[31:2] = range_limit_21_qs;
+        end
+
+        94: begin
+          reg_rdata_next[31:2] = range_limit_22_qs;
+        end
+
+        95: begin
+          reg_rdata_next[31:2] = range_limit_23_qs;
+        end
+
+        96: begin
+          reg_rdata_next[31:2] = range_limit_24_qs;
+        end
+
+        97: begin
+          reg_rdata_next[31:2] = range_limit_25_qs;
+        end
+
+        98: begin
+          reg_rdata_next[31:2] = range_limit_26_qs;
+        end
+
+        99: begin
+          reg_rdata_next[31:2] = range_limit_27_qs;
+        end
+
+        100: begin
+          reg_rdata_next[31:2] = range_limit_28_qs;
+        end
+
+        101: begin
+          reg_rdata_next[31:2] = range_limit_29_qs;
+        end
+
+        102: begin
+          reg_rdata_next[31:2] = range_limit_30_qs;
+        end
+
+        103: begin
+          reg_rdata_next[31:2] = range_limit_31_qs;
+        end
+
+        104: begin
+          reg_rdata_next[3:0] = range_attr_0_enable_0_qs;
+          reg_rdata_next[7:4] = range_attr_0_read_access_0_qs;
+          reg_rdata_next[11:8] = range_attr_0_write_access_0_qs;
+          reg_rdata_next[15:12] = range_attr_0_execute_access_0_qs;
+          reg_rdata_next[19:16] = range_attr_0_log_denied_access_0_qs;
+        end
+
+        105: begin
+          reg_rdata_next[3:0] = range_attr_1_enable_1_qs;
+          reg_rdata_next[7:4] = range_attr_1_read_access_1_qs;
+          reg_rdata_next[11:8] = range_attr_1_write_access_1_qs;
+          reg_rdata_next[15:12] = range_attr_1_execute_access_1_qs;
+          reg_rdata_next[19:16] = range_attr_1_log_denied_access_1_qs;
+        end
+
+        106: begin
+          reg_rdata_next[3:0] = range_attr_2_enable_2_qs;
+          reg_rdata_next[7:4] = range_attr_2_read_access_2_qs;
+          reg_rdata_next[11:8] = range_attr_2_write_access_2_qs;
+          reg_rdata_next[15:12] = range_attr_2_execute_access_2_qs;
+          reg_rdata_next[19:16] = range_attr_2_log_denied_access_2_qs;
+        end
+
+        107: begin
+          reg_rdata_next[3:0] = range_attr_3_enable_3_qs;
+          reg_rdata_next[7:4] = range_attr_3_read_access_3_qs;
+          reg_rdata_next[11:8] = range_attr_3_write_access_3_qs;
+          reg_rdata_next[15:12] = range_attr_3_execute_access_3_qs;
+          reg_rdata_next[19:16] = range_attr_3_log_denied_access_3_qs;
+        end
+
+        108: begin
+          reg_rdata_next[3:0] = range_attr_4_enable_4_qs;
+          reg_rdata_next[7:4] = range_attr_4_read_access_4_qs;
+          reg_rdata_next[11:8] = range_attr_4_write_access_4_qs;
+          reg_rdata_next[15:12] = range_attr_4_execute_access_4_qs;
+          reg_rdata_next[19:16] = range_attr_4_log_denied_access_4_qs;
+        end
+
+        109: begin
+          reg_rdata_next[3:0] = range_attr_5_enable_5_qs;
+          reg_rdata_next[7:4] = range_attr_5_read_access_5_qs;
+          reg_rdata_next[11:8] = range_attr_5_write_access_5_qs;
+          reg_rdata_next[15:12] = range_attr_5_execute_access_5_qs;
+          reg_rdata_next[19:16] = range_attr_5_log_denied_access_5_qs;
+        end
+
+        110: begin
+          reg_rdata_next[3:0] = range_attr_6_enable_6_qs;
+          reg_rdata_next[7:4] = range_attr_6_read_access_6_qs;
+          reg_rdata_next[11:8] = range_attr_6_write_access_6_qs;
+          reg_rdata_next[15:12] = range_attr_6_execute_access_6_qs;
+          reg_rdata_next[19:16] = range_attr_6_log_denied_access_6_qs;
+        end
+
+        111: begin
+          reg_rdata_next[3:0] = range_attr_7_enable_7_qs;
+          reg_rdata_next[7:4] = range_attr_7_read_access_7_qs;
+          reg_rdata_next[11:8] = range_attr_7_write_access_7_qs;
+          reg_rdata_next[15:12] = range_attr_7_execute_access_7_qs;
+          reg_rdata_next[19:16] = range_attr_7_log_denied_access_7_qs;
+        end
+
+        112: begin
+          reg_rdata_next[3:0] = range_attr_8_enable_8_qs;
+          reg_rdata_next[7:4] = range_attr_8_read_access_8_qs;
+          reg_rdata_next[11:8] = range_attr_8_write_access_8_qs;
+          reg_rdata_next[15:12] = range_attr_8_execute_access_8_qs;
+          reg_rdata_next[19:16] = range_attr_8_log_denied_access_8_qs;
+        end
+
+        113: begin
+          reg_rdata_next[3:0] = range_attr_9_enable_9_qs;
+          reg_rdata_next[7:4] = range_attr_9_read_access_9_qs;
+          reg_rdata_next[11:8] = range_attr_9_write_access_9_qs;
+          reg_rdata_next[15:12] = range_attr_9_execute_access_9_qs;
+          reg_rdata_next[19:16] = range_attr_9_log_denied_access_9_qs;
+        end
+
+        114: begin
+          reg_rdata_next[3:0] = range_attr_10_enable_10_qs;
+          reg_rdata_next[7:4] = range_attr_10_read_access_10_qs;
+          reg_rdata_next[11:8] = range_attr_10_write_access_10_qs;
+          reg_rdata_next[15:12] = range_attr_10_execute_access_10_qs;
+          reg_rdata_next[19:16] = range_attr_10_log_denied_access_10_qs;
+        end
+
+        115: begin
+          reg_rdata_next[3:0] = range_attr_11_enable_11_qs;
+          reg_rdata_next[7:4] = range_attr_11_read_access_11_qs;
+          reg_rdata_next[11:8] = range_attr_11_write_access_11_qs;
+          reg_rdata_next[15:12] = range_attr_11_execute_access_11_qs;
+          reg_rdata_next[19:16] = range_attr_11_log_denied_access_11_qs;
+        end
+
+        116: begin
+          reg_rdata_next[3:0] = range_attr_12_enable_12_qs;
+          reg_rdata_next[7:4] = range_attr_12_read_access_12_qs;
+          reg_rdata_next[11:8] = range_attr_12_write_access_12_qs;
+          reg_rdata_next[15:12] = range_attr_12_execute_access_12_qs;
+          reg_rdata_next[19:16] = range_attr_12_log_denied_access_12_qs;
+        end
+
+        117: begin
+          reg_rdata_next[3:0] = range_attr_13_enable_13_qs;
+          reg_rdata_next[7:4] = range_attr_13_read_access_13_qs;
+          reg_rdata_next[11:8] = range_attr_13_write_access_13_qs;
+          reg_rdata_next[15:12] = range_attr_13_execute_access_13_qs;
+          reg_rdata_next[19:16] = range_attr_13_log_denied_access_13_qs;
+        end
+
+        118: begin
+          reg_rdata_next[3:0] = range_attr_14_enable_14_qs;
+          reg_rdata_next[7:4] = range_attr_14_read_access_14_qs;
+          reg_rdata_next[11:8] = range_attr_14_write_access_14_qs;
+          reg_rdata_next[15:12] = range_attr_14_execute_access_14_qs;
+          reg_rdata_next[19:16] = range_attr_14_log_denied_access_14_qs;
+        end
+
+        119: begin
+          reg_rdata_next[3:0] = range_attr_15_enable_15_qs;
+          reg_rdata_next[7:4] = range_attr_15_read_access_15_qs;
+          reg_rdata_next[11:8] = range_attr_15_write_access_15_qs;
+          reg_rdata_next[15:12] = range_attr_15_execute_access_15_qs;
+          reg_rdata_next[19:16] = range_attr_15_log_denied_access_15_qs;
+        end
+
+        120: begin
+          reg_rdata_next[3:0] = range_attr_16_enable_16_qs;
+          reg_rdata_next[7:4] = range_attr_16_read_access_16_qs;
+          reg_rdata_next[11:8] = range_attr_16_write_access_16_qs;
+          reg_rdata_next[15:12] = range_attr_16_execute_access_16_qs;
+          reg_rdata_next[19:16] = range_attr_16_log_denied_access_16_qs;
+        end
+
+        121: begin
+          reg_rdata_next[3:0] = range_attr_17_enable_17_qs;
+          reg_rdata_next[7:4] = range_attr_17_read_access_17_qs;
+          reg_rdata_next[11:8] = range_attr_17_write_access_17_qs;
+          reg_rdata_next[15:12] = range_attr_17_execute_access_17_qs;
+          reg_rdata_next[19:16] = range_attr_17_log_denied_access_17_qs;
+        end
+
+        122: begin
+          reg_rdata_next[3:0] = range_attr_18_enable_18_qs;
+          reg_rdata_next[7:4] = range_attr_18_read_access_18_qs;
+          reg_rdata_next[11:8] = range_attr_18_write_access_18_qs;
+          reg_rdata_next[15:12] = range_attr_18_execute_access_18_qs;
+          reg_rdata_next[19:16] = range_attr_18_log_denied_access_18_qs;
+        end
+
+        123: begin
+          reg_rdata_next[3:0] = range_attr_19_enable_19_qs;
+          reg_rdata_next[7:4] = range_attr_19_read_access_19_qs;
+          reg_rdata_next[11:8] = range_attr_19_write_access_19_qs;
+          reg_rdata_next[15:12] = range_attr_19_execute_access_19_qs;
+          reg_rdata_next[19:16] = range_attr_19_log_denied_access_19_qs;
+        end
+
+        124: begin
+          reg_rdata_next[3:0] = range_attr_20_enable_20_qs;
+          reg_rdata_next[7:4] = range_attr_20_read_access_20_qs;
+          reg_rdata_next[11:8] = range_attr_20_write_access_20_qs;
+          reg_rdata_next[15:12] = range_attr_20_execute_access_20_qs;
+          reg_rdata_next[19:16] = range_attr_20_log_denied_access_20_qs;
+        end
+
+        125: begin
+          reg_rdata_next[3:0] = range_attr_21_enable_21_qs;
+          reg_rdata_next[7:4] = range_attr_21_read_access_21_qs;
+          reg_rdata_next[11:8] = range_attr_21_write_access_21_qs;
+          reg_rdata_next[15:12] = range_attr_21_execute_access_21_qs;
+          reg_rdata_next[19:16] = range_attr_21_log_denied_access_21_qs;
+        end
+
+        126: begin
+          reg_rdata_next[3:0] = range_attr_22_enable_22_qs;
+          reg_rdata_next[7:4] = range_attr_22_read_access_22_qs;
+          reg_rdata_next[11:8] = range_attr_22_write_access_22_qs;
+          reg_rdata_next[15:12] = range_attr_22_execute_access_22_qs;
+          reg_rdata_next[19:16] = range_attr_22_log_denied_access_22_qs;
+        end
+
+        127: begin
+          reg_rdata_next[3:0] = range_attr_23_enable_23_qs;
+          reg_rdata_next[7:4] = range_attr_23_read_access_23_qs;
+          reg_rdata_next[11:8] = range_attr_23_write_access_23_qs;
+          reg_rdata_next[15:12] = range_attr_23_execute_access_23_qs;
+          reg_rdata_next[19:16] = range_attr_23_log_denied_access_23_qs;
+        end
+
+        128: begin
+          reg_rdata_next[3:0] = range_attr_24_enable_24_qs;
+          reg_rdata_next[7:4] = range_attr_24_read_access_24_qs;
+          reg_rdata_next[11:8] = range_attr_24_write_access_24_qs;
+          reg_rdata_next[15:12] = range_attr_24_execute_access_24_qs;
+          reg_rdata_next[19:16] = range_attr_24_log_denied_access_24_qs;
+        end
+
+        129: begin
+          reg_rdata_next[3:0] = range_attr_25_enable_25_qs;
+          reg_rdata_next[7:4] = range_attr_25_read_access_25_qs;
+          reg_rdata_next[11:8] = range_attr_25_write_access_25_qs;
+          reg_rdata_next[15:12] = range_attr_25_execute_access_25_qs;
+          reg_rdata_next[19:16] = range_attr_25_log_denied_access_25_qs;
+        end
+
+        130: begin
+          reg_rdata_next[3:0] = range_attr_26_enable_26_qs;
+          reg_rdata_next[7:4] = range_attr_26_read_access_26_qs;
+          reg_rdata_next[11:8] = range_attr_26_write_access_26_qs;
+          reg_rdata_next[15:12] = range_attr_26_execute_access_26_qs;
+          reg_rdata_next[19:16] = range_attr_26_log_denied_access_26_qs;
+        end
+
+        131: begin
+          reg_rdata_next[3:0] = range_attr_27_enable_27_qs;
+          reg_rdata_next[7:4] = range_attr_27_read_access_27_qs;
+          reg_rdata_next[11:8] = range_attr_27_write_access_27_qs;
+          reg_rdata_next[15:12] = range_attr_27_execute_access_27_qs;
+          reg_rdata_next[19:16] = range_attr_27_log_denied_access_27_qs;
+        end
+
+        132: begin
+          reg_rdata_next[3:0] = range_attr_28_enable_28_qs;
+          reg_rdata_next[7:4] = range_attr_28_read_access_28_qs;
+          reg_rdata_next[11:8] = range_attr_28_write_access_28_qs;
+          reg_rdata_next[15:12] = range_attr_28_execute_access_28_qs;
+          reg_rdata_next[19:16] = range_attr_28_log_denied_access_28_qs;
+        end
+
+        133: begin
+          reg_rdata_next[3:0] = range_attr_29_enable_29_qs;
+          reg_rdata_next[7:4] = range_attr_29_read_access_29_qs;
+          reg_rdata_next[11:8] = range_attr_29_write_access_29_qs;
+          reg_rdata_next[15:12] = range_attr_29_execute_access_29_qs;
+          reg_rdata_next[19:16] = range_attr_29_log_denied_access_29_qs;
+        end
+
+        134: begin
+          reg_rdata_next[3:0] = range_attr_30_enable_30_qs;
+          reg_rdata_next[7:4] = range_attr_30_read_access_30_qs;
+          reg_rdata_next[11:8] = range_attr_30_write_access_30_qs;
+          reg_rdata_next[15:12] = range_attr_30_execute_access_30_qs;
+          reg_rdata_next[19:16] = range_attr_30_log_denied_access_30_qs;
+        end
+
+        135: begin
+          reg_rdata_next[3:0] = range_attr_31_enable_31_qs;
+          reg_rdata_next[7:4] = range_attr_31_read_access_31_qs;
+          reg_rdata_next[11:8] = range_attr_31_write_access_31_qs;
+          reg_rdata_next[15:12] = range_attr_31_execute_access_31_qs;
+          reg_rdata_next[19:16] = range_attr_31_log_denied_access_31_qs;
+        end
+
+        136: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_0_read_perm_0_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_0_write_perm_0_qs;
+        end
+
+        137: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_1_read_perm_1_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_1_write_perm_1_qs;
+        end
+
+        138: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_2_read_perm_2_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_2_write_perm_2_qs;
+        end
+
+        139: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_3_read_perm_3_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_3_write_perm_3_qs;
+        end
+
+        140: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_4_read_perm_4_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_4_write_perm_4_qs;
+        end
+
+        141: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_5_read_perm_5_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_5_write_perm_5_qs;
+        end
+
+        142: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_6_read_perm_6_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_6_write_perm_6_qs;
+        end
+
+        143: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_7_read_perm_7_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_7_write_perm_7_qs;
+        end
+
+        144: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_8_read_perm_8_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_8_write_perm_8_qs;
+        end
+
+        145: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_9_read_perm_9_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_9_write_perm_9_qs;
+        end
+
+        146: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_10_read_perm_10_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_10_write_perm_10_qs;
+        end
+
+        147: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_11_read_perm_11_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_11_write_perm_11_qs;
+        end
+
+        148: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_12_read_perm_12_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_12_write_perm_12_qs;
+        end
+
+        149: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_13_read_perm_13_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_13_write_perm_13_qs;
+        end
+
+        150: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_14_read_perm_14_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_14_write_perm_14_qs;
+        end
+
+        151: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_15_read_perm_15_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_15_write_perm_15_qs;
+        end
+
+        152: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_16_read_perm_16_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_16_write_perm_16_qs;
+        end
+
+        153: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_17_read_perm_17_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_17_write_perm_17_qs;
+        end
+
+        154: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_18_read_perm_18_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_18_write_perm_18_qs;
+        end
+
+        155: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_19_read_perm_19_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_19_write_perm_19_qs;
+        end
+
+        156: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_20_read_perm_20_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_20_write_perm_20_qs;
+        end
+
+        157: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_21_read_perm_21_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_21_write_perm_21_qs;
+        end
+
+        158: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_22_read_perm_22_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_22_write_perm_22_qs;
+        end
+
+        159: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_23_read_perm_23_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_23_write_perm_23_qs;
+        end
+
+        160: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_24_read_perm_24_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_24_write_perm_24_qs;
+        end
+
+        161: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_25_read_perm_25_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_25_write_perm_25_qs;
+        end
+
+        162: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_26_read_perm_26_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_26_write_perm_26_qs;
+        end
+
+        163: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_27_read_perm_27_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_27_write_perm_27_qs;
+        end
+
+        164: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_28_read_perm_28_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_28_write_perm_28_qs;
+        end
+
+        165: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_29_read_perm_29_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_29_write_perm_29_qs;
+        end
+
+        166: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_30_read_perm_30_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_30_write_perm_30_qs;
+        end
+
+        167: begin
+          reg_rdata_next[15:0] = range_racl_policy_shadowed_31_read_perm_31_qs;
+          reg_rdata_next[31:16] = range_racl_policy_shadowed_31_write_perm_31_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -14409,7 +14438,7 @@ module ac_range_check_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

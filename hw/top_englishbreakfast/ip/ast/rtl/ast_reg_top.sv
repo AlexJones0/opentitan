@@ -1478,229 +1478,286 @@ module ast_reg_top (
 
 
 
-  logic [43:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == AST_REGA0_OFFSET);
-    addr_hit[ 1] = (reg_addr == AST_REGA1_OFFSET);
-    addr_hit[ 2] = (reg_addr == AST_REGA2_OFFSET);
-    addr_hit[ 3] = (reg_addr == AST_REGA3_OFFSET);
-    addr_hit[ 4] = (reg_addr == AST_REGA4_OFFSET);
-    addr_hit[ 5] = (reg_addr == AST_REGA5_OFFSET);
-    addr_hit[ 6] = (reg_addr == AST_REGA6_OFFSET);
-    addr_hit[ 7] = (reg_addr == AST_REGA7_OFFSET);
-    addr_hit[ 8] = (reg_addr == AST_REGA8_OFFSET);
-    addr_hit[ 9] = (reg_addr == AST_REGA9_OFFSET);
-    addr_hit[10] = (reg_addr == AST_REGA10_OFFSET);
-    addr_hit[11] = (reg_addr == AST_REGA11_OFFSET);
-    addr_hit[12] = (reg_addr == AST_REGA12_OFFSET);
-    addr_hit[13] = (reg_addr == AST_REGA13_OFFSET);
-    addr_hit[14] = (reg_addr == AST_REGA14_OFFSET);
-    addr_hit[15] = (reg_addr == AST_REGA15_OFFSET);
-    addr_hit[16] = (reg_addr == AST_REGA16_OFFSET);
-    addr_hit[17] = (reg_addr == AST_REGA17_OFFSET);
-    addr_hit[18] = (reg_addr == AST_REGA18_OFFSET);
-    addr_hit[19] = (reg_addr == AST_REGA19_OFFSET);
-    addr_hit[20] = (reg_addr == AST_REGA20_OFFSET);
-    addr_hit[21] = (reg_addr == AST_REGA21_OFFSET);
-    addr_hit[22] = (reg_addr == AST_REGA22_OFFSET);
-    addr_hit[23] = (reg_addr == AST_REGA23_OFFSET);
-    addr_hit[24] = (reg_addr == AST_REGA24_OFFSET);
-    addr_hit[25] = (reg_addr == AST_REGA25_OFFSET);
-    addr_hit[26] = (reg_addr == AST_REGA26_OFFSET);
-    addr_hit[27] = (reg_addr == AST_REGA27_OFFSET);
-    addr_hit[28] = (reg_addr == AST_REGA28_OFFSET);
-    addr_hit[29] = (reg_addr == AST_REGA29_OFFSET);
-    addr_hit[30] = (reg_addr == AST_REGA30_OFFSET);
-    addr_hit[31] = (reg_addr == AST_REGA31_OFFSET);
-    addr_hit[32] = (reg_addr == AST_REGA32_OFFSET);
-    addr_hit[33] = (reg_addr == AST_REGA33_OFFSET);
-    addr_hit[34] = (reg_addr == AST_REGA34_OFFSET);
-    addr_hit[35] = (reg_addr == AST_REGA35_OFFSET);
-    addr_hit[36] = (reg_addr == AST_REGA36_OFFSET);
-    addr_hit[37] = (reg_addr == AST_REGA37_OFFSET);
-    addr_hit[38] = (reg_addr == AST_REGAL_OFFSET);
-    addr_hit[39] = (reg_addr == AST_REGB_0_OFFSET);
-    addr_hit[40] = (reg_addr == AST_REGB_1_OFFSET);
-    addr_hit[41] = (reg_addr == AST_REGB_2_OFFSET);
-    addr_hit[42] = (reg_addr == AST_REGB_3_OFFSET);
-    addr_hit[43] = (reg_addr == AST_REGB_4_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      AST_REGA0_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      AST_REGA1_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      AST_REGA2_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      AST_REGA3_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      AST_REGA4_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      AST_REGA5_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      AST_REGA6_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      AST_REGA7_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      AST_REGA8_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      AST_REGA9_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      AST_REGA10_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      AST_REGA11_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      AST_REGA12_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      AST_REGA13_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      AST_REGA14_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      AST_REGA15_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      AST_REGA16_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      AST_REGA17_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      AST_REGA18_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      AST_REGA19_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      AST_REGA20_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      AST_REGA21_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      AST_REGA22_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      AST_REGA23_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      AST_REGA24_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      AST_REGA25_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      AST_REGA26_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      AST_REGA27_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      AST_REGA28_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      AST_REGA29_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      AST_REGA30_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      AST_REGA31_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      AST_REGA32_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      AST_REGA33_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      AST_REGA34_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      AST_REGA35_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      AST_REGA36_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      AST_REGA37_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      AST_REGAL_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      AST_REGB_0_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      AST_REGB_1_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      AST_REGB_2_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      AST_REGB_3_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      AST_REGB_4_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(AST_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(AST_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(AST_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(AST_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(AST_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(AST_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(AST_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(AST_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(AST_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(AST_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(AST_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(AST_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(AST_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(AST_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(AST_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(AST_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(AST_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(AST_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(AST_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(AST_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(AST_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(AST_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(AST_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(AST_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(AST_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(AST_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(AST_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(AST_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(AST_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(AST_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(AST_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(AST_PERMIT[31] & ~reg_be))) |
-               (addr_hit[32] & (|(AST_PERMIT[32] & ~reg_be))) |
-               (addr_hit[33] & (|(AST_PERMIT[33] & ~reg_be))) |
-               (addr_hit[34] & (|(AST_PERMIT[34] & ~reg_be))) |
-               (addr_hit[35] & (|(AST_PERMIT[35] & ~reg_be))) |
-               (addr_hit[36] & (|(AST_PERMIT[36] & ~reg_be))) |
-               (addr_hit[37] & (|(AST_PERMIT[37] & ~reg_be))) |
-               (addr_hit[38] & (|(AST_PERMIT[38] & ~reg_be))) |
-               (addr_hit[39] & (|(AST_PERMIT[39] & ~reg_be))) |
-               (addr_hit[40] & (|(AST_PERMIT[40] & ~reg_be))) |
-               (addr_hit[41] & (|(AST_PERMIT[41] & ~reg_be))) |
-               (addr_hit[42] & (|(AST_PERMIT[42] & ~reg_be))) |
-               (addr_hit[43] & (|(AST_PERMIT[43] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(AST_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(AST_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(AST_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(AST_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(AST_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(AST_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(AST_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(AST_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(AST_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(AST_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(AST_PERMIT[10] & ~reg_be);
+        11: wr_err = |(AST_PERMIT[11] & ~reg_be);
+        12: wr_err = |(AST_PERMIT[12] & ~reg_be);
+        13: wr_err = |(AST_PERMIT[13] & ~reg_be);
+        14: wr_err = |(AST_PERMIT[14] & ~reg_be);
+        15: wr_err = |(AST_PERMIT[15] & ~reg_be);
+        16: wr_err = |(AST_PERMIT[16] & ~reg_be);
+        17: wr_err = |(AST_PERMIT[17] & ~reg_be);
+        18: wr_err = |(AST_PERMIT[18] & ~reg_be);
+        19: wr_err = |(AST_PERMIT[19] & ~reg_be);
+        20: wr_err = |(AST_PERMIT[20] & ~reg_be);
+        21: wr_err = |(AST_PERMIT[21] & ~reg_be);
+        22: wr_err = |(AST_PERMIT[22] & ~reg_be);
+        23: wr_err = |(AST_PERMIT[23] & ~reg_be);
+        24: wr_err = |(AST_PERMIT[24] & ~reg_be);
+        25: wr_err = |(AST_PERMIT[25] & ~reg_be);
+        26: wr_err = |(AST_PERMIT[26] & ~reg_be);
+        27: wr_err = |(AST_PERMIT[27] & ~reg_be);
+        28: wr_err = |(AST_PERMIT[28] & ~reg_be);
+        29: wr_err = |(AST_PERMIT[29] & ~reg_be);
+        30: wr_err = |(AST_PERMIT[30] & ~reg_be);
+        31: wr_err = |(AST_PERMIT[31] & ~reg_be);
+        32: wr_err = |(AST_PERMIT[32] & ~reg_be);
+        33: wr_err = |(AST_PERMIT[33] & ~reg_be);
+        34: wr_err = |(AST_PERMIT[34] & ~reg_be);
+        35: wr_err = |(AST_PERMIT[35] & ~reg_be);
+        36: wr_err = |(AST_PERMIT[36] & ~reg_be);
+        37: wr_err = |(AST_PERMIT[37] & ~reg_be);
+        38: wr_err = |(AST_PERMIT[38] & ~reg_be);
+        39: wr_err = |(AST_PERMIT[39] & ~reg_be);
+        40: wr_err = |(AST_PERMIT[40] & ~reg_be);
+        41: wr_err = |(AST_PERMIT[41] & ~reg_be);
+        42: wr_err = |(AST_PERMIT[42] & ~reg_be);
+        43: wr_err = |(AST_PERMIT[43] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign rega2_we = addr_hit[2] & reg_we & !reg_error;
+
+
+  assign rega2_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign rega2_wd = reg_wdata[31:0];
-  assign rega3_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign rega3_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign rega3_wd = reg_wdata[31:0];
-  assign rega4_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign rega4_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign rega4_wd = reg_wdata[31:0];
-  assign rega5_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign rega5_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign rega5_wd = reg_wdata[31:0];
-  assign rega6_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign rega6_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign rega6_wd = reg_wdata[31:0];
-  assign rega7_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign rega7_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign rega7_wd = reg_wdata[31:0];
-  assign rega8_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign rega8_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign rega8_wd = reg_wdata[31:0];
-  assign rega9_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign rega9_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign rega9_wd = reg_wdata[31:0];
-  assign rega10_we = addr_hit[10] & reg_we & !reg_error;
+
+  assign rega10_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign rega10_wd = reg_wdata[31:0];
-  assign rega11_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign rega11_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign rega11_wd = reg_wdata[31:0];
-  assign rega12_we = addr_hit[12] & reg_we & !reg_error;
+
+  assign rega12_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
   assign rega12_wd = reg_wdata[31:0];
-  assign rega13_we = addr_hit[13] & reg_we & !reg_error;
+
+  assign rega13_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
   assign rega13_wd = reg_wdata[31:0];
-  assign rega14_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign rega14_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign rega14_wd = reg_wdata[31:0];
-  assign rega15_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign rega15_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign rega15_wd = reg_wdata[31:0];
-  assign rega16_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign rega16_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign rega16_wd = reg_wdata[31:0];
-  assign rega17_we = addr_hit[17] & reg_we & !reg_error;
+
+  assign rega17_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
   assign rega17_wd = reg_wdata[31:0];
-  assign rega18_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign rega18_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign rega18_wd = reg_wdata[31:0];
-  assign rega19_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign rega19_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign rega19_wd = reg_wdata[31:0];
-  assign rega20_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign rega20_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign rega20_wd = reg_wdata[31:0];
-  assign rega21_we = addr_hit[21] & reg_we & !reg_error;
+
+  assign rega21_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
   assign rega21_wd = reg_wdata[31:0];
-  assign rega22_we = addr_hit[22] & reg_we & !reg_error;
+
+  assign rega22_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign rega22_wd = reg_wdata[31:0];
-  assign rega23_we = addr_hit[23] & reg_we & !reg_error;
+
+  assign rega23_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign rega23_wd = reg_wdata[31:0];
-  assign rega24_we = addr_hit[24] & reg_we & !reg_error;
+
+  assign rega24_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
   assign rega24_wd = reg_wdata[31:0];
-  assign rega25_we = addr_hit[25] & reg_we & !reg_error;
+
+  assign rega25_we = addr_valid & (addr_idx == 25) & reg_we & !reg_error;
 
   assign rega25_wd = reg_wdata[31:0];
-  assign rega26_we = addr_hit[26] & reg_we & !reg_error;
+
+  assign rega26_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
   assign rega26_wd = reg_wdata[31:0];
-  assign rega27_we = addr_hit[27] & reg_we & !reg_error;
+
+  assign rega27_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
   assign rega27_wd = reg_wdata[31:0];
-  assign rega29_we = addr_hit[29] & reg_we & !reg_error;
+
+
+  assign rega29_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
   assign rega29_wd = reg_wdata[31:0];
-  assign rega30_we = addr_hit[30] & reg_we & !reg_error;
+
+  assign rega30_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
   assign rega30_wd = reg_wdata[31:0];
-  assign rega31_we = addr_hit[31] & reg_we & !reg_error;
+
+  assign rega31_we = addr_valid & (addr_idx == 31) & reg_we & !reg_error;
 
   assign rega31_wd = reg_wdata[31:0];
-  assign rega32_we = addr_hit[32] & reg_we & !reg_error;
+
+  assign rega32_we = addr_valid & (addr_idx == 32) & reg_we & !reg_error;
 
   assign rega32_wd = reg_wdata[31:0];
-  assign rega33_we = addr_hit[33] & reg_we & !reg_error;
+
+  assign rega33_we = addr_valid & (addr_idx == 33) & reg_we & !reg_error;
 
   assign rega33_wd = reg_wdata[31:0];
-  assign rega34_we = addr_hit[34] & reg_we & !reg_error;
+
+  assign rega34_we = addr_valid & (addr_idx == 34) & reg_we & !reg_error;
 
   assign rega34_wd = reg_wdata[31:0];
-  assign rega35_we = addr_hit[35] & reg_we & !reg_error;
+
+  assign rega35_we = addr_valid & (addr_idx == 35) & reg_we & !reg_error;
 
   assign rega35_wd = reg_wdata[31:0];
-  assign rega36_we = addr_hit[36] & reg_we & !reg_error;
+
+  assign rega36_we = addr_valid & (addr_idx == 36) & reg_we & !reg_error;
 
   assign rega36_wd = reg_wdata[31:0];
-  assign rega37_we = addr_hit[37] & reg_we & !reg_error;
+
+  assign rega37_we = addr_valid & (addr_idx == 37) & reg_we & !reg_error;
 
   assign rega37_wd = reg_wdata[31:0];
-  assign regal_we = addr_hit[38] & reg_we & !reg_error;
+
+  assign regal_we = addr_valid & (addr_idx == 38) & reg_we & !reg_error;
 
   assign regal_wd = reg_wdata[31:0];
-  assign regb_0_we = addr_hit[39] & reg_we & !reg_error;
+
+  assign regb_0_we = addr_valid & (addr_idx == 39) & reg_we & !reg_error;
 
   assign regb_0_wd = reg_wdata[31:0];
-  assign regb_1_we = addr_hit[40] & reg_we & !reg_error;
+
+  assign regb_1_we = addr_valid & (addr_idx == 40) & reg_we & !reg_error;
 
   assign regb_1_wd = reg_wdata[31:0];
-  assign regb_2_we = addr_hit[41] & reg_we & !reg_error;
+
+  assign regb_2_we = addr_valid & (addr_idx == 41) & reg_we & !reg_error;
 
   assign regb_2_wd = reg_wdata[31:0];
-  assign regb_3_we = addr_hit[42] & reg_we & !reg_error;
+
+  assign regb_3_we = addr_valid & (addr_idx == 42) & reg_we & !reg_error;
 
   assign regb_3_wd = reg_wdata[31:0];
-  assign regb_4_we = addr_hit[43] & reg_we & !reg_error;
+
+  assign regb_4_we = addr_valid & (addr_idx == 43) & reg_we & !reg_error;
 
   assign regb_4_wd = reg_wdata[31:0];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -1752,188 +1809,193 @@ module ast_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[31:0] = rega0_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[31:0] = rega0_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[31:0] = rega1_qs;
-      end
+        1: begin
+          reg_rdata_next[31:0] = rega1_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[31:0] = rega2_qs;
-      end
+        2: begin
+          reg_rdata_next[31:0] = rega2_qs;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[31:0] = rega3_qs;
-      end
+        3: begin
+          reg_rdata_next[31:0] = rega3_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[31:0] = rega4_qs;
-      end
+        4: begin
+          reg_rdata_next[31:0] = rega4_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[31:0] = rega5_qs;
-      end
+        5: begin
+          reg_rdata_next[31:0] = rega5_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[31:0] = rega6_qs;
-      end
+        6: begin
+          reg_rdata_next[31:0] = rega6_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[31:0] = rega7_qs;
-      end
+        7: begin
+          reg_rdata_next[31:0] = rega7_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[31:0] = rega8_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = rega8_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[31:0] = rega9_qs;
-      end
+        9: begin
+          reg_rdata_next[31:0] = rega9_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[31:0] = rega10_qs;
-      end
+        10: begin
+          reg_rdata_next[31:0] = rega10_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[31:0] = rega11_qs;
-      end
+        11: begin
+          reg_rdata_next[31:0] = rega11_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[31:0] = rega12_qs;
-      end
+        12: begin
+          reg_rdata_next[31:0] = rega12_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[31:0] = rega13_qs;
-      end
+        13: begin
+          reg_rdata_next[31:0] = rega13_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[31:0] = rega14_qs;
-      end
+        14: begin
+          reg_rdata_next[31:0] = rega14_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[31:0] = rega15_qs;
-      end
+        15: begin
+          reg_rdata_next[31:0] = rega15_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[31:0] = rega16_qs;
-      end
+        16: begin
+          reg_rdata_next[31:0] = rega16_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[31:0] = rega17_qs;
-      end
+        17: begin
+          reg_rdata_next[31:0] = rega17_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[31:0] = rega18_qs;
-      end
+        18: begin
+          reg_rdata_next[31:0] = rega18_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[31:0] = rega19_qs;
-      end
+        19: begin
+          reg_rdata_next[31:0] = rega19_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[31:0] = rega20_qs;
-      end
+        20: begin
+          reg_rdata_next[31:0] = rega20_qs;
+        end
 
-      addr_hit[21]: begin
-        reg_rdata_next[31:0] = rega21_qs;
-      end
+        21: begin
+          reg_rdata_next[31:0] = rega21_qs;
+        end
 
-      addr_hit[22]: begin
-        reg_rdata_next[31:0] = rega22_qs;
-      end
+        22: begin
+          reg_rdata_next[31:0] = rega22_qs;
+        end
 
-      addr_hit[23]: begin
-        reg_rdata_next[31:0] = rega23_qs;
-      end
+        23: begin
+          reg_rdata_next[31:0] = rega23_qs;
+        end
 
-      addr_hit[24]: begin
-        reg_rdata_next[31:0] = rega24_qs;
-      end
+        24: begin
+          reg_rdata_next[31:0] = rega24_qs;
+        end
 
-      addr_hit[25]: begin
-        reg_rdata_next[31:0] = rega25_qs;
-      end
+        25: begin
+          reg_rdata_next[31:0] = rega25_qs;
+        end
 
-      addr_hit[26]: begin
-        reg_rdata_next[31:0] = rega26_qs;
-      end
+        26: begin
+          reg_rdata_next[31:0] = rega26_qs;
+        end
 
-      addr_hit[27]: begin
-        reg_rdata_next[31:0] = rega27_qs;
-      end
+        27: begin
+          reg_rdata_next[31:0] = rega27_qs;
+        end
 
-      addr_hit[28]: begin
-        reg_rdata_next[31:0] = rega28_qs;
-      end
+        28: begin
+          reg_rdata_next[31:0] = rega28_qs;
+        end
 
-      addr_hit[29]: begin
-        reg_rdata_next[31:0] = rega29_qs;
-      end
+        29: begin
+          reg_rdata_next[31:0] = rega29_qs;
+        end
 
-      addr_hit[30]: begin
-        reg_rdata_next[31:0] = rega30_qs;
-      end
+        30: begin
+          reg_rdata_next[31:0] = rega30_qs;
+        end
 
-      addr_hit[31]: begin
-        reg_rdata_next[31:0] = rega31_qs;
-      end
+        31: begin
+          reg_rdata_next[31:0] = rega31_qs;
+        end
 
-      addr_hit[32]: begin
-        reg_rdata_next[31:0] = rega32_qs;
-      end
+        32: begin
+          reg_rdata_next[31:0] = rega32_qs;
+        end
 
-      addr_hit[33]: begin
-        reg_rdata_next[31:0] = rega33_qs;
-      end
+        33: begin
+          reg_rdata_next[31:0] = rega33_qs;
+        end
 
-      addr_hit[34]: begin
-        reg_rdata_next[31:0] = rega34_qs;
-      end
+        34: begin
+          reg_rdata_next[31:0] = rega34_qs;
+        end
 
-      addr_hit[35]: begin
-        reg_rdata_next[31:0] = rega35_qs;
-      end
+        35: begin
+          reg_rdata_next[31:0] = rega35_qs;
+        end
 
-      addr_hit[36]: begin
-        reg_rdata_next[31:0] = rega36_qs;
-      end
+        36: begin
+          reg_rdata_next[31:0] = rega36_qs;
+        end
 
-      addr_hit[37]: begin
-        reg_rdata_next[31:0] = rega37_qs;
-      end
+        37: begin
+          reg_rdata_next[31:0] = rega37_qs;
+        end
 
-      addr_hit[38]: begin
-        reg_rdata_next[31:0] = '0;
-      end
+        38: begin
+          reg_rdata_next[31:0] = '0;
+        end
 
-      addr_hit[39]: begin
-        reg_rdata_next[31:0] = regb_0_qs;
-      end
+        39: begin
+          reg_rdata_next[31:0] = regb_0_qs;
+        end
 
-      addr_hit[40]: begin
-        reg_rdata_next[31:0] = regb_1_qs;
-      end
+        40: begin
+          reg_rdata_next[31:0] = regb_1_qs;
+        end
 
-      addr_hit[41]: begin
-        reg_rdata_next[31:0] = regb_2_qs;
-      end
+        41: begin
+          reg_rdata_next[31:0] = regb_2_qs;
+        end
 
-      addr_hit[42]: begin
-        reg_rdata_next[31:0] = regb_3_qs;
-      end
+        42: begin
+          reg_rdata_next[31:0] = regb_3_qs;
+        end
 
-      addr_hit[43]: begin
-        reg_rdata_next[31:0] = regb_4_qs;
-      end
+        43: begin
+          reg_rdata_next[31:0] = regb_4_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -1958,7 +2020,7 @@ module ast_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

@@ -2001,201 +2001,196 @@ module flash_ctrl_prim_reg_top (
 
 
 
-  logic [20:0] addr_hit;
+  logic [$clog2(NumRegsPrim)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == FLASH_CTRL_CSR0_REGWEN_OFFSET);
-    addr_hit[ 1] = (reg_addr == FLASH_CTRL_CSR1_OFFSET);
-    addr_hit[ 2] = (reg_addr == FLASH_CTRL_CSR2_OFFSET);
-    addr_hit[ 3] = (reg_addr == FLASH_CTRL_CSR3_OFFSET);
-    addr_hit[ 4] = (reg_addr == FLASH_CTRL_CSR4_OFFSET);
-    addr_hit[ 5] = (reg_addr == FLASH_CTRL_CSR5_OFFSET);
-    addr_hit[ 6] = (reg_addr == FLASH_CTRL_CSR6_OFFSET);
-    addr_hit[ 7] = (reg_addr == FLASH_CTRL_CSR7_OFFSET);
-    addr_hit[ 8] = (reg_addr == FLASH_CTRL_CSR8_OFFSET);
-    addr_hit[ 9] = (reg_addr == FLASH_CTRL_CSR9_OFFSET);
-    addr_hit[10] = (reg_addr == FLASH_CTRL_CSR10_OFFSET);
-    addr_hit[11] = (reg_addr == FLASH_CTRL_CSR11_OFFSET);
-    addr_hit[12] = (reg_addr == FLASH_CTRL_CSR12_OFFSET);
-    addr_hit[13] = (reg_addr == FLASH_CTRL_CSR13_OFFSET);
-    addr_hit[14] = (reg_addr == FLASH_CTRL_CSR14_OFFSET);
-    addr_hit[15] = (reg_addr == FLASH_CTRL_CSR15_OFFSET);
-    addr_hit[16] = (reg_addr == FLASH_CTRL_CSR16_OFFSET);
-    addr_hit[17] = (reg_addr == FLASH_CTRL_CSR17_OFFSET);
-    addr_hit[18] = (reg_addr == FLASH_CTRL_CSR18_OFFSET);
-    addr_hit[19] = (reg_addr == FLASH_CTRL_CSR19_OFFSET);
-    addr_hit[20] = (reg_addr == FLASH_CTRL_CSR20_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      FLASH_CTRL_CSR0_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      FLASH_CTRL_CSR1_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      FLASH_CTRL_CSR2_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      FLASH_CTRL_CSR3_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      FLASH_CTRL_CSR4_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      FLASH_CTRL_CSR5_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      FLASH_CTRL_CSR6_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      FLASH_CTRL_CSR7_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      FLASH_CTRL_CSR8_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      FLASH_CTRL_CSR9_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      FLASH_CTRL_CSR10_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      FLASH_CTRL_CSR11_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      FLASH_CTRL_CSR12_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      FLASH_CTRL_CSR13_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      FLASH_CTRL_CSR14_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      FLASH_CTRL_CSR15_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      FLASH_CTRL_CSR16_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      FLASH_CTRL_CSR17_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      FLASH_CTRL_CSR18_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      FLASH_CTRL_CSR19_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      FLASH_CTRL_CSR20_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(FLASH_CTRL_PRIM_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(FLASH_CTRL_PRIM_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(FLASH_CTRL_PRIM_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(FLASH_CTRL_PRIM_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(FLASH_CTRL_PRIM_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(FLASH_CTRL_PRIM_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(FLASH_CTRL_PRIM_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(FLASH_CTRL_PRIM_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(FLASH_CTRL_PRIM_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(FLASH_CTRL_PRIM_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(FLASH_CTRL_PRIM_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(FLASH_CTRL_PRIM_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(FLASH_CTRL_PRIM_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(FLASH_CTRL_PRIM_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(FLASH_CTRL_PRIM_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(FLASH_CTRL_PRIM_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(FLASH_CTRL_PRIM_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(FLASH_CTRL_PRIM_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(FLASH_CTRL_PRIM_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(FLASH_CTRL_PRIM_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(FLASH_CTRL_PRIM_PERMIT[20] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(FLASH_CTRL_PRIM_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(FLASH_CTRL_PRIM_PERMIT[10] & ~reg_be);
+        11: wr_err = |(FLASH_CTRL_PRIM_PERMIT[11] & ~reg_be);
+        12: wr_err = |(FLASH_CTRL_PRIM_PERMIT[12] & ~reg_be);
+        13: wr_err = |(FLASH_CTRL_PRIM_PERMIT[13] & ~reg_be);
+        14: wr_err = |(FLASH_CTRL_PRIM_PERMIT[14] & ~reg_be);
+        15: wr_err = |(FLASH_CTRL_PRIM_PERMIT[15] & ~reg_be);
+        16: wr_err = |(FLASH_CTRL_PRIM_PERMIT[16] & ~reg_be);
+        17: wr_err = |(FLASH_CTRL_PRIM_PERMIT[17] & ~reg_be);
+        18: wr_err = |(FLASH_CTRL_PRIM_PERMIT[18] & ~reg_be);
+        19: wr_err = |(FLASH_CTRL_PRIM_PERMIT[19] & ~reg_be);
+        20: wr_err = |(FLASH_CTRL_PRIM_PERMIT[20] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign csr0_regwen_we = addr_hit[0] & reg_we & !reg_error;
+  assign csr0_regwen_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign csr0_regwen_wd = reg_wdata[0];
-  assign csr1_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign csr1_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign csr1_field0_wd = reg_wdata[7:0];
-
   assign csr1_field1_wd = reg_wdata[12:8];
-  assign csr2_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign csr2_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign csr2_field0_wd = reg_wdata[0];
-
   assign csr2_field1_wd = reg_wdata[1];
-
   assign csr2_field2_wd = reg_wdata[2];
-
   assign csr2_field3_wd = reg_wdata[3];
-
   assign csr2_field4_wd = reg_wdata[4];
-
   assign csr2_field5_wd = reg_wdata[5];
-
   assign csr2_field6_wd = reg_wdata[6];
-
   assign csr2_field7_wd = reg_wdata[7];
-  assign csr3_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign csr3_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign csr3_field0_wd = reg_wdata[3:0];
-
   assign csr3_field1_wd = reg_wdata[7:4];
-
   assign csr3_field2_wd = reg_wdata[10:8];
-
   assign csr3_field3_wd = reg_wdata[13:11];
-
   assign csr3_field4_wd = reg_wdata[16:14];
-
   assign csr3_field5_wd = reg_wdata[19:17];
-
   assign csr3_field6_wd = reg_wdata[20];
-
   assign csr3_field7_wd = reg_wdata[23:21];
-
   assign csr3_field8_wd = reg_wdata[25:24];
-
   assign csr3_field9_wd = reg_wdata[27:26];
-  assign csr4_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign csr4_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign csr4_field0_wd = reg_wdata[2:0];
-
   assign csr4_field1_wd = reg_wdata[5:3];
-
   assign csr4_field2_wd = reg_wdata[8:6];
-
   assign csr4_field3_wd = reg_wdata[11:9];
-  assign csr5_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign csr5_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign csr5_field0_wd = reg_wdata[2:0];
-
   assign csr5_field1_wd = reg_wdata[4:3];
-
   assign csr5_field2_wd = reg_wdata[13:5];
-
   assign csr5_field3_wd = reg_wdata[18:14];
-
   assign csr5_field4_wd = reg_wdata[22:19];
-  assign csr6_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign csr6_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign csr6_field0_wd = reg_wdata[2:0];
-
   assign csr6_field1_wd = reg_wdata[5:3];
-
   assign csr6_field2_wd = reg_wdata[13:6];
-
   assign csr6_field3_wd = reg_wdata[16:14];
-
   assign csr6_field4_wd = reg_wdata[18:17];
-
   assign csr6_field5_wd = reg_wdata[20:19];
-
   assign csr6_field6_wd = reg_wdata[22:21];
-
   assign csr6_field7_wd = reg_wdata[23];
-
   assign csr6_field8_wd = reg_wdata[24];
-  assign csr7_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign csr7_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign csr7_field0_wd = reg_wdata[7:0];
-
   assign csr7_field1_wd = reg_wdata[16:8];
-  assign csr8_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign csr8_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign csr8_wd = reg_wdata[31:0];
-  assign csr9_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign csr9_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign csr9_wd = reg_wdata[31:0];
-  assign csr10_we = addr_hit[10] & reg_we & !reg_error;
+
+  assign csr10_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign csr10_wd = reg_wdata[31:0];
-  assign csr11_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign csr11_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign csr11_wd = reg_wdata[31:0];
-  assign csr12_we = addr_hit[12] & reg_we & !reg_error;
+
+  assign csr12_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
   assign csr12_wd = reg_wdata[9:0];
-  assign csr13_we = addr_hit[13] & reg_we & !reg_error;
+
+  assign csr13_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
   assign csr13_field0_wd = reg_wdata[19:0];
-
   assign csr13_field1_wd = reg_wdata[20];
-  assign csr14_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign csr14_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign csr14_field0_wd = reg_wdata[7:0];
-
   assign csr14_field1_wd = reg_wdata[8];
-  assign csr15_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign csr15_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign csr15_field0_wd = reg_wdata[7:0];
-
   assign csr15_field1_wd = reg_wdata[8];
-  assign csr16_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign csr16_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign csr16_field0_wd = reg_wdata[7:0];
-
   assign csr16_field1_wd = reg_wdata[8];
-  assign csr17_we = addr_hit[17] & reg_we & !reg_error;
+
+  assign csr17_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
   assign csr17_field0_wd = reg_wdata[7:0];
-
   assign csr17_field1_wd = reg_wdata[8];
-  assign csr18_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign csr18_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign csr18_wd = reg_wdata[0];
-  assign csr19_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign csr19_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign csr19_wd = reg_wdata[0];
-  assign csr20_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign csr20_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign csr20_field0_wd = reg_wdata[0];
-
   assign csr20_field1_wd = reg_wdata[1];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -2224,136 +2219,141 @@ module flash_ctrl_prim_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = csr0_regwen_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = csr0_regwen_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[7:0] = csr1_field0_qs;
-        reg_rdata_next[12:8] = csr1_field1_qs;
-      end
+        1: begin
+          reg_rdata_next[7:0] = csr1_field0_qs;
+          reg_rdata_next[12:8] = csr1_field1_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = csr2_field0_qs;
-        reg_rdata_next[1] = csr2_field1_qs;
-        reg_rdata_next[2] = csr2_field2_qs;
-        reg_rdata_next[3] = csr2_field3_qs;
-        reg_rdata_next[4] = csr2_field4_qs;
-        reg_rdata_next[5] = csr2_field5_qs;
-        reg_rdata_next[6] = csr2_field6_qs;
-        reg_rdata_next[7] = csr2_field7_qs;
-      end
+        2: begin
+          reg_rdata_next[0] = csr2_field0_qs;
+          reg_rdata_next[1] = csr2_field1_qs;
+          reg_rdata_next[2] = csr2_field2_qs;
+          reg_rdata_next[3] = csr2_field3_qs;
+          reg_rdata_next[4] = csr2_field4_qs;
+          reg_rdata_next[5] = csr2_field5_qs;
+          reg_rdata_next[6] = csr2_field6_qs;
+          reg_rdata_next[7] = csr2_field7_qs;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[3:0] = csr3_field0_qs;
-        reg_rdata_next[7:4] = csr3_field1_qs;
-        reg_rdata_next[10:8] = csr3_field2_qs;
-        reg_rdata_next[13:11] = csr3_field3_qs;
-        reg_rdata_next[16:14] = csr3_field4_qs;
-        reg_rdata_next[19:17] = csr3_field5_qs;
-        reg_rdata_next[20] = csr3_field6_qs;
-        reg_rdata_next[23:21] = csr3_field7_qs;
-        reg_rdata_next[25:24] = csr3_field8_qs;
-        reg_rdata_next[27:26] = csr3_field9_qs;
-      end
+        3: begin
+          reg_rdata_next[3:0] = csr3_field0_qs;
+          reg_rdata_next[7:4] = csr3_field1_qs;
+          reg_rdata_next[10:8] = csr3_field2_qs;
+          reg_rdata_next[13:11] = csr3_field3_qs;
+          reg_rdata_next[16:14] = csr3_field4_qs;
+          reg_rdata_next[19:17] = csr3_field5_qs;
+          reg_rdata_next[20] = csr3_field6_qs;
+          reg_rdata_next[23:21] = csr3_field7_qs;
+          reg_rdata_next[25:24] = csr3_field8_qs;
+          reg_rdata_next[27:26] = csr3_field9_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[2:0] = csr4_field0_qs;
-        reg_rdata_next[5:3] = csr4_field1_qs;
-        reg_rdata_next[8:6] = csr4_field2_qs;
-        reg_rdata_next[11:9] = csr4_field3_qs;
-      end
+        4: begin
+          reg_rdata_next[2:0] = csr4_field0_qs;
+          reg_rdata_next[5:3] = csr4_field1_qs;
+          reg_rdata_next[8:6] = csr4_field2_qs;
+          reg_rdata_next[11:9] = csr4_field3_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[2:0] = csr5_field0_qs;
-        reg_rdata_next[4:3] = csr5_field1_qs;
-        reg_rdata_next[13:5] = csr5_field2_qs;
-        reg_rdata_next[18:14] = csr5_field3_qs;
-        reg_rdata_next[22:19] = csr5_field4_qs;
-      end
+        5: begin
+          reg_rdata_next[2:0] = csr5_field0_qs;
+          reg_rdata_next[4:3] = csr5_field1_qs;
+          reg_rdata_next[13:5] = csr5_field2_qs;
+          reg_rdata_next[18:14] = csr5_field3_qs;
+          reg_rdata_next[22:19] = csr5_field4_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[2:0] = csr6_field0_qs;
-        reg_rdata_next[5:3] = csr6_field1_qs;
-        reg_rdata_next[13:6] = csr6_field2_qs;
-        reg_rdata_next[16:14] = csr6_field3_qs;
-        reg_rdata_next[18:17] = csr6_field4_qs;
-        reg_rdata_next[20:19] = csr6_field5_qs;
-        reg_rdata_next[22:21] = csr6_field6_qs;
-        reg_rdata_next[23] = csr6_field7_qs;
-        reg_rdata_next[24] = csr6_field8_qs;
-      end
+        6: begin
+          reg_rdata_next[2:0] = csr6_field0_qs;
+          reg_rdata_next[5:3] = csr6_field1_qs;
+          reg_rdata_next[13:6] = csr6_field2_qs;
+          reg_rdata_next[16:14] = csr6_field3_qs;
+          reg_rdata_next[18:17] = csr6_field4_qs;
+          reg_rdata_next[20:19] = csr6_field5_qs;
+          reg_rdata_next[22:21] = csr6_field6_qs;
+          reg_rdata_next[23] = csr6_field7_qs;
+          reg_rdata_next[24] = csr6_field8_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[7:0] = csr7_field0_qs;
-        reg_rdata_next[16:8] = csr7_field1_qs;
-      end
+        7: begin
+          reg_rdata_next[7:0] = csr7_field0_qs;
+          reg_rdata_next[16:8] = csr7_field1_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[31:0] = csr8_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = csr8_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[31:0] = csr9_qs;
-      end
+        9: begin
+          reg_rdata_next[31:0] = csr9_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[31:0] = csr10_qs;
-      end
+        10: begin
+          reg_rdata_next[31:0] = csr10_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[31:0] = csr11_qs;
-      end
+        11: begin
+          reg_rdata_next[31:0] = csr11_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[9:0] = csr12_qs;
-      end
+        12: begin
+          reg_rdata_next[9:0] = csr12_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[19:0] = csr13_field0_qs;
-        reg_rdata_next[20] = csr13_field1_qs;
-      end
+        13: begin
+          reg_rdata_next[19:0] = csr13_field0_qs;
+          reg_rdata_next[20] = csr13_field1_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[7:0] = csr14_field0_qs;
-        reg_rdata_next[8] = csr14_field1_qs;
-      end
+        14: begin
+          reg_rdata_next[7:0] = csr14_field0_qs;
+          reg_rdata_next[8] = csr14_field1_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[7:0] = csr15_field0_qs;
-        reg_rdata_next[8] = csr15_field1_qs;
-      end
+        15: begin
+          reg_rdata_next[7:0] = csr15_field0_qs;
+          reg_rdata_next[8] = csr15_field1_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[7:0] = csr16_field0_qs;
-        reg_rdata_next[8] = csr16_field1_qs;
-      end
+        16: begin
+          reg_rdata_next[7:0] = csr16_field0_qs;
+          reg_rdata_next[8] = csr16_field1_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[7:0] = csr17_field0_qs;
-        reg_rdata_next[8] = csr17_field1_qs;
-      end
+        17: begin
+          reg_rdata_next[7:0] = csr17_field0_qs;
+          reg_rdata_next[8] = csr17_field1_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[0] = csr18_qs;
-      end
+        18: begin
+          reg_rdata_next[0] = csr18_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[0] = csr19_qs;
-      end
+        19: begin
+          reg_rdata_next[0] = csr19_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[0] = csr20_field0_qs;
-        reg_rdata_next[1] = csr20_field1_qs;
-        reg_rdata_next[2] = csr20_field2_qs;
-      end
+        20: begin
+          reg_rdata_next[0] = csr20_field0_qs;
+          reg_rdata_next[1] = csr20_field1_qs;
+          reg_rdata_next[2] = csr20_field2_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -2378,7 +2378,7 @@ module flash_ctrl_prim_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

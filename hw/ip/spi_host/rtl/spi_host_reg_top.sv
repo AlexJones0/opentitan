@@ -1725,12 +1725,15 @@ module spi_host_reg_top
 
 
 
-  logic [11:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [11:0] racl_addr_hit_read;
-  logic [11:0] racl_addr_hit_write;
+  logic [$clog2(NumRegs)-1:0] racl_addr_read_idx;
+  logic [$clog2(NumRegs)-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -1749,40 +1752,50 @@ module spi_host_reg_top
   end
 
   always_comb begin
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
-    addr_hit[ 0] = (reg_addr == SPI_HOST_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == SPI_HOST_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == SPI_HOST_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == SPI_HOST_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == SPI_HOST_CONTROL_OFFSET);
-    addr_hit[ 5] = (reg_addr == SPI_HOST_STATUS_OFFSET);
-    addr_hit[ 6] = (reg_addr == SPI_HOST_CONFIGOPTS_OFFSET);
-    addr_hit[ 7] = (reg_addr == SPI_HOST_CSID_OFFSET);
-    addr_hit[ 8] = (reg_addr == SPI_HOST_COMMAND_OFFSET);
-    addr_hit[ 9] = (reg_addr == SPI_HOST_ERROR_ENABLE_OFFSET);
-    addr_hit[10] = (reg_addr == SPI_HOST_ERROR_STATUS_OFFSET);
-    addr_hit[11] = (reg_addr == SPI_HOST_EVENT_ENABLE_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      SPI_HOST_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      SPI_HOST_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      SPI_HOST_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      SPI_HOST_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      SPI_HOST_CONTROL_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      SPI_HOST_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      SPI_HOST_CONFIGOPTS_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      SPI_HOST_CSID_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      SPI_HOST_COMMAND_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      SPI_HOST_ERROR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      SPI_HOST_ERROR_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      SPI_HOST_EVENT_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < 12; slice_idx++) begin
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
       end
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -1797,113 +1810,102 @@ module spi_host_reg_top
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((racl_addr_hit_write[ 0] & (|(SPI_HOST_PERMIT[ 0] & ~reg_be))) |
-               (racl_addr_hit_write[ 1] & (|(SPI_HOST_PERMIT[ 1] & ~reg_be))) |
-               (racl_addr_hit_write[ 2] & (|(SPI_HOST_PERMIT[ 2] & ~reg_be))) |
-               (racl_addr_hit_write[ 3] & (|(SPI_HOST_PERMIT[ 3] & ~reg_be))) |
-               (racl_addr_hit_write[ 4] & (|(SPI_HOST_PERMIT[ 4] & ~reg_be))) |
-               (racl_addr_hit_write[ 5] & (|(SPI_HOST_PERMIT[ 5] & ~reg_be))) |
-               (racl_addr_hit_write[ 6] & (|(SPI_HOST_PERMIT[ 6] & ~reg_be))) |
-               (racl_addr_hit_write[ 7] & (|(SPI_HOST_PERMIT[ 7] & ~reg_be))) |
-               (racl_addr_hit_write[ 8] & (|(SPI_HOST_PERMIT[ 8] & ~reg_be))) |
-               (racl_addr_hit_write[ 9] & (|(SPI_HOST_PERMIT[ 9] & ~reg_be))) |
-               (racl_addr_hit_write[10] & (|(SPI_HOST_PERMIT[10] & ~reg_be))) |
-               (racl_addr_hit_write[11] & (|(SPI_HOST_PERMIT[11] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && racl_addr_write_valid) begin
+      case (racl_addr_write_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(SPI_HOST_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(SPI_HOST_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(SPI_HOST_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(SPI_HOST_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(SPI_HOST_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(SPI_HOST_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(SPI_HOST_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(SPI_HOST_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(SPI_HOST_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(SPI_HOST_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(SPI_HOST_PERMIT[10] & ~reg_be);
+        11: wr_err = |(SPI_HOST_PERMIT[11] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = racl_addr_hit_write[0] & reg_we & !reg_error;
+  assign intr_state_we = racl_addr_write_valid & (racl_addr_write_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_error_wd = reg_wdata[0];
-  assign intr_enable_we = racl_addr_hit_write[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_error_wd = reg_wdata[0];
-
   assign intr_enable_spi_event_wd = reg_wdata[1];
-  assign intr_test_we = racl_addr_hit_write[2] & reg_we & !reg_error;
+
+  assign intr_test_we = racl_addr_write_valid & (racl_addr_write_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_error_wd = reg_wdata[0];
-
   assign intr_test_spi_event_wd = reg_wdata[1];
-  assign alert_test_we = racl_addr_hit_write[3] & reg_we & !reg_error;
+
+  assign alert_test_we = racl_addr_write_valid & (racl_addr_write_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign control_we = racl_addr_hit_write[4] & reg_we & !reg_error;
+
+  assign control_we = racl_addr_write_valid & (racl_addr_write_idx == 4) & reg_we & !reg_error;
 
   assign control_rx_watermark_wd = reg_wdata[7:0];
-
   assign control_tx_watermark_wd = reg_wdata[15:8];
-
   assign control_output_en_wd = reg_wdata[29];
-
   assign control_sw_rst_wd = reg_wdata[30];
-
   assign control_spien_wd = reg_wdata[31];
-  assign configopts_we = racl_addr_hit_write[6] & reg_we & !reg_error;
+
+
+  assign configopts_we = racl_addr_write_valid & (racl_addr_write_idx == 6) & reg_we & !reg_error;
 
   assign configopts_clkdiv_wd = reg_wdata[15:0];
-
   assign configopts_csnidle_wd = reg_wdata[19:16];
-
   assign configopts_csntrail_wd = reg_wdata[23:20];
-
   assign configopts_csnlead_wd = reg_wdata[27:24];
-
   assign configopts_fullcyc_wd = reg_wdata[29];
-
   assign configopts_cpha_wd = reg_wdata[30];
-
   assign configopts_cpol_wd = reg_wdata[31];
-  assign csid_we = racl_addr_hit_write[7] & reg_we & !reg_error;
+
+  assign csid_we = racl_addr_write_valid & (racl_addr_write_idx == 7) & reg_we & !reg_error;
 
   assign csid_wd = reg_wdata[31:0];
-  assign command_we = racl_addr_hit_write[8] & reg_we & !reg_error;
+
+  assign command_we = racl_addr_write_valid & (racl_addr_write_idx == 8) & reg_we & !reg_error;
 
   assign command_csaat_wd = reg_wdata[0];
-
   assign command_speed_wd = reg_wdata[2:1];
-
   assign command_direction_wd = reg_wdata[4:3];
-
   assign command_len_wd = reg_wdata[24:5];
-  assign error_enable_we = racl_addr_hit_write[9] & reg_we & !reg_error;
+
+  assign error_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 9) & reg_we & !reg_error;
 
   assign error_enable_cmdbusy_wd = reg_wdata[0];
-
   assign error_enable_overflow_wd = reg_wdata[1];
-
   assign error_enable_underflow_wd = reg_wdata[2];
-
   assign error_enable_cmdinval_wd = reg_wdata[3];
-
   assign error_enable_csidinval_wd = reg_wdata[4];
-  assign error_status_we = racl_addr_hit_write[10] & reg_we & !reg_error;
+
+  assign error_status_we = racl_addr_write_valid & (racl_addr_write_idx == 10) & reg_we & !reg_error;
 
   assign error_status_cmdbusy_wd = reg_wdata[0];
-
   assign error_status_overflow_wd = reg_wdata[1];
-
   assign error_status_underflow_wd = reg_wdata[2];
-
   assign error_status_cmdinval_wd = reg_wdata[3];
-
   assign error_status_csidinval_wd = reg_wdata[4];
-
   assign error_status_accessinval_wd = reg_wdata[5];
-  assign event_enable_we = racl_addr_hit_write[11] & reg_we & !reg_error;
+
+  assign event_enable_we = racl_addr_write_valid & (racl_addr_write_idx == 11) & reg_we & !reg_error;
 
   assign event_enable_rxfull_wd = reg_wdata[0];
-
   assign event_enable_txempty_wd = reg_wdata[1];
-
   assign event_enable_rxwm_wd = reg_wdata[2];
-
   assign event_enable_txwm_wd = reg_wdata[3];
-
   assign event_enable_ready_wd = reg_wdata[4];
-
   assign event_enable_idle_wd = reg_wdata[5];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -1923,103 +1925,108 @@ module spi_host_reg_top
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      racl_addr_hit_read[0]: begin
-        reg_rdata_next[0] = intr_state_error_qs;
-        reg_rdata_next[1] = intr_state_spi_event_qs;
-      end
+    if (!racl_addr_read_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (racl_addr_read_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_error_qs;
+          reg_rdata_next[1] = intr_state_spi_event_qs;
+        end
 
-      racl_addr_hit_read[1]: begin
-        reg_rdata_next[0] = intr_enable_error_qs;
-        reg_rdata_next[1] = intr_enable_spi_event_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_error_qs;
+          reg_rdata_next[1] = intr_enable_spi_event_qs;
+        end
 
-      racl_addr_hit_read[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      racl_addr_hit_read[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      racl_addr_hit_read[4]: begin
-        reg_rdata_next[7:0] = control_rx_watermark_qs;
-        reg_rdata_next[15:8] = control_tx_watermark_qs;
-        reg_rdata_next[29] = control_output_en_qs;
-        reg_rdata_next[30] = control_sw_rst_qs;
-        reg_rdata_next[31] = control_spien_qs;
-      end
+        4: begin
+          reg_rdata_next[7:0] = control_rx_watermark_qs;
+          reg_rdata_next[15:8] = control_tx_watermark_qs;
+          reg_rdata_next[29] = control_output_en_qs;
+          reg_rdata_next[30] = control_sw_rst_qs;
+          reg_rdata_next[31] = control_spien_qs;
+        end
 
-      racl_addr_hit_read[5]: begin
-        reg_rdata_next[7:0] = status_txqd_qs;
-        reg_rdata_next[15:8] = status_rxqd_qs;
-        reg_rdata_next[19:16] = status_cmdqd_qs;
-        reg_rdata_next[20] = status_rxwm_qs;
-        reg_rdata_next[22] = status_byteorder_qs;
-        reg_rdata_next[23] = status_rxstall_qs;
-        reg_rdata_next[24] = status_rxempty_qs;
-        reg_rdata_next[25] = status_rxfull_qs;
-        reg_rdata_next[26] = status_txwm_qs;
-        reg_rdata_next[27] = status_txstall_qs;
-        reg_rdata_next[28] = status_txempty_qs;
-        reg_rdata_next[29] = status_txfull_qs;
-        reg_rdata_next[30] = status_active_qs;
-        reg_rdata_next[31] = status_ready_qs;
-      end
+        5: begin
+          reg_rdata_next[7:0] = status_txqd_qs;
+          reg_rdata_next[15:8] = status_rxqd_qs;
+          reg_rdata_next[19:16] = status_cmdqd_qs;
+          reg_rdata_next[20] = status_rxwm_qs;
+          reg_rdata_next[22] = status_byteorder_qs;
+          reg_rdata_next[23] = status_rxstall_qs;
+          reg_rdata_next[24] = status_rxempty_qs;
+          reg_rdata_next[25] = status_rxfull_qs;
+          reg_rdata_next[26] = status_txwm_qs;
+          reg_rdata_next[27] = status_txstall_qs;
+          reg_rdata_next[28] = status_txempty_qs;
+          reg_rdata_next[29] = status_txfull_qs;
+          reg_rdata_next[30] = status_active_qs;
+          reg_rdata_next[31] = status_ready_qs;
+        end
 
-      racl_addr_hit_read[6]: begin
-        reg_rdata_next[15:0] = configopts_clkdiv_qs;
-        reg_rdata_next[19:16] = configopts_csnidle_qs;
-        reg_rdata_next[23:20] = configopts_csntrail_qs;
-        reg_rdata_next[27:24] = configopts_csnlead_qs;
-        reg_rdata_next[29] = configopts_fullcyc_qs;
-        reg_rdata_next[30] = configopts_cpha_qs;
-        reg_rdata_next[31] = configopts_cpol_qs;
-      end
+        6: begin
+          reg_rdata_next[15:0] = configopts_clkdiv_qs;
+          reg_rdata_next[19:16] = configopts_csnidle_qs;
+          reg_rdata_next[23:20] = configopts_csntrail_qs;
+          reg_rdata_next[27:24] = configopts_csnlead_qs;
+          reg_rdata_next[29] = configopts_fullcyc_qs;
+          reg_rdata_next[30] = configopts_cpha_qs;
+          reg_rdata_next[31] = configopts_cpol_qs;
+        end
 
-      racl_addr_hit_read[7]: begin
-        reg_rdata_next[31:0] = csid_qs;
-      end
+        7: begin
+          reg_rdata_next[31:0] = csid_qs;
+        end
 
-      racl_addr_hit_read[8]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[2:1] = '0;
-        reg_rdata_next[4:3] = '0;
-        reg_rdata_next[24:5] = '0;
-      end
+        8: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[2:1] = '0;
+          reg_rdata_next[4:3] = '0;
+          reg_rdata_next[24:5] = '0;
+        end
 
-      racl_addr_hit_read[9]: begin
-        reg_rdata_next[0] = error_enable_cmdbusy_qs;
-        reg_rdata_next[1] = error_enable_overflow_qs;
-        reg_rdata_next[2] = error_enable_underflow_qs;
-        reg_rdata_next[3] = error_enable_cmdinval_qs;
-        reg_rdata_next[4] = error_enable_csidinval_qs;
-      end
+        9: begin
+          reg_rdata_next[0] = error_enable_cmdbusy_qs;
+          reg_rdata_next[1] = error_enable_overflow_qs;
+          reg_rdata_next[2] = error_enable_underflow_qs;
+          reg_rdata_next[3] = error_enable_cmdinval_qs;
+          reg_rdata_next[4] = error_enable_csidinval_qs;
+        end
 
-      racl_addr_hit_read[10]: begin
-        reg_rdata_next[0] = error_status_cmdbusy_qs;
-        reg_rdata_next[1] = error_status_overflow_qs;
-        reg_rdata_next[2] = error_status_underflow_qs;
-        reg_rdata_next[3] = error_status_cmdinval_qs;
-        reg_rdata_next[4] = error_status_csidinval_qs;
-        reg_rdata_next[5] = error_status_accessinval_qs;
-      end
+        10: begin
+          reg_rdata_next[0] = error_status_cmdbusy_qs;
+          reg_rdata_next[1] = error_status_overflow_qs;
+          reg_rdata_next[2] = error_status_underflow_qs;
+          reg_rdata_next[3] = error_status_cmdinval_qs;
+          reg_rdata_next[4] = error_status_csidinval_qs;
+          reg_rdata_next[5] = error_status_accessinval_qs;
+        end
 
-      racl_addr_hit_read[11]: begin
-        reg_rdata_next[0] = event_enable_rxfull_qs;
-        reg_rdata_next[1] = event_enable_txempty_qs;
-        reg_rdata_next[2] = event_enable_rxwm_qs;
-        reg_rdata_next[3] = event_enable_txwm_qs;
-        reg_rdata_next[4] = event_enable_ready_qs;
-        reg_rdata_next[5] = event_enable_idle_qs;
-      end
+        11: begin
+          reg_rdata_next[0] = event_enable_rxfull_qs;
+          reg_rdata_next[1] = event_enable_txempty_qs;
+          reg_rdata_next[2] = event_enable_rxwm_qs;
+          reg_rdata_next[3] = event_enable_txwm_qs;
+          reg_rdata_next[4] = event_enable_ready_qs;
+          reg_rdata_next[5] = event_enable_idle_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -2046,7 +2053,7 @@ module spi_host_reg_top
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

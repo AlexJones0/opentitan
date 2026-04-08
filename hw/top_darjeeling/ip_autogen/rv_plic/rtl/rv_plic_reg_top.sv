@@ -12015,988 +12015,1020 @@ module rv_plic_reg_top (
 
 
 
-  logic [145:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[  0] = (reg_addr == RV_PLIC_PRIO_0_OFFSET);
-    addr_hit[  1] = (reg_addr == RV_PLIC_PRIO_1_OFFSET);
-    addr_hit[  2] = (reg_addr == RV_PLIC_PRIO_2_OFFSET);
-    addr_hit[  3] = (reg_addr == RV_PLIC_PRIO_3_OFFSET);
-    addr_hit[  4] = (reg_addr == RV_PLIC_PRIO_4_OFFSET);
-    addr_hit[  5] = (reg_addr == RV_PLIC_PRIO_5_OFFSET);
-    addr_hit[  6] = (reg_addr == RV_PLIC_PRIO_6_OFFSET);
-    addr_hit[  7] = (reg_addr == RV_PLIC_PRIO_7_OFFSET);
-    addr_hit[  8] = (reg_addr == RV_PLIC_PRIO_8_OFFSET);
-    addr_hit[  9] = (reg_addr == RV_PLIC_PRIO_9_OFFSET);
-    addr_hit[ 10] = (reg_addr == RV_PLIC_PRIO_10_OFFSET);
-    addr_hit[ 11] = (reg_addr == RV_PLIC_PRIO_11_OFFSET);
-    addr_hit[ 12] = (reg_addr == RV_PLIC_PRIO_12_OFFSET);
-    addr_hit[ 13] = (reg_addr == RV_PLIC_PRIO_13_OFFSET);
-    addr_hit[ 14] = (reg_addr == RV_PLIC_PRIO_14_OFFSET);
-    addr_hit[ 15] = (reg_addr == RV_PLIC_PRIO_15_OFFSET);
-    addr_hit[ 16] = (reg_addr == RV_PLIC_PRIO_16_OFFSET);
-    addr_hit[ 17] = (reg_addr == RV_PLIC_PRIO_17_OFFSET);
-    addr_hit[ 18] = (reg_addr == RV_PLIC_PRIO_18_OFFSET);
-    addr_hit[ 19] = (reg_addr == RV_PLIC_PRIO_19_OFFSET);
-    addr_hit[ 20] = (reg_addr == RV_PLIC_PRIO_20_OFFSET);
-    addr_hit[ 21] = (reg_addr == RV_PLIC_PRIO_21_OFFSET);
-    addr_hit[ 22] = (reg_addr == RV_PLIC_PRIO_22_OFFSET);
-    addr_hit[ 23] = (reg_addr == RV_PLIC_PRIO_23_OFFSET);
-    addr_hit[ 24] = (reg_addr == RV_PLIC_PRIO_24_OFFSET);
-    addr_hit[ 25] = (reg_addr == RV_PLIC_PRIO_25_OFFSET);
-    addr_hit[ 26] = (reg_addr == RV_PLIC_PRIO_26_OFFSET);
-    addr_hit[ 27] = (reg_addr == RV_PLIC_PRIO_27_OFFSET);
-    addr_hit[ 28] = (reg_addr == RV_PLIC_PRIO_28_OFFSET);
-    addr_hit[ 29] = (reg_addr == RV_PLIC_PRIO_29_OFFSET);
-    addr_hit[ 30] = (reg_addr == RV_PLIC_PRIO_30_OFFSET);
-    addr_hit[ 31] = (reg_addr == RV_PLIC_PRIO_31_OFFSET);
-    addr_hit[ 32] = (reg_addr == RV_PLIC_PRIO_32_OFFSET);
-    addr_hit[ 33] = (reg_addr == RV_PLIC_PRIO_33_OFFSET);
-    addr_hit[ 34] = (reg_addr == RV_PLIC_PRIO_34_OFFSET);
-    addr_hit[ 35] = (reg_addr == RV_PLIC_PRIO_35_OFFSET);
-    addr_hit[ 36] = (reg_addr == RV_PLIC_PRIO_36_OFFSET);
-    addr_hit[ 37] = (reg_addr == RV_PLIC_PRIO_37_OFFSET);
-    addr_hit[ 38] = (reg_addr == RV_PLIC_PRIO_38_OFFSET);
-    addr_hit[ 39] = (reg_addr == RV_PLIC_PRIO_39_OFFSET);
-    addr_hit[ 40] = (reg_addr == RV_PLIC_PRIO_40_OFFSET);
-    addr_hit[ 41] = (reg_addr == RV_PLIC_PRIO_41_OFFSET);
-    addr_hit[ 42] = (reg_addr == RV_PLIC_PRIO_42_OFFSET);
-    addr_hit[ 43] = (reg_addr == RV_PLIC_PRIO_43_OFFSET);
-    addr_hit[ 44] = (reg_addr == RV_PLIC_PRIO_44_OFFSET);
-    addr_hit[ 45] = (reg_addr == RV_PLIC_PRIO_45_OFFSET);
-    addr_hit[ 46] = (reg_addr == RV_PLIC_PRIO_46_OFFSET);
-    addr_hit[ 47] = (reg_addr == RV_PLIC_PRIO_47_OFFSET);
-    addr_hit[ 48] = (reg_addr == RV_PLIC_PRIO_48_OFFSET);
-    addr_hit[ 49] = (reg_addr == RV_PLIC_PRIO_49_OFFSET);
-    addr_hit[ 50] = (reg_addr == RV_PLIC_PRIO_50_OFFSET);
-    addr_hit[ 51] = (reg_addr == RV_PLIC_PRIO_51_OFFSET);
-    addr_hit[ 52] = (reg_addr == RV_PLIC_PRIO_52_OFFSET);
-    addr_hit[ 53] = (reg_addr == RV_PLIC_PRIO_53_OFFSET);
-    addr_hit[ 54] = (reg_addr == RV_PLIC_PRIO_54_OFFSET);
-    addr_hit[ 55] = (reg_addr == RV_PLIC_PRIO_55_OFFSET);
-    addr_hit[ 56] = (reg_addr == RV_PLIC_PRIO_56_OFFSET);
-    addr_hit[ 57] = (reg_addr == RV_PLIC_PRIO_57_OFFSET);
-    addr_hit[ 58] = (reg_addr == RV_PLIC_PRIO_58_OFFSET);
-    addr_hit[ 59] = (reg_addr == RV_PLIC_PRIO_59_OFFSET);
-    addr_hit[ 60] = (reg_addr == RV_PLIC_PRIO_60_OFFSET);
-    addr_hit[ 61] = (reg_addr == RV_PLIC_PRIO_61_OFFSET);
-    addr_hit[ 62] = (reg_addr == RV_PLIC_PRIO_62_OFFSET);
-    addr_hit[ 63] = (reg_addr == RV_PLIC_PRIO_63_OFFSET);
-    addr_hit[ 64] = (reg_addr == RV_PLIC_PRIO_64_OFFSET);
-    addr_hit[ 65] = (reg_addr == RV_PLIC_PRIO_65_OFFSET);
-    addr_hit[ 66] = (reg_addr == RV_PLIC_PRIO_66_OFFSET);
-    addr_hit[ 67] = (reg_addr == RV_PLIC_PRIO_67_OFFSET);
-    addr_hit[ 68] = (reg_addr == RV_PLIC_PRIO_68_OFFSET);
-    addr_hit[ 69] = (reg_addr == RV_PLIC_PRIO_69_OFFSET);
-    addr_hit[ 70] = (reg_addr == RV_PLIC_PRIO_70_OFFSET);
-    addr_hit[ 71] = (reg_addr == RV_PLIC_PRIO_71_OFFSET);
-    addr_hit[ 72] = (reg_addr == RV_PLIC_PRIO_72_OFFSET);
-    addr_hit[ 73] = (reg_addr == RV_PLIC_PRIO_73_OFFSET);
-    addr_hit[ 74] = (reg_addr == RV_PLIC_PRIO_74_OFFSET);
-    addr_hit[ 75] = (reg_addr == RV_PLIC_PRIO_75_OFFSET);
-    addr_hit[ 76] = (reg_addr == RV_PLIC_PRIO_76_OFFSET);
-    addr_hit[ 77] = (reg_addr == RV_PLIC_PRIO_77_OFFSET);
-    addr_hit[ 78] = (reg_addr == RV_PLIC_PRIO_78_OFFSET);
-    addr_hit[ 79] = (reg_addr == RV_PLIC_PRIO_79_OFFSET);
-    addr_hit[ 80] = (reg_addr == RV_PLIC_PRIO_80_OFFSET);
-    addr_hit[ 81] = (reg_addr == RV_PLIC_PRIO_81_OFFSET);
-    addr_hit[ 82] = (reg_addr == RV_PLIC_PRIO_82_OFFSET);
-    addr_hit[ 83] = (reg_addr == RV_PLIC_PRIO_83_OFFSET);
-    addr_hit[ 84] = (reg_addr == RV_PLIC_PRIO_84_OFFSET);
-    addr_hit[ 85] = (reg_addr == RV_PLIC_PRIO_85_OFFSET);
-    addr_hit[ 86] = (reg_addr == RV_PLIC_PRIO_86_OFFSET);
-    addr_hit[ 87] = (reg_addr == RV_PLIC_PRIO_87_OFFSET);
-    addr_hit[ 88] = (reg_addr == RV_PLIC_PRIO_88_OFFSET);
-    addr_hit[ 89] = (reg_addr == RV_PLIC_PRIO_89_OFFSET);
-    addr_hit[ 90] = (reg_addr == RV_PLIC_PRIO_90_OFFSET);
-    addr_hit[ 91] = (reg_addr == RV_PLIC_PRIO_91_OFFSET);
-    addr_hit[ 92] = (reg_addr == RV_PLIC_PRIO_92_OFFSET);
-    addr_hit[ 93] = (reg_addr == RV_PLIC_PRIO_93_OFFSET);
-    addr_hit[ 94] = (reg_addr == RV_PLIC_PRIO_94_OFFSET);
-    addr_hit[ 95] = (reg_addr == RV_PLIC_PRIO_95_OFFSET);
-    addr_hit[ 96] = (reg_addr == RV_PLIC_PRIO_96_OFFSET);
-    addr_hit[ 97] = (reg_addr == RV_PLIC_PRIO_97_OFFSET);
-    addr_hit[ 98] = (reg_addr == RV_PLIC_PRIO_98_OFFSET);
-    addr_hit[ 99] = (reg_addr == RV_PLIC_PRIO_99_OFFSET);
-    addr_hit[100] = (reg_addr == RV_PLIC_PRIO_100_OFFSET);
-    addr_hit[101] = (reg_addr == RV_PLIC_PRIO_101_OFFSET);
-    addr_hit[102] = (reg_addr == RV_PLIC_PRIO_102_OFFSET);
-    addr_hit[103] = (reg_addr == RV_PLIC_PRIO_103_OFFSET);
-    addr_hit[104] = (reg_addr == RV_PLIC_PRIO_104_OFFSET);
-    addr_hit[105] = (reg_addr == RV_PLIC_PRIO_105_OFFSET);
-    addr_hit[106] = (reg_addr == RV_PLIC_PRIO_106_OFFSET);
-    addr_hit[107] = (reg_addr == RV_PLIC_PRIO_107_OFFSET);
-    addr_hit[108] = (reg_addr == RV_PLIC_PRIO_108_OFFSET);
-    addr_hit[109] = (reg_addr == RV_PLIC_PRIO_109_OFFSET);
-    addr_hit[110] = (reg_addr == RV_PLIC_PRIO_110_OFFSET);
-    addr_hit[111] = (reg_addr == RV_PLIC_PRIO_111_OFFSET);
-    addr_hit[112] = (reg_addr == RV_PLIC_PRIO_112_OFFSET);
-    addr_hit[113] = (reg_addr == RV_PLIC_PRIO_113_OFFSET);
-    addr_hit[114] = (reg_addr == RV_PLIC_PRIO_114_OFFSET);
-    addr_hit[115] = (reg_addr == RV_PLIC_PRIO_115_OFFSET);
-    addr_hit[116] = (reg_addr == RV_PLIC_PRIO_116_OFFSET);
-    addr_hit[117] = (reg_addr == RV_PLIC_PRIO_117_OFFSET);
-    addr_hit[118] = (reg_addr == RV_PLIC_PRIO_118_OFFSET);
-    addr_hit[119] = (reg_addr == RV_PLIC_PRIO_119_OFFSET);
-    addr_hit[120] = (reg_addr == RV_PLIC_PRIO_120_OFFSET);
-    addr_hit[121] = (reg_addr == RV_PLIC_PRIO_121_OFFSET);
-    addr_hit[122] = (reg_addr == RV_PLIC_PRIO_122_OFFSET);
-    addr_hit[123] = (reg_addr == RV_PLIC_PRIO_123_OFFSET);
-    addr_hit[124] = (reg_addr == RV_PLIC_PRIO_124_OFFSET);
-    addr_hit[125] = (reg_addr == RV_PLIC_PRIO_125_OFFSET);
-    addr_hit[126] = (reg_addr == RV_PLIC_PRIO_126_OFFSET);
-    addr_hit[127] = (reg_addr == RV_PLIC_PRIO_127_OFFSET);
-    addr_hit[128] = (reg_addr == RV_PLIC_PRIO_128_OFFSET);
-    addr_hit[129] = (reg_addr == RV_PLIC_PRIO_129_OFFSET);
-    addr_hit[130] = (reg_addr == RV_PLIC_PRIO_130_OFFSET);
-    addr_hit[131] = (reg_addr == RV_PLIC_PRIO_131_OFFSET);
-    addr_hit[132] = (reg_addr == RV_PLIC_IP_0_OFFSET);
-    addr_hit[133] = (reg_addr == RV_PLIC_IP_1_OFFSET);
-    addr_hit[134] = (reg_addr == RV_PLIC_IP_2_OFFSET);
-    addr_hit[135] = (reg_addr == RV_PLIC_IP_3_OFFSET);
-    addr_hit[136] = (reg_addr == RV_PLIC_IP_4_OFFSET);
-    addr_hit[137] = (reg_addr == RV_PLIC_IE0_0_OFFSET);
-    addr_hit[138] = (reg_addr == RV_PLIC_IE0_1_OFFSET);
-    addr_hit[139] = (reg_addr == RV_PLIC_IE0_2_OFFSET);
-    addr_hit[140] = (reg_addr == RV_PLIC_IE0_3_OFFSET);
-    addr_hit[141] = (reg_addr == RV_PLIC_IE0_4_OFFSET);
-    addr_hit[142] = (reg_addr == RV_PLIC_THRESHOLD0_OFFSET);
-    addr_hit[143] = (reg_addr == RV_PLIC_CC0_OFFSET);
-    addr_hit[144] = (reg_addr == RV_PLIC_MSIP0_OFFSET);
-    addr_hit[145] = (reg_addr == RV_PLIC_ALERT_TEST_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      RV_PLIC_PRIO_0_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      RV_PLIC_PRIO_1_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      RV_PLIC_PRIO_2_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      RV_PLIC_PRIO_3_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      RV_PLIC_PRIO_4_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      RV_PLIC_PRIO_5_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      RV_PLIC_PRIO_6_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      RV_PLIC_PRIO_7_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      RV_PLIC_PRIO_8_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      RV_PLIC_PRIO_9_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      RV_PLIC_PRIO_10_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      RV_PLIC_PRIO_11_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      RV_PLIC_PRIO_12_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      RV_PLIC_PRIO_13_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      RV_PLIC_PRIO_14_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      RV_PLIC_PRIO_15_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      RV_PLIC_PRIO_16_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      RV_PLIC_PRIO_17_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      RV_PLIC_PRIO_18_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      RV_PLIC_PRIO_19_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      RV_PLIC_PRIO_20_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      RV_PLIC_PRIO_21_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      RV_PLIC_PRIO_22_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      RV_PLIC_PRIO_23_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      RV_PLIC_PRIO_24_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      RV_PLIC_PRIO_25_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      RV_PLIC_PRIO_26_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      RV_PLIC_PRIO_27_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      RV_PLIC_PRIO_28_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      RV_PLIC_PRIO_29_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      RV_PLIC_PRIO_30_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      RV_PLIC_PRIO_31_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      RV_PLIC_PRIO_32_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      RV_PLIC_PRIO_33_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      RV_PLIC_PRIO_34_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      RV_PLIC_PRIO_35_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      RV_PLIC_PRIO_36_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      RV_PLIC_PRIO_37_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      RV_PLIC_PRIO_38_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      RV_PLIC_PRIO_39_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      RV_PLIC_PRIO_40_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      RV_PLIC_PRIO_41_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      RV_PLIC_PRIO_42_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      RV_PLIC_PRIO_43_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      RV_PLIC_PRIO_44_OFFSET: begin addr_valid = 1; addr_idx = 44; end
+      RV_PLIC_PRIO_45_OFFSET: begin addr_valid = 1; addr_idx = 45; end
+      RV_PLIC_PRIO_46_OFFSET: begin addr_valid = 1; addr_idx = 46; end
+      RV_PLIC_PRIO_47_OFFSET: begin addr_valid = 1; addr_idx = 47; end
+      RV_PLIC_PRIO_48_OFFSET: begin addr_valid = 1; addr_idx = 48; end
+      RV_PLIC_PRIO_49_OFFSET: begin addr_valid = 1; addr_idx = 49; end
+      RV_PLIC_PRIO_50_OFFSET: begin addr_valid = 1; addr_idx = 50; end
+      RV_PLIC_PRIO_51_OFFSET: begin addr_valid = 1; addr_idx = 51; end
+      RV_PLIC_PRIO_52_OFFSET: begin addr_valid = 1; addr_idx = 52; end
+      RV_PLIC_PRIO_53_OFFSET: begin addr_valid = 1; addr_idx = 53; end
+      RV_PLIC_PRIO_54_OFFSET: begin addr_valid = 1; addr_idx = 54; end
+      RV_PLIC_PRIO_55_OFFSET: begin addr_valid = 1; addr_idx = 55; end
+      RV_PLIC_PRIO_56_OFFSET: begin addr_valid = 1; addr_idx = 56; end
+      RV_PLIC_PRIO_57_OFFSET: begin addr_valid = 1; addr_idx = 57; end
+      RV_PLIC_PRIO_58_OFFSET: begin addr_valid = 1; addr_idx = 58; end
+      RV_PLIC_PRIO_59_OFFSET: begin addr_valid = 1; addr_idx = 59; end
+      RV_PLIC_PRIO_60_OFFSET: begin addr_valid = 1; addr_idx = 60; end
+      RV_PLIC_PRIO_61_OFFSET: begin addr_valid = 1; addr_idx = 61; end
+      RV_PLIC_PRIO_62_OFFSET: begin addr_valid = 1; addr_idx = 62; end
+      RV_PLIC_PRIO_63_OFFSET: begin addr_valid = 1; addr_idx = 63; end
+      RV_PLIC_PRIO_64_OFFSET: begin addr_valid = 1; addr_idx = 64; end
+      RV_PLIC_PRIO_65_OFFSET: begin addr_valid = 1; addr_idx = 65; end
+      RV_PLIC_PRIO_66_OFFSET: begin addr_valid = 1; addr_idx = 66; end
+      RV_PLIC_PRIO_67_OFFSET: begin addr_valid = 1; addr_idx = 67; end
+      RV_PLIC_PRIO_68_OFFSET: begin addr_valid = 1; addr_idx = 68; end
+      RV_PLIC_PRIO_69_OFFSET: begin addr_valid = 1; addr_idx = 69; end
+      RV_PLIC_PRIO_70_OFFSET: begin addr_valid = 1; addr_idx = 70; end
+      RV_PLIC_PRIO_71_OFFSET: begin addr_valid = 1; addr_idx = 71; end
+      RV_PLIC_PRIO_72_OFFSET: begin addr_valid = 1; addr_idx = 72; end
+      RV_PLIC_PRIO_73_OFFSET: begin addr_valid = 1; addr_idx = 73; end
+      RV_PLIC_PRIO_74_OFFSET: begin addr_valid = 1; addr_idx = 74; end
+      RV_PLIC_PRIO_75_OFFSET: begin addr_valid = 1; addr_idx = 75; end
+      RV_PLIC_PRIO_76_OFFSET: begin addr_valid = 1; addr_idx = 76; end
+      RV_PLIC_PRIO_77_OFFSET: begin addr_valid = 1; addr_idx = 77; end
+      RV_PLIC_PRIO_78_OFFSET: begin addr_valid = 1; addr_idx = 78; end
+      RV_PLIC_PRIO_79_OFFSET: begin addr_valid = 1; addr_idx = 79; end
+      RV_PLIC_PRIO_80_OFFSET: begin addr_valid = 1; addr_idx = 80; end
+      RV_PLIC_PRIO_81_OFFSET: begin addr_valid = 1; addr_idx = 81; end
+      RV_PLIC_PRIO_82_OFFSET: begin addr_valid = 1; addr_idx = 82; end
+      RV_PLIC_PRIO_83_OFFSET: begin addr_valid = 1; addr_idx = 83; end
+      RV_PLIC_PRIO_84_OFFSET: begin addr_valid = 1; addr_idx = 84; end
+      RV_PLIC_PRIO_85_OFFSET: begin addr_valid = 1; addr_idx = 85; end
+      RV_PLIC_PRIO_86_OFFSET: begin addr_valid = 1; addr_idx = 86; end
+      RV_PLIC_PRIO_87_OFFSET: begin addr_valid = 1; addr_idx = 87; end
+      RV_PLIC_PRIO_88_OFFSET: begin addr_valid = 1; addr_idx = 88; end
+      RV_PLIC_PRIO_89_OFFSET: begin addr_valid = 1; addr_idx = 89; end
+      RV_PLIC_PRIO_90_OFFSET: begin addr_valid = 1; addr_idx = 90; end
+      RV_PLIC_PRIO_91_OFFSET: begin addr_valid = 1; addr_idx = 91; end
+      RV_PLIC_PRIO_92_OFFSET: begin addr_valid = 1; addr_idx = 92; end
+      RV_PLIC_PRIO_93_OFFSET: begin addr_valid = 1; addr_idx = 93; end
+      RV_PLIC_PRIO_94_OFFSET: begin addr_valid = 1; addr_idx = 94; end
+      RV_PLIC_PRIO_95_OFFSET: begin addr_valid = 1; addr_idx = 95; end
+      RV_PLIC_PRIO_96_OFFSET: begin addr_valid = 1; addr_idx = 96; end
+      RV_PLIC_PRIO_97_OFFSET: begin addr_valid = 1; addr_idx = 97; end
+      RV_PLIC_PRIO_98_OFFSET: begin addr_valid = 1; addr_idx = 98; end
+      RV_PLIC_PRIO_99_OFFSET: begin addr_valid = 1; addr_idx = 99; end
+      RV_PLIC_PRIO_100_OFFSET: begin addr_valid = 1; addr_idx = 100; end
+      RV_PLIC_PRIO_101_OFFSET: begin addr_valid = 1; addr_idx = 101; end
+      RV_PLIC_PRIO_102_OFFSET: begin addr_valid = 1; addr_idx = 102; end
+      RV_PLIC_PRIO_103_OFFSET: begin addr_valid = 1; addr_idx = 103; end
+      RV_PLIC_PRIO_104_OFFSET: begin addr_valid = 1; addr_idx = 104; end
+      RV_PLIC_PRIO_105_OFFSET: begin addr_valid = 1; addr_idx = 105; end
+      RV_PLIC_PRIO_106_OFFSET: begin addr_valid = 1; addr_idx = 106; end
+      RV_PLIC_PRIO_107_OFFSET: begin addr_valid = 1; addr_idx = 107; end
+      RV_PLIC_PRIO_108_OFFSET: begin addr_valid = 1; addr_idx = 108; end
+      RV_PLIC_PRIO_109_OFFSET: begin addr_valid = 1; addr_idx = 109; end
+      RV_PLIC_PRIO_110_OFFSET: begin addr_valid = 1; addr_idx = 110; end
+      RV_PLIC_PRIO_111_OFFSET: begin addr_valid = 1; addr_idx = 111; end
+      RV_PLIC_PRIO_112_OFFSET: begin addr_valid = 1; addr_idx = 112; end
+      RV_PLIC_PRIO_113_OFFSET: begin addr_valid = 1; addr_idx = 113; end
+      RV_PLIC_PRIO_114_OFFSET: begin addr_valid = 1; addr_idx = 114; end
+      RV_PLIC_PRIO_115_OFFSET: begin addr_valid = 1; addr_idx = 115; end
+      RV_PLIC_PRIO_116_OFFSET: begin addr_valid = 1; addr_idx = 116; end
+      RV_PLIC_PRIO_117_OFFSET: begin addr_valid = 1; addr_idx = 117; end
+      RV_PLIC_PRIO_118_OFFSET: begin addr_valid = 1; addr_idx = 118; end
+      RV_PLIC_PRIO_119_OFFSET: begin addr_valid = 1; addr_idx = 119; end
+      RV_PLIC_PRIO_120_OFFSET: begin addr_valid = 1; addr_idx = 120; end
+      RV_PLIC_PRIO_121_OFFSET: begin addr_valid = 1; addr_idx = 121; end
+      RV_PLIC_PRIO_122_OFFSET: begin addr_valid = 1; addr_idx = 122; end
+      RV_PLIC_PRIO_123_OFFSET: begin addr_valid = 1; addr_idx = 123; end
+      RV_PLIC_PRIO_124_OFFSET: begin addr_valid = 1; addr_idx = 124; end
+      RV_PLIC_PRIO_125_OFFSET: begin addr_valid = 1; addr_idx = 125; end
+      RV_PLIC_PRIO_126_OFFSET: begin addr_valid = 1; addr_idx = 126; end
+      RV_PLIC_PRIO_127_OFFSET: begin addr_valid = 1; addr_idx = 127; end
+      RV_PLIC_PRIO_128_OFFSET: begin addr_valid = 1; addr_idx = 128; end
+      RV_PLIC_PRIO_129_OFFSET: begin addr_valid = 1; addr_idx = 129; end
+      RV_PLIC_PRIO_130_OFFSET: begin addr_valid = 1; addr_idx = 130; end
+      RV_PLIC_PRIO_131_OFFSET: begin addr_valid = 1; addr_idx = 131; end
+      RV_PLIC_IP_0_OFFSET: begin addr_valid = 1; addr_idx = 132; end
+      RV_PLIC_IP_1_OFFSET: begin addr_valid = 1; addr_idx = 133; end
+      RV_PLIC_IP_2_OFFSET: begin addr_valid = 1; addr_idx = 134; end
+      RV_PLIC_IP_3_OFFSET: begin addr_valid = 1; addr_idx = 135; end
+      RV_PLIC_IP_4_OFFSET: begin addr_valid = 1; addr_idx = 136; end
+      RV_PLIC_IE0_0_OFFSET: begin addr_valid = 1; addr_idx = 137; end
+      RV_PLIC_IE0_1_OFFSET: begin addr_valid = 1; addr_idx = 138; end
+      RV_PLIC_IE0_2_OFFSET: begin addr_valid = 1; addr_idx = 139; end
+      RV_PLIC_IE0_3_OFFSET: begin addr_valid = 1; addr_idx = 140; end
+      RV_PLIC_IE0_4_OFFSET: begin addr_valid = 1; addr_idx = 141; end
+      RV_PLIC_THRESHOLD0_OFFSET: begin addr_valid = 1; addr_idx = 142; end
+      RV_PLIC_CC0_OFFSET: begin addr_valid = 1; addr_idx = 143; end
+      RV_PLIC_MSIP0_OFFSET: begin addr_valid = 1; addr_idx = 144; end
+      RV_PLIC_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 145; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[  0] & (|(RV_PLIC_PERMIT[  0] & ~reg_be))) |
-               (addr_hit[  1] & (|(RV_PLIC_PERMIT[  1] & ~reg_be))) |
-               (addr_hit[  2] & (|(RV_PLIC_PERMIT[  2] & ~reg_be))) |
-               (addr_hit[  3] & (|(RV_PLIC_PERMIT[  3] & ~reg_be))) |
-               (addr_hit[  4] & (|(RV_PLIC_PERMIT[  4] & ~reg_be))) |
-               (addr_hit[  5] & (|(RV_PLIC_PERMIT[  5] & ~reg_be))) |
-               (addr_hit[  6] & (|(RV_PLIC_PERMIT[  6] & ~reg_be))) |
-               (addr_hit[  7] & (|(RV_PLIC_PERMIT[  7] & ~reg_be))) |
-               (addr_hit[  8] & (|(RV_PLIC_PERMIT[  8] & ~reg_be))) |
-               (addr_hit[  9] & (|(RV_PLIC_PERMIT[  9] & ~reg_be))) |
-               (addr_hit[ 10] & (|(RV_PLIC_PERMIT[ 10] & ~reg_be))) |
-               (addr_hit[ 11] & (|(RV_PLIC_PERMIT[ 11] & ~reg_be))) |
-               (addr_hit[ 12] & (|(RV_PLIC_PERMIT[ 12] & ~reg_be))) |
-               (addr_hit[ 13] & (|(RV_PLIC_PERMIT[ 13] & ~reg_be))) |
-               (addr_hit[ 14] & (|(RV_PLIC_PERMIT[ 14] & ~reg_be))) |
-               (addr_hit[ 15] & (|(RV_PLIC_PERMIT[ 15] & ~reg_be))) |
-               (addr_hit[ 16] & (|(RV_PLIC_PERMIT[ 16] & ~reg_be))) |
-               (addr_hit[ 17] & (|(RV_PLIC_PERMIT[ 17] & ~reg_be))) |
-               (addr_hit[ 18] & (|(RV_PLIC_PERMIT[ 18] & ~reg_be))) |
-               (addr_hit[ 19] & (|(RV_PLIC_PERMIT[ 19] & ~reg_be))) |
-               (addr_hit[ 20] & (|(RV_PLIC_PERMIT[ 20] & ~reg_be))) |
-               (addr_hit[ 21] & (|(RV_PLIC_PERMIT[ 21] & ~reg_be))) |
-               (addr_hit[ 22] & (|(RV_PLIC_PERMIT[ 22] & ~reg_be))) |
-               (addr_hit[ 23] & (|(RV_PLIC_PERMIT[ 23] & ~reg_be))) |
-               (addr_hit[ 24] & (|(RV_PLIC_PERMIT[ 24] & ~reg_be))) |
-               (addr_hit[ 25] & (|(RV_PLIC_PERMIT[ 25] & ~reg_be))) |
-               (addr_hit[ 26] & (|(RV_PLIC_PERMIT[ 26] & ~reg_be))) |
-               (addr_hit[ 27] & (|(RV_PLIC_PERMIT[ 27] & ~reg_be))) |
-               (addr_hit[ 28] & (|(RV_PLIC_PERMIT[ 28] & ~reg_be))) |
-               (addr_hit[ 29] & (|(RV_PLIC_PERMIT[ 29] & ~reg_be))) |
-               (addr_hit[ 30] & (|(RV_PLIC_PERMIT[ 30] & ~reg_be))) |
-               (addr_hit[ 31] & (|(RV_PLIC_PERMIT[ 31] & ~reg_be))) |
-               (addr_hit[ 32] & (|(RV_PLIC_PERMIT[ 32] & ~reg_be))) |
-               (addr_hit[ 33] & (|(RV_PLIC_PERMIT[ 33] & ~reg_be))) |
-               (addr_hit[ 34] & (|(RV_PLIC_PERMIT[ 34] & ~reg_be))) |
-               (addr_hit[ 35] & (|(RV_PLIC_PERMIT[ 35] & ~reg_be))) |
-               (addr_hit[ 36] & (|(RV_PLIC_PERMIT[ 36] & ~reg_be))) |
-               (addr_hit[ 37] & (|(RV_PLIC_PERMIT[ 37] & ~reg_be))) |
-               (addr_hit[ 38] & (|(RV_PLIC_PERMIT[ 38] & ~reg_be))) |
-               (addr_hit[ 39] & (|(RV_PLIC_PERMIT[ 39] & ~reg_be))) |
-               (addr_hit[ 40] & (|(RV_PLIC_PERMIT[ 40] & ~reg_be))) |
-               (addr_hit[ 41] & (|(RV_PLIC_PERMIT[ 41] & ~reg_be))) |
-               (addr_hit[ 42] & (|(RV_PLIC_PERMIT[ 42] & ~reg_be))) |
-               (addr_hit[ 43] & (|(RV_PLIC_PERMIT[ 43] & ~reg_be))) |
-               (addr_hit[ 44] & (|(RV_PLIC_PERMIT[ 44] & ~reg_be))) |
-               (addr_hit[ 45] & (|(RV_PLIC_PERMIT[ 45] & ~reg_be))) |
-               (addr_hit[ 46] & (|(RV_PLIC_PERMIT[ 46] & ~reg_be))) |
-               (addr_hit[ 47] & (|(RV_PLIC_PERMIT[ 47] & ~reg_be))) |
-               (addr_hit[ 48] & (|(RV_PLIC_PERMIT[ 48] & ~reg_be))) |
-               (addr_hit[ 49] & (|(RV_PLIC_PERMIT[ 49] & ~reg_be))) |
-               (addr_hit[ 50] & (|(RV_PLIC_PERMIT[ 50] & ~reg_be))) |
-               (addr_hit[ 51] & (|(RV_PLIC_PERMIT[ 51] & ~reg_be))) |
-               (addr_hit[ 52] & (|(RV_PLIC_PERMIT[ 52] & ~reg_be))) |
-               (addr_hit[ 53] & (|(RV_PLIC_PERMIT[ 53] & ~reg_be))) |
-               (addr_hit[ 54] & (|(RV_PLIC_PERMIT[ 54] & ~reg_be))) |
-               (addr_hit[ 55] & (|(RV_PLIC_PERMIT[ 55] & ~reg_be))) |
-               (addr_hit[ 56] & (|(RV_PLIC_PERMIT[ 56] & ~reg_be))) |
-               (addr_hit[ 57] & (|(RV_PLIC_PERMIT[ 57] & ~reg_be))) |
-               (addr_hit[ 58] & (|(RV_PLIC_PERMIT[ 58] & ~reg_be))) |
-               (addr_hit[ 59] & (|(RV_PLIC_PERMIT[ 59] & ~reg_be))) |
-               (addr_hit[ 60] & (|(RV_PLIC_PERMIT[ 60] & ~reg_be))) |
-               (addr_hit[ 61] & (|(RV_PLIC_PERMIT[ 61] & ~reg_be))) |
-               (addr_hit[ 62] & (|(RV_PLIC_PERMIT[ 62] & ~reg_be))) |
-               (addr_hit[ 63] & (|(RV_PLIC_PERMIT[ 63] & ~reg_be))) |
-               (addr_hit[ 64] & (|(RV_PLIC_PERMIT[ 64] & ~reg_be))) |
-               (addr_hit[ 65] & (|(RV_PLIC_PERMIT[ 65] & ~reg_be))) |
-               (addr_hit[ 66] & (|(RV_PLIC_PERMIT[ 66] & ~reg_be))) |
-               (addr_hit[ 67] & (|(RV_PLIC_PERMIT[ 67] & ~reg_be))) |
-               (addr_hit[ 68] & (|(RV_PLIC_PERMIT[ 68] & ~reg_be))) |
-               (addr_hit[ 69] & (|(RV_PLIC_PERMIT[ 69] & ~reg_be))) |
-               (addr_hit[ 70] & (|(RV_PLIC_PERMIT[ 70] & ~reg_be))) |
-               (addr_hit[ 71] & (|(RV_PLIC_PERMIT[ 71] & ~reg_be))) |
-               (addr_hit[ 72] & (|(RV_PLIC_PERMIT[ 72] & ~reg_be))) |
-               (addr_hit[ 73] & (|(RV_PLIC_PERMIT[ 73] & ~reg_be))) |
-               (addr_hit[ 74] & (|(RV_PLIC_PERMIT[ 74] & ~reg_be))) |
-               (addr_hit[ 75] & (|(RV_PLIC_PERMIT[ 75] & ~reg_be))) |
-               (addr_hit[ 76] & (|(RV_PLIC_PERMIT[ 76] & ~reg_be))) |
-               (addr_hit[ 77] & (|(RV_PLIC_PERMIT[ 77] & ~reg_be))) |
-               (addr_hit[ 78] & (|(RV_PLIC_PERMIT[ 78] & ~reg_be))) |
-               (addr_hit[ 79] & (|(RV_PLIC_PERMIT[ 79] & ~reg_be))) |
-               (addr_hit[ 80] & (|(RV_PLIC_PERMIT[ 80] & ~reg_be))) |
-               (addr_hit[ 81] & (|(RV_PLIC_PERMIT[ 81] & ~reg_be))) |
-               (addr_hit[ 82] & (|(RV_PLIC_PERMIT[ 82] & ~reg_be))) |
-               (addr_hit[ 83] & (|(RV_PLIC_PERMIT[ 83] & ~reg_be))) |
-               (addr_hit[ 84] & (|(RV_PLIC_PERMIT[ 84] & ~reg_be))) |
-               (addr_hit[ 85] & (|(RV_PLIC_PERMIT[ 85] & ~reg_be))) |
-               (addr_hit[ 86] & (|(RV_PLIC_PERMIT[ 86] & ~reg_be))) |
-               (addr_hit[ 87] & (|(RV_PLIC_PERMIT[ 87] & ~reg_be))) |
-               (addr_hit[ 88] & (|(RV_PLIC_PERMIT[ 88] & ~reg_be))) |
-               (addr_hit[ 89] & (|(RV_PLIC_PERMIT[ 89] & ~reg_be))) |
-               (addr_hit[ 90] & (|(RV_PLIC_PERMIT[ 90] & ~reg_be))) |
-               (addr_hit[ 91] & (|(RV_PLIC_PERMIT[ 91] & ~reg_be))) |
-               (addr_hit[ 92] & (|(RV_PLIC_PERMIT[ 92] & ~reg_be))) |
-               (addr_hit[ 93] & (|(RV_PLIC_PERMIT[ 93] & ~reg_be))) |
-               (addr_hit[ 94] & (|(RV_PLIC_PERMIT[ 94] & ~reg_be))) |
-               (addr_hit[ 95] & (|(RV_PLIC_PERMIT[ 95] & ~reg_be))) |
-               (addr_hit[ 96] & (|(RV_PLIC_PERMIT[ 96] & ~reg_be))) |
-               (addr_hit[ 97] & (|(RV_PLIC_PERMIT[ 97] & ~reg_be))) |
-               (addr_hit[ 98] & (|(RV_PLIC_PERMIT[ 98] & ~reg_be))) |
-               (addr_hit[ 99] & (|(RV_PLIC_PERMIT[ 99] & ~reg_be))) |
-               (addr_hit[100] & (|(RV_PLIC_PERMIT[100] & ~reg_be))) |
-               (addr_hit[101] & (|(RV_PLIC_PERMIT[101] & ~reg_be))) |
-               (addr_hit[102] & (|(RV_PLIC_PERMIT[102] & ~reg_be))) |
-               (addr_hit[103] & (|(RV_PLIC_PERMIT[103] & ~reg_be))) |
-               (addr_hit[104] & (|(RV_PLIC_PERMIT[104] & ~reg_be))) |
-               (addr_hit[105] & (|(RV_PLIC_PERMIT[105] & ~reg_be))) |
-               (addr_hit[106] & (|(RV_PLIC_PERMIT[106] & ~reg_be))) |
-               (addr_hit[107] & (|(RV_PLIC_PERMIT[107] & ~reg_be))) |
-               (addr_hit[108] & (|(RV_PLIC_PERMIT[108] & ~reg_be))) |
-               (addr_hit[109] & (|(RV_PLIC_PERMIT[109] & ~reg_be))) |
-               (addr_hit[110] & (|(RV_PLIC_PERMIT[110] & ~reg_be))) |
-               (addr_hit[111] & (|(RV_PLIC_PERMIT[111] & ~reg_be))) |
-               (addr_hit[112] & (|(RV_PLIC_PERMIT[112] & ~reg_be))) |
-               (addr_hit[113] & (|(RV_PLIC_PERMIT[113] & ~reg_be))) |
-               (addr_hit[114] & (|(RV_PLIC_PERMIT[114] & ~reg_be))) |
-               (addr_hit[115] & (|(RV_PLIC_PERMIT[115] & ~reg_be))) |
-               (addr_hit[116] & (|(RV_PLIC_PERMIT[116] & ~reg_be))) |
-               (addr_hit[117] & (|(RV_PLIC_PERMIT[117] & ~reg_be))) |
-               (addr_hit[118] & (|(RV_PLIC_PERMIT[118] & ~reg_be))) |
-               (addr_hit[119] & (|(RV_PLIC_PERMIT[119] & ~reg_be))) |
-               (addr_hit[120] & (|(RV_PLIC_PERMIT[120] & ~reg_be))) |
-               (addr_hit[121] & (|(RV_PLIC_PERMIT[121] & ~reg_be))) |
-               (addr_hit[122] & (|(RV_PLIC_PERMIT[122] & ~reg_be))) |
-               (addr_hit[123] & (|(RV_PLIC_PERMIT[123] & ~reg_be))) |
-               (addr_hit[124] & (|(RV_PLIC_PERMIT[124] & ~reg_be))) |
-               (addr_hit[125] & (|(RV_PLIC_PERMIT[125] & ~reg_be))) |
-               (addr_hit[126] & (|(RV_PLIC_PERMIT[126] & ~reg_be))) |
-               (addr_hit[127] & (|(RV_PLIC_PERMIT[127] & ~reg_be))) |
-               (addr_hit[128] & (|(RV_PLIC_PERMIT[128] & ~reg_be))) |
-               (addr_hit[129] & (|(RV_PLIC_PERMIT[129] & ~reg_be))) |
-               (addr_hit[130] & (|(RV_PLIC_PERMIT[130] & ~reg_be))) |
-               (addr_hit[131] & (|(RV_PLIC_PERMIT[131] & ~reg_be))) |
-               (addr_hit[132] & (|(RV_PLIC_PERMIT[132] & ~reg_be))) |
-               (addr_hit[133] & (|(RV_PLIC_PERMIT[133] & ~reg_be))) |
-               (addr_hit[134] & (|(RV_PLIC_PERMIT[134] & ~reg_be))) |
-               (addr_hit[135] & (|(RV_PLIC_PERMIT[135] & ~reg_be))) |
-               (addr_hit[136] & (|(RV_PLIC_PERMIT[136] & ~reg_be))) |
-               (addr_hit[137] & (|(RV_PLIC_PERMIT[137] & ~reg_be))) |
-               (addr_hit[138] & (|(RV_PLIC_PERMIT[138] & ~reg_be))) |
-               (addr_hit[139] & (|(RV_PLIC_PERMIT[139] & ~reg_be))) |
-               (addr_hit[140] & (|(RV_PLIC_PERMIT[140] & ~reg_be))) |
-               (addr_hit[141] & (|(RV_PLIC_PERMIT[141] & ~reg_be))) |
-               (addr_hit[142] & (|(RV_PLIC_PERMIT[142] & ~reg_be))) |
-               (addr_hit[143] & (|(RV_PLIC_PERMIT[143] & ~reg_be))) |
-               (addr_hit[144] & (|(RV_PLIC_PERMIT[144] & ~reg_be))) |
-               (addr_hit[145] & (|(RV_PLIC_PERMIT[145] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:   wr_err = |(RV_PLIC_PERMIT[  0] & ~reg_be);
+        1:   wr_err = |(RV_PLIC_PERMIT[  1] & ~reg_be);
+        2:   wr_err = |(RV_PLIC_PERMIT[  2] & ~reg_be);
+        3:   wr_err = |(RV_PLIC_PERMIT[  3] & ~reg_be);
+        4:   wr_err = |(RV_PLIC_PERMIT[  4] & ~reg_be);
+        5:   wr_err = |(RV_PLIC_PERMIT[  5] & ~reg_be);
+        6:   wr_err = |(RV_PLIC_PERMIT[  6] & ~reg_be);
+        7:   wr_err = |(RV_PLIC_PERMIT[  7] & ~reg_be);
+        8:   wr_err = |(RV_PLIC_PERMIT[  8] & ~reg_be);
+        9:   wr_err = |(RV_PLIC_PERMIT[  9] & ~reg_be);
+        10:  wr_err = |(RV_PLIC_PERMIT[ 10] & ~reg_be);
+        11:  wr_err = |(RV_PLIC_PERMIT[ 11] & ~reg_be);
+        12:  wr_err = |(RV_PLIC_PERMIT[ 12] & ~reg_be);
+        13:  wr_err = |(RV_PLIC_PERMIT[ 13] & ~reg_be);
+        14:  wr_err = |(RV_PLIC_PERMIT[ 14] & ~reg_be);
+        15:  wr_err = |(RV_PLIC_PERMIT[ 15] & ~reg_be);
+        16:  wr_err = |(RV_PLIC_PERMIT[ 16] & ~reg_be);
+        17:  wr_err = |(RV_PLIC_PERMIT[ 17] & ~reg_be);
+        18:  wr_err = |(RV_PLIC_PERMIT[ 18] & ~reg_be);
+        19:  wr_err = |(RV_PLIC_PERMIT[ 19] & ~reg_be);
+        20:  wr_err = |(RV_PLIC_PERMIT[ 20] & ~reg_be);
+        21:  wr_err = |(RV_PLIC_PERMIT[ 21] & ~reg_be);
+        22:  wr_err = |(RV_PLIC_PERMIT[ 22] & ~reg_be);
+        23:  wr_err = |(RV_PLIC_PERMIT[ 23] & ~reg_be);
+        24:  wr_err = |(RV_PLIC_PERMIT[ 24] & ~reg_be);
+        25:  wr_err = |(RV_PLIC_PERMIT[ 25] & ~reg_be);
+        26:  wr_err = |(RV_PLIC_PERMIT[ 26] & ~reg_be);
+        27:  wr_err = |(RV_PLIC_PERMIT[ 27] & ~reg_be);
+        28:  wr_err = |(RV_PLIC_PERMIT[ 28] & ~reg_be);
+        29:  wr_err = |(RV_PLIC_PERMIT[ 29] & ~reg_be);
+        30:  wr_err = |(RV_PLIC_PERMIT[ 30] & ~reg_be);
+        31:  wr_err = |(RV_PLIC_PERMIT[ 31] & ~reg_be);
+        32:  wr_err = |(RV_PLIC_PERMIT[ 32] & ~reg_be);
+        33:  wr_err = |(RV_PLIC_PERMIT[ 33] & ~reg_be);
+        34:  wr_err = |(RV_PLIC_PERMIT[ 34] & ~reg_be);
+        35:  wr_err = |(RV_PLIC_PERMIT[ 35] & ~reg_be);
+        36:  wr_err = |(RV_PLIC_PERMIT[ 36] & ~reg_be);
+        37:  wr_err = |(RV_PLIC_PERMIT[ 37] & ~reg_be);
+        38:  wr_err = |(RV_PLIC_PERMIT[ 38] & ~reg_be);
+        39:  wr_err = |(RV_PLIC_PERMIT[ 39] & ~reg_be);
+        40:  wr_err = |(RV_PLIC_PERMIT[ 40] & ~reg_be);
+        41:  wr_err = |(RV_PLIC_PERMIT[ 41] & ~reg_be);
+        42:  wr_err = |(RV_PLIC_PERMIT[ 42] & ~reg_be);
+        43:  wr_err = |(RV_PLIC_PERMIT[ 43] & ~reg_be);
+        44:  wr_err = |(RV_PLIC_PERMIT[ 44] & ~reg_be);
+        45:  wr_err = |(RV_PLIC_PERMIT[ 45] & ~reg_be);
+        46:  wr_err = |(RV_PLIC_PERMIT[ 46] & ~reg_be);
+        47:  wr_err = |(RV_PLIC_PERMIT[ 47] & ~reg_be);
+        48:  wr_err = |(RV_PLIC_PERMIT[ 48] & ~reg_be);
+        49:  wr_err = |(RV_PLIC_PERMIT[ 49] & ~reg_be);
+        50:  wr_err = |(RV_PLIC_PERMIT[ 50] & ~reg_be);
+        51:  wr_err = |(RV_PLIC_PERMIT[ 51] & ~reg_be);
+        52:  wr_err = |(RV_PLIC_PERMIT[ 52] & ~reg_be);
+        53:  wr_err = |(RV_PLIC_PERMIT[ 53] & ~reg_be);
+        54:  wr_err = |(RV_PLIC_PERMIT[ 54] & ~reg_be);
+        55:  wr_err = |(RV_PLIC_PERMIT[ 55] & ~reg_be);
+        56:  wr_err = |(RV_PLIC_PERMIT[ 56] & ~reg_be);
+        57:  wr_err = |(RV_PLIC_PERMIT[ 57] & ~reg_be);
+        58:  wr_err = |(RV_PLIC_PERMIT[ 58] & ~reg_be);
+        59:  wr_err = |(RV_PLIC_PERMIT[ 59] & ~reg_be);
+        60:  wr_err = |(RV_PLIC_PERMIT[ 60] & ~reg_be);
+        61:  wr_err = |(RV_PLIC_PERMIT[ 61] & ~reg_be);
+        62:  wr_err = |(RV_PLIC_PERMIT[ 62] & ~reg_be);
+        63:  wr_err = |(RV_PLIC_PERMIT[ 63] & ~reg_be);
+        64:  wr_err = |(RV_PLIC_PERMIT[ 64] & ~reg_be);
+        65:  wr_err = |(RV_PLIC_PERMIT[ 65] & ~reg_be);
+        66:  wr_err = |(RV_PLIC_PERMIT[ 66] & ~reg_be);
+        67:  wr_err = |(RV_PLIC_PERMIT[ 67] & ~reg_be);
+        68:  wr_err = |(RV_PLIC_PERMIT[ 68] & ~reg_be);
+        69:  wr_err = |(RV_PLIC_PERMIT[ 69] & ~reg_be);
+        70:  wr_err = |(RV_PLIC_PERMIT[ 70] & ~reg_be);
+        71:  wr_err = |(RV_PLIC_PERMIT[ 71] & ~reg_be);
+        72:  wr_err = |(RV_PLIC_PERMIT[ 72] & ~reg_be);
+        73:  wr_err = |(RV_PLIC_PERMIT[ 73] & ~reg_be);
+        74:  wr_err = |(RV_PLIC_PERMIT[ 74] & ~reg_be);
+        75:  wr_err = |(RV_PLIC_PERMIT[ 75] & ~reg_be);
+        76:  wr_err = |(RV_PLIC_PERMIT[ 76] & ~reg_be);
+        77:  wr_err = |(RV_PLIC_PERMIT[ 77] & ~reg_be);
+        78:  wr_err = |(RV_PLIC_PERMIT[ 78] & ~reg_be);
+        79:  wr_err = |(RV_PLIC_PERMIT[ 79] & ~reg_be);
+        80:  wr_err = |(RV_PLIC_PERMIT[ 80] & ~reg_be);
+        81:  wr_err = |(RV_PLIC_PERMIT[ 81] & ~reg_be);
+        82:  wr_err = |(RV_PLIC_PERMIT[ 82] & ~reg_be);
+        83:  wr_err = |(RV_PLIC_PERMIT[ 83] & ~reg_be);
+        84:  wr_err = |(RV_PLIC_PERMIT[ 84] & ~reg_be);
+        85:  wr_err = |(RV_PLIC_PERMIT[ 85] & ~reg_be);
+        86:  wr_err = |(RV_PLIC_PERMIT[ 86] & ~reg_be);
+        87:  wr_err = |(RV_PLIC_PERMIT[ 87] & ~reg_be);
+        88:  wr_err = |(RV_PLIC_PERMIT[ 88] & ~reg_be);
+        89:  wr_err = |(RV_PLIC_PERMIT[ 89] & ~reg_be);
+        90:  wr_err = |(RV_PLIC_PERMIT[ 90] & ~reg_be);
+        91:  wr_err = |(RV_PLIC_PERMIT[ 91] & ~reg_be);
+        92:  wr_err = |(RV_PLIC_PERMIT[ 92] & ~reg_be);
+        93:  wr_err = |(RV_PLIC_PERMIT[ 93] & ~reg_be);
+        94:  wr_err = |(RV_PLIC_PERMIT[ 94] & ~reg_be);
+        95:  wr_err = |(RV_PLIC_PERMIT[ 95] & ~reg_be);
+        96:  wr_err = |(RV_PLIC_PERMIT[ 96] & ~reg_be);
+        97:  wr_err = |(RV_PLIC_PERMIT[ 97] & ~reg_be);
+        98:  wr_err = |(RV_PLIC_PERMIT[ 98] & ~reg_be);
+        99:  wr_err = |(RV_PLIC_PERMIT[ 99] & ~reg_be);
+        100: wr_err = |(RV_PLIC_PERMIT[100] & ~reg_be);
+        101: wr_err = |(RV_PLIC_PERMIT[101] & ~reg_be);
+        102: wr_err = |(RV_PLIC_PERMIT[102] & ~reg_be);
+        103: wr_err = |(RV_PLIC_PERMIT[103] & ~reg_be);
+        104: wr_err = |(RV_PLIC_PERMIT[104] & ~reg_be);
+        105: wr_err = |(RV_PLIC_PERMIT[105] & ~reg_be);
+        106: wr_err = |(RV_PLIC_PERMIT[106] & ~reg_be);
+        107: wr_err = |(RV_PLIC_PERMIT[107] & ~reg_be);
+        108: wr_err = |(RV_PLIC_PERMIT[108] & ~reg_be);
+        109: wr_err = |(RV_PLIC_PERMIT[109] & ~reg_be);
+        110: wr_err = |(RV_PLIC_PERMIT[110] & ~reg_be);
+        111: wr_err = |(RV_PLIC_PERMIT[111] & ~reg_be);
+        112: wr_err = |(RV_PLIC_PERMIT[112] & ~reg_be);
+        113: wr_err = |(RV_PLIC_PERMIT[113] & ~reg_be);
+        114: wr_err = |(RV_PLIC_PERMIT[114] & ~reg_be);
+        115: wr_err = |(RV_PLIC_PERMIT[115] & ~reg_be);
+        116: wr_err = |(RV_PLIC_PERMIT[116] & ~reg_be);
+        117: wr_err = |(RV_PLIC_PERMIT[117] & ~reg_be);
+        118: wr_err = |(RV_PLIC_PERMIT[118] & ~reg_be);
+        119: wr_err = |(RV_PLIC_PERMIT[119] & ~reg_be);
+        120: wr_err = |(RV_PLIC_PERMIT[120] & ~reg_be);
+        121: wr_err = |(RV_PLIC_PERMIT[121] & ~reg_be);
+        122: wr_err = |(RV_PLIC_PERMIT[122] & ~reg_be);
+        123: wr_err = |(RV_PLIC_PERMIT[123] & ~reg_be);
+        124: wr_err = |(RV_PLIC_PERMIT[124] & ~reg_be);
+        125: wr_err = |(RV_PLIC_PERMIT[125] & ~reg_be);
+        126: wr_err = |(RV_PLIC_PERMIT[126] & ~reg_be);
+        127: wr_err = |(RV_PLIC_PERMIT[127] & ~reg_be);
+        128: wr_err = |(RV_PLIC_PERMIT[128] & ~reg_be);
+        129: wr_err = |(RV_PLIC_PERMIT[129] & ~reg_be);
+        130: wr_err = |(RV_PLIC_PERMIT[130] & ~reg_be);
+        131: wr_err = |(RV_PLIC_PERMIT[131] & ~reg_be);
+        132: wr_err = |(RV_PLIC_PERMIT[132] & ~reg_be);
+        133: wr_err = |(RV_PLIC_PERMIT[133] & ~reg_be);
+        134: wr_err = |(RV_PLIC_PERMIT[134] & ~reg_be);
+        135: wr_err = |(RV_PLIC_PERMIT[135] & ~reg_be);
+        136: wr_err = |(RV_PLIC_PERMIT[136] & ~reg_be);
+        137: wr_err = |(RV_PLIC_PERMIT[137] & ~reg_be);
+        138: wr_err = |(RV_PLIC_PERMIT[138] & ~reg_be);
+        139: wr_err = |(RV_PLIC_PERMIT[139] & ~reg_be);
+        140: wr_err = |(RV_PLIC_PERMIT[140] & ~reg_be);
+        141: wr_err = |(RV_PLIC_PERMIT[141] & ~reg_be);
+        142: wr_err = |(RV_PLIC_PERMIT[142] & ~reg_be);
+        143: wr_err = |(RV_PLIC_PERMIT[143] & ~reg_be);
+        144: wr_err = |(RV_PLIC_PERMIT[144] & ~reg_be);
+        145: wr_err = |(RV_PLIC_PERMIT[145] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign prio_0_we = addr_hit[0] & reg_we & !reg_error;
+  assign prio_0_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign prio_0_wd = reg_wdata[1:0];
-  assign prio_1_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign prio_1_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign prio_1_wd = reg_wdata[1:0];
-  assign prio_2_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign prio_2_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign prio_2_wd = reg_wdata[1:0];
-  assign prio_3_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign prio_3_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign prio_3_wd = reg_wdata[1:0];
-  assign prio_4_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign prio_4_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign prio_4_wd = reg_wdata[1:0];
-  assign prio_5_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign prio_5_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign prio_5_wd = reg_wdata[1:0];
-  assign prio_6_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign prio_6_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign prio_6_wd = reg_wdata[1:0];
-  assign prio_7_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign prio_7_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign prio_7_wd = reg_wdata[1:0];
-  assign prio_8_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign prio_8_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign prio_8_wd = reg_wdata[1:0];
-  assign prio_9_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign prio_9_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign prio_9_wd = reg_wdata[1:0];
-  assign prio_10_we = addr_hit[10] & reg_we & !reg_error;
+
+  assign prio_10_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign prio_10_wd = reg_wdata[1:0];
-  assign prio_11_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign prio_11_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign prio_11_wd = reg_wdata[1:0];
-  assign prio_12_we = addr_hit[12] & reg_we & !reg_error;
+
+  assign prio_12_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
   assign prio_12_wd = reg_wdata[1:0];
-  assign prio_13_we = addr_hit[13] & reg_we & !reg_error;
+
+  assign prio_13_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
   assign prio_13_wd = reg_wdata[1:0];
-  assign prio_14_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign prio_14_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign prio_14_wd = reg_wdata[1:0];
-  assign prio_15_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign prio_15_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign prio_15_wd = reg_wdata[1:0];
-  assign prio_16_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign prio_16_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign prio_16_wd = reg_wdata[1:0];
-  assign prio_17_we = addr_hit[17] & reg_we & !reg_error;
+
+  assign prio_17_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
   assign prio_17_wd = reg_wdata[1:0];
-  assign prio_18_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign prio_18_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign prio_18_wd = reg_wdata[1:0];
-  assign prio_19_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign prio_19_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign prio_19_wd = reg_wdata[1:0];
-  assign prio_20_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign prio_20_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign prio_20_wd = reg_wdata[1:0];
-  assign prio_21_we = addr_hit[21] & reg_we & !reg_error;
+
+  assign prio_21_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
   assign prio_21_wd = reg_wdata[1:0];
-  assign prio_22_we = addr_hit[22] & reg_we & !reg_error;
+
+  assign prio_22_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign prio_22_wd = reg_wdata[1:0];
-  assign prio_23_we = addr_hit[23] & reg_we & !reg_error;
+
+  assign prio_23_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign prio_23_wd = reg_wdata[1:0];
-  assign prio_24_we = addr_hit[24] & reg_we & !reg_error;
+
+  assign prio_24_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
   assign prio_24_wd = reg_wdata[1:0];
-  assign prio_25_we = addr_hit[25] & reg_we & !reg_error;
+
+  assign prio_25_we = addr_valid & (addr_idx == 25) & reg_we & !reg_error;
 
   assign prio_25_wd = reg_wdata[1:0];
-  assign prio_26_we = addr_hit[26] & reg_we & !reg_error;
+
+  assign prio_26_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
   assign prio_26_wd = reg_wdata[1:0];
-  assign prio_27_we = addr_hit[27] & reg_we & !reg_error;
+
+  assign prio_27_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
   assign prio_27_wd = reg_wdata[1:0];
-  assign prio_28_we = addr_hit[28] & reg_we & !reg_error;
+
+  assign prio_28_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
   assign prio_28_wd = reg_wdata[1:0];
-  assign prio_29_we = addr_hit[29] & reg_we & !reg_error;
+
+  assign prio_29_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
   assign prio_29_wd = reg_wdata[1:0];
-  assign prio_30_we = addr_hit[30] & reg_we & !reg_error;
+
+  assign prio_30_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
   assign prio_30_wd = reg_wdata[1:0];
-  assign prio_31_we = addr_hit[31] & reg_we & !reg_error;
+
+  assign prio_31_we = addr_valid & (addr_idx == 31) & reg_we & !reg_error;
 
   assign prio_31_wd = reg_wdata[1:0];
-  assign prio_32_we = addr_hit[32] & reg_we & !reg_error;
+
+  assign prio_32_we = addr_valid & (addr_idx == 32) & reg_we & !reg_error;
 
   assign prio_32_wd = reg_wdata[1:0];
-  assign prio_33_we = addr_hit[33] & reg_we & !reg_error;
+
+  assign prio_33_we = addr_valid & (addr_idx == 33) & reg_we & !reg_error;
 
   assign prio_33_wd = reg_wdata[1:0];
-  assign prio_34_we = addr_hit[34] & reg_we & !reg_error;
+
+  assign prio_34_we = addr_valid & (addr_idx == 34) & reg_we & !reg_error;
 
   assign prio_34_wd = reg_wdata[1:0];
-  assign prio_35_we = addr_hit[35] & reg_we & !reg_error;
+
+  assign prio_35_we = addr_valid & (addr_idx == 35) & reg_we & !reg_error;
 
   assign prio_35_wd = reg_wdata[1:0];
-  assign prio_36_we = addr_hit[36] & reg_we & !reg_error;
+
+  assign prio_36_we = addr_valid & (addr_idx == 36) & reg_we & !reg_error;
 
   assign prio_36_wd = reg_wdata[1:0];
-  assign prio_37_we = addr_hit[37] & reg_we & !reg_error;
+
+  assign prio_37_we = addr_valid & (addr_idx == 37) & reg_we & !reg_error;
 
   assign prio_37_wd = reg_wdata[1:0];
-  assign prio_38_we = addr_hit[38] & reg_we & !reg_error;
+
+  assign prio_38_we = addr_valid & (addr_idx == 38) & reg_we & !reg_error;
 
   assign prio_38_wd = reg_wdata[1:0];
-  assign prio_39_we = addr_hit[39] & reg_we & !reg_error;
+
+  assign prio_39_we = addr_valid & (addr_idx == 39) & reg_we & !reg_error;
 
   assign prio_39_wd = reg_wdata[1:0];
-  assign prio_40_we = addr_hit[40] & reg_we & !reg_error;
+
+  assign prio_40_we = addr_valid & (addr_idx == 40) & reg_we & !reg_error;
 
   assign prio_40_wd = reg_wdata[1:0];
-  assign prio_41_we = addr_hit[41] & reg_we & !reg_error;
+
+  assign prio_41_we = addr_valid & (addr_idx == 41) & reg_we & !reg_error;
 
   assign prio_41_wd = reg_wdata[1:0];
-  assign prio_42_we = addr_hit[42] & reg_we & !reg_error;
+
+  assign prio_42_we = addr_valid & (addr_idx == 42) & reg_we & !reg_error;
 
   assign prio_42_wd = reg_wdata[1:0];
-  assign prio_43_we = addr_hit[43] & reg_we & !reg_error;
+
+  assign prio_43_we = addr_valid & (addr_idx == 43) & reg_we & !reg_error;
 
   assign prio_43_wd = reg_wdata[1:0];
-  assign prio_44_we = addr_hit[44] & reg_we & !reg_error;
+
+  assign prio_44_we = addr_valid & (addr_idx == 44) & reg_we & !reg_error;
 
   assign prio_44_wd = reg_wdata[1:0];
-  assign prio_45_we = addr_hit[45] & reg_we & !reg_error;
+
+  assign prio_45_we = addr_valid & (addr_idx == 45) & reg_we & !reg_error;
 
   assign prio_45_wd = reg_wdata[1:0];
-  assign prio_46_we = addr_hit[46] & reg_we & !reg_error;
+
+  assign prio_46_we = addr_valid & (addr_idx == 46) & reg_we & !reg_error;
 
   assign prio_46_wd = reg_wdata[1:0];
-  assign prio_47_we = addr_hit[47] & reg_we & !reg_error;
+
+  assign prio_47_we = addr_valid & (addr_idx == 47) & reg_we & !reg_error;
 
   assign prio_47_wd = reg_wdata[1:0];
-  assign prio_48_we = addr_hit[48] & reg_we & !reg_error;
+
+  assign prio_48_we = addr_valid & (addr_idx == 48) & reg_we & !reg_error;
 
   assign prio_48_wd = reg_wdata[1:0];
-  assign prio_49_we = addr_hit[49] & reg_we & !reg_error;
+
+  assign prio_49_we = addr_valid & (addr_idx == 49) & reg_we & !reg_error;
 
   assign prio_49_wd = reg_wdata[1:0];
-  assign prio_50_we = addr_hit[50] & reg_we & !reg_error;
+
+  assign prio_50_we = addr_valid & (addr_idx == 50) & reg_we & !reg_error;
 
   assign prio_50_wd = reg_wdata[1:0];
-  assign prio_51_we = addr_hit[51] & reg_we & !reg_error;
+
+  assign prio_51_we = addr_valid & (addr_idx == 51) & reg_we & !reg_error;
 
   assign prio_51_wd = reg_wdata[1:0];
-  assign prio_52_we = addr_hit[52] & reg_we & !reg_error;
+
+  assign prio_52_we = addr_valid & (addr_idx == 52) & reg_we & !reg_error;
 
   assign prio_52_wd = reg_wdata[1:0];
-  assign prio_53_we = addr_hit[53] & reg_we & !reg_error;
+
+  assign prio_53_we = addr_valid & (addr_idx == 53) & reg_we & !reg_error;
 
   assign prio_53_wd = reg_wdata[1:0];
-  assign prio_54_we = addr_hit[54] & reg_we & !reg_error;
+
+  assign prio_54_we = addr_valid & (addr_idx == 54) & reg_we & !reg_error;
 
   assign prio_54_wd = reg_wdata[1:0];
-  assign prio_55_we = addr_hit[55] & reg_we & !reg_error;
+
+  assign prio_55_we = addr_valid & (addr_idx == 55) & reg_we & !reg_error;
 
   assign prio_55_wd = reg_wdata[1:0];
-  assign prio_56_we = addr_hit[56] & reg_we & !reg_error;
+
+  assign prio_56_we = addr_valid & (addr_idx == 56) & reg_we & !reg_error;
 
   assign prio_56_wd = reg_wdata[1:0];
-  assign prio_57_we = addr_hit[57] & reg_we & !reg_error;
+
+  assign prio_57_we = addr_valid & (addr_idx == 57) & reg_we & !reg_error;
 
   assign prio_57_wd = reg_wdata[1:0];
-  assign prio_58_we = addr_hit[58] & reg_we & !reg_error;
+
+  assign prio_58_we = addr_valid & (addr_idx == 58) & reg_we & !reg_error;
 
   assign prio_58_wd = reg_wdata[1:0];
-  assign prio_59_we = addr_hit[59] & reg_we & !reg_error;
+
+  assign prio_59_we = addr_valid & (addr_idx == 59) & reg_we & !reg_error;
 
   assign prio_59_wd = reg_wdata[1:0];
-  assign prio_60_we = addr_hit[60] & reg_we & !reg_error;
+
+  assign prio_60_we = addr_valid & (addr_idx == 60) & reg_we & !reg_error;
 
   assign prio_60_wd = reg_wdata[1:0];
-  assign prio_61_we = addr_hit[61] & reg_we & !reg_error;
+
+  assign prio_61_we = addr_valid & (addr_idx == 61) & reg_we & !reg_error;
 
   assign prio_61_wd = reg_wdata[1:0];
-  assign prio_62_we = addr_hit[62] & reg_we & !reg_error;
+
+  assign prio_62_we = addr_valid & (addr_idx == 62) & reg_we & !reg_error;
 
   assign prio_62_wd = reg_wdata[1:0];
-  assign prio_63_we = addr_hit[63] & reg_we & !reg_error;
+
+  assign prio_63_we = addr_valid & (addr_idx == 63) & reg_we & !reg_error;
 
   assign prio_63_wd = reg_wdata[1:0];
-  assign prio_64_we = addr_hit[64] & reg_we & !reg_error;
+
+  assign prio_64_we = addr_valid & (addr_idx == 64) & reg_we & !reg_error;
 
   assign prio_64_wd = reg_wdata[1:0];
-  assign prio_65_we = addr_hit[65] & reg_we & !reg_error;
+
+  assign prio_65_we = addr_valid & (addr_idx == 65) & reg_we & !reg_error;
 
   assign prio_65_wd = reg_wdata[1:0];
-  assign prio_66_we = addr_hit[66] & reg_we & !reg_error;
+
+  assign prio_66_we = addr_valid & (addr_idx == 66) & reg_we & !reg_error;
 
   assign prio_66_wd = reg_wdata[1:0];
-  assign prio_67_we = addr_hit[67] & reg_we & !reg_error;
+
+  assign prio_67_we = addr_valid & (addr_idx == 67) & reg_we & !reg_error;
 
   assign prio_67_wd = reg_wdata[1:0];
-  assign prio_68_we = addr_hit[68] & reg_we & !reg_error;
+
+  assign prio_68_we = addr_valid & (addr_idx == 68) & reg_we & !reg_error;
 
   assign prio_68_wd = reg_wdata[1:0];
-  assign prio_69_we = addr_hit[69] & reg_we & !reg_error;
+
+  assign prio_69_we = addr_valid & (addr_idx == 69) & reg_we & !reg_error;
 
   assign prio_69_wd = reg_wdata[1:0];
-  assign prio_70_we = addr_hit[70] & reg_we & !reg_error;
+
+  assign prio_70_we = addr_valid & (addr_idx == 70) & reg_we & !reg_error;
 
   assign prio_70_wd = reg_wdata[1:0];
-  assign prio_71_we = addr_hit[71] & reg_we & !reg_error;
+
+  assign prio_71_we = addr_valid & (addr_idx == 71) & reg_we & !reg_error;
 
   assign prio_71_wd = reg_wdata[1:0];
-  assign prio_72_we = addr_hit[72] & reg_we & !reg_error;
+
+  assign prio_72_we = addr_valid & (addr_idx == 72) & reg_we & !reg_error;
 
   assign prio_72_wd = reg_wdata[1:0];
-  assign prio_73_we = addr_hit[73] & reg_we & !reg_error;
+
+  assign prio_73_we = addr_valid & (addr_idx == 73) & reg_we & !reg_error;
 
   assign prio_73_wd = reg_wdata[1:0];
-  assign prio_74_we = addr_hit[74] & reg_we & !reg_error;
+
+  assign prio_74_we = addr_valid & (addr_idx == 74) & reg_we & !reg_error;
 
   assign prio_74_wd = reg_wdata[1:0];
-  assign prio_75_we = addr_hit[75] & reg_we & !reg_error;
+
+  assign prio_75_we = addr_valid & (addr_idx == 75) & reg_we & !reg_error;
 
   assign prio_75_wd = reg_wdata[1:0];
-  assign prio_76_we = addr_hit[76] & reg_we & !reg_error;
+
+  assign prio_76_we = addr_valid & (addr_idx == 76) & reg_we & !reg_error;
 
   assign prio_76_wd = reg_wdata[1:0];
-  assign prio_77_we = addr_hit[77] & reg_we & !reg_error;
+
+  assign prio_77_we = addr_valid & (addr_idx == 77) & reg_we & !reg_error;
 
   assign prio_77_wd = reg_wdata[1:0];
-  assign prio_78_we = addr_hit[78] & reg_we & !reg_error;
+
+  assign prio_78_we = addr_valid & (addr_idx == 78) & reg_we & !reg_error;
 
   assign prio_78_wd = reg_wdata[1:0];
-  assign prio_79_we = addr_hit[79] & reg_we & !reg_error;
+
+  assign prio_79_we = addr_valid & (addr_idx == 79) & reg_we & !reg_error;
 
   assign prio_79_wd = reg_wdata[1:0];
-  assign prio_80_we = addr_hit[80] & reg_we & !reg_error;
+
+  assign prio_80_we = addr_valid & (addr_idx == 80) & reg_we & !reg_error;
 
   assign prio_80_wd = reg_wdata[1:0];
-  assign prio_81_we = addr_hit[81] & reg_we & !reg_error;
+
+  assign prio_81_we = addr_valid & (addr_idx == 81) & reg_we & !reg_error;
 
   assign prio_81_wd = reg_wdata[1:0];
-  assign prio_82_we = addr_hit[82] & reg_we & !reg_error;
+
+  assign prio_82_we = addr_valid & (addr_idx == 82) & reg_we & !reg_error;
 
   assign prio_82_wd = reg_wdata[1:0];
-  assign prio_83_we = addr_hit[83] & reg_we & !reg_error;
+
+  assign prio_83_we = addr_valid & (addr_idx == 83) & reg_we & !reg_error;
 
   assign prio_83_wd = reg_wdata[1:0];
-  assign prio_84_we = addr_hit[84] & reg_we & !reg_error;
+
+  assign prio_84_we = addr_valid & (addr_idx == 84) & reg_we & !reg_error;
 
   assign prio_84_wd = reg_wdata[1:0];
-  assign prio_85_we = addr_hit[85] & reg_we & !reg_error;
+
+  assign prio_85_we = addr_valid & (addr_idx == 85) & reg_we & !reg_error;
 
   assign prio_85_wd = reg_wdata[1:0];
-  assign prio_86_we = addr_hit[86] & reg_we & !reg_error;
+
+  assign prio_86_we = addr_valid & (addr_idx == 86) & reg_we & !reg_error;
 
   assign prio_86_wd = reg_wdata[1:0];
-  assign prio_87_we = addr_hit[87] & reg_we & !reg_error;
+
+  assign prio_87_we = addr_valid & (addr_idx == 87) & reg_we & !reg_error;
 
   assign prio_87_wd = reg_wdata[1:0];
-  assign prio_88_we = addr_hit[88] & reg_we & !reg_error;
+
+  assign prio_88_we = addr_valid & (addr_idx == 88) & reg_we & !reg_error;
 
   assign prio_88_wd = reg_wdata[1:0];
-  assign prio_89_we = addr_hit[89] & reg_we & !reg_error;
+
+  assign prio_89_we = addr_valid & (addr_idx == 89) & reg_we & !reg_error;
 
   assign prio_89_wd = reg_wdata[1:0];
-  assign prio_90_we = addr_hit[90] & reg_we & !reg_error;
+
+  assign prio_90_we = addr_valid & (addr_idx == 90) & reg_we & !reg_error;
 
   assign prio_90_wd = reg_wdata[1:0];
-  assign prio_91_we = addr_hit[91] & reg_we & !reg_error;
+
+  assign prio_91_we = addr_valid & (addr_idx == 91) & reg_we & !reg_error;
 
   assign prio_91_wd = reg_wdata[1:0];
-  assign prio_92_we = addr_hit[92] & reg_we & !reg_error;
+
+  assign prio_92_we = addr_valid & (addr_idx == 92) & reg_we & !reg_error;
 
   assign prio_92_wd = reg_wdata[1:0];
-  assign prio_93_we = addr_hit[93] & reg_we & !reg_error;
+
+  assign prio_93_we = addr_valid & (addr_idx == 93) & reg_we & !reg_error;
 
   assign prio_93_wd = reg_wdata[1:0];
-  assign prio_94_we = addr_hit[94] & reg_we & !reg_error;
+
+  assign prio_94_we = addr_valid & (addr_idx == 94) & reg_we & !reg_error;
 
   assign prio_94_wd = reg_wdata[1:0];
-  assign prio_95_we = addr_hit[95] & reg_we & !reg_error;
+
+  assign prio_95_we = addr_valid & (addr_idx == 95) & reg_we & !reg_error;
 
   assign prio_95_wd = reg_wdata[1:0];
-  assign prio_96_we = addr_hit[96] & reg_we & !reg_error;
+
+  assign prio_96_we = addr_valid & (addr_idx == 96) & reg_we & !reg_error;
 
   assign prio_96_wd = reg_wdata[1:0];
-  assign prio_97_we = addr_hit[97] & reg_we & !reg_error;
+
+  assign prio_97_we = addr_valid & (addr_idx == 97) & reg_we & !reg_error;
 
   assign prio_97_wd = reg_wdata[1:0];
-  assign prio_98_we = addr_hit[98] & reg_we & !reg_error;
+
+  assign prio_98_we = addr_valid & (addr_idx == 98) & reg_we & !reg_error;
 
   assign prio_98_wd = reg_wdata[1:0];
-  assign prio_99_we = addr_hit[99] & reg_we & !reg_error;
+
+  assign prio_99_we = addr_valid & (addr_idx == 99) & reg_we & !reg_error;
 
   assign prio_99_wd = reg_wdata[1:0];
-  assign prio_100_we = addr_hit[100] & reg_we & !reg_error;
+
+  assign prio_100_we = addr_valid & (addr_idx == 100) & reg_we & !reg_error;
 
   assign prio_100_wd = reg_wdata[1:0];
-  assign prio_101_we = addr_hit[101] & reg_we & !reg_error;
+
+  assign prio_101_we = addr_valid & (addr_idx == 101) & reg_we & !reg_error;
 
   assign prio_101_wd = reg_wdata[1:0];
-  assign prio_102_we = addr_hit[102] & reg_we & !reg_error;
+
+  assign prio_102_we = addr_valid & (addr_idx == 102) & reg_we & !reg_error;
 
   assign prio_102_wd = reg_wdata[1:0];
-  assign prio_103_we = addr_hit[103] & reg_we & !reg_error;
+
+  assign prio_103_we = addr_valid & (addr_idx == 103) & reg_we & !reg_error;
 
   assign prio_103_wd = reg_wdata[1:0];
-  assign prio_104_we = addr_hit[104] & reg_we & !reg_error;
+
+  assign prio_104_we = addr_valid & (addr_idx == 104) & reg_we & !reg_error;
 
   assign prio_104_wd = reg_wdata[1:0];
-  assign prio_105_we = addr_hit[105] & reg_we & !reg_error;
+
+  assign prio_105_we = addr_valid & (addr_idx == 105) & reg_we & !reg_error;
 
   assign prio_105_wd = reg_wdata[1:0];
-  assign prio_106_we = addr_hit[106] & reg_we & !reg_error;
+
+  assign prio_106_we = addr_valid & (addr_idx == 106) & reg_we & !reg_error;
 
   assign prio_106_wd = reg_wdata[1:0];
-  assign prio_107_we = addr_hit[107] & reg_we & !reg_error;
+
+  assign prio_107_we = addr_valid & (addr_idx == 107) & reg_we & !reg_error;
 
   assign prio_107_wd = reg_wdata[1:0];
-  assign prio_108_we = addr_hit[108] & reg_we & !reg_error;
+
+  assign prio_108_we = addr_valid & (addr_idx == 108) & reg_we & !reg_error;
 
   assign prio_108_wd = reg_wdata[1:0];
-  assign prio_109_we = addr_hit[109] & reg_we & !reg_error;
+
+  assign prio_109_we = addr_valid & (addr_idx == 109) & reg_we & !reg_error;
 
   assign prio_109_wd = reg_wdata[1:0];
-  assign prio_110_we = addr_hit[110] & reg_we & !reg_error;
+
+  assign prio_110_we = addr_valid & (addr_idx == 110) & reg_we & !reg_error;
 
   assign prio_110_wd = reg_wdata[1:0];
-  assign prio_111_we = addr_hit[111] & reg_we & !reg_error;
+
+  assign prio_111_we = addr_valid & (addr_idx == 111) & reg_we & !reg_error;
 
   assign prio_111_wd = reg_wdata[1:0];
-  assign prio_112_we = addr_hit[112] & reg_we & !reg_error;
+
+  assign prio_112_we = addr_valid & (addr_idx == 112) & reg_we & !reg_error;
 
   assign prio_112_wd = reg_wdata[1:0];
-  assign prio_113_we = addr_hit[113] & reg_we & !reg_error;
+
+  assign prio_113_we = addr_valid & (addr_idx == 113) & reg_we & !reg_error;
 
   assign prio_113_wd = reg_wdata[1:0];
-  assign prio_114_we = addr_hit[114] & reg_we & !reg_error;
+
+  assign prio_114_we = addr_valid & (addr_idx == 114) & reg_we & !reg_error;
 
   assign prio_114_wd = reg_wdata[1:0];
-  assign prio_115_we = addr_hit[115] & reg_we & !reg_error;
+
+  assign prio_115_we = addr_valid & (addr_idx == 115) & reg_we & !reg_error;
 
   assign prio_115_wd = reg_wdata[1:0];
-  assign prio_116_we = addr_hit[116] & reg_we & !reg_error;
+
+  assign prio_116_we = addr_valid & (addr_idx == 116) & reg_we & !reg_error;
 
   assign prio_116_wd = reg_wdata[1:0];
-  assign prio_117_we = addr_hit[117] & reg_we & !reg_error;
+
+  assign prio_117_we = addr_valid & (addr_idx == 117) & reg_we & !reg_error;
 
   assign prio_117_wd = reg_wdata[1:0];
-  assign prio_118_we = addr_hit[118] & reg_we & !reg_error;
+
+  assign prio_118_we = addr_valid & (addr_idx == 118) & reg_we & !reg_error;
 
   assign prio_118_wd = reg_wdata[1:0];
-  assign prio_119_we = addr_hit[119] & reg_we & !reg_error;
+
+  assign prio_119_we = addr_valid & (addr_idx == 119) & reg_we & !reg_error;
 
   assign prio_119_wd = reg_wdata[1:0];
-  assign prio_120_we = addr_hit[120] & reg_we & !reg_error;
+
+  assign prio_120_we = addr_valid & (addr_idx == 120) & reg_we & !reg_error;
 
   assign prio_120_wd = reg_wdata[1:0];
-  assign prio_121_we = addr_hit[121] & reg_we & !reg_error;
+
+  assign prio_121_we = addr_valid & (addr_idx == 121) & reg_we & !reg_error;
 
   assign prio_121_wd = reg_wdata[1:0];
-  assign prio_122_we = addr_hit[122] & reg_we & !reg_error;
+
+  assign prio_122_we = addr_valid & (addr_idx == 122) & reg_we & !reg_error;
 
   assign prio_122_wd = reg_wdata[1:0];
-  assign prio_123_we = addr_hit[123] & reg_we & !reg_error;
+
+  assign prio_123_we = addr_valid & (addr_idx == 123) & reg_we & !reg_error;
 
   assign prio_123_wd = reg_wdata[1:0];
-  assign prio_124_we = addr_hit[124] & reg_we & !reg_error;
+
+  assign prio_124_we = addr_valid & (addr_idx == 124) & reg_we & !reg_error;
 
   assign prio_124_wd = reg_wdata[1:0];
-  assign prio_125_we = addr_hit[125] & reg_we & !reg_error;
+
+  assign prio_125_we = addr_valid & (addr_idx == 125) & reg_we & !reg_error;
 
   assign prio_125_wd = reg_wdata[1:0];
-  assign prio_126_we = addr_hit[126] & reg_we & !reg_error;
+
+  assign prio_126_we = addr_valid & (addr_idx == 126) & reg_we & !reg_error;
 
   assign prio_126_wd = reg_wdata[1:0];
-  assign prio_127_we = addr_hit[127] & reg_we & !reg_error;
+
+  assign prio_127_we = addr_valid & (addr_idx == 127) & reg_we & !reg_error;
 
   assign prio_127_wd = reg_wdata[1:0];
-  assign prio_128_we = addr_hit[128] & reg_we & !reg_error;
+
+  assign prio_128_we = addr_valid & (addr_idx == 128) & reg_we & !reg_error;
 
   assign prio_128_wd = reg_wdata[1:0];
-  assign prio_129_we = addr_hit[129] & reg_we & !reg_error;
+
+  assign prio_129_we = addr_valid & (addr_idx == 129) & reg_we & !reg_error;
 
   assign prio_129_wd = reg_wdata[1:0];
-  assign prio_130_we = addr_hit[130] & reg_we & !reg_error;
+
+  assign prio_130_we = addr_valid & (addr_idx == 130) & reg_we & !reg_error;
 
   assign prio_130_wd = reg_wdata[1:0];
-  assign prio_131_we = addr_hit[131] & reg_we & !reg_error;
+
+  assign prio_131_we = addr_valid & (addr_idx == 131) & reg_we & !reg_error;
 
   assign prio_131_wd = reg_wdata[1:0];
-  assign ie0_0_we = addr_hit[137] & reg_we & !reg_error;
+
+
+
+
+
+
+  assign ie0_0_we = addr_valid & (addr_idx == 137) & reg_we & !reg_error;
 
   assign ie0_0_e_0_wd = reg_wdata[0];
-
   assign ie0_0_e_1_wd = reg_wdata[1];
-
   assign ie0_0_e_2_wd = reg_wdata[2];
-
   assign ie0_0_e_3_wd = reg_wdata[3];
-
   assign ie0_0_e_4_wd = reg_wdata[4];
-
   assign ie0_0_e_5_wd = reg_wdata[5];
-
   assign ie0_0_e_6_wd = reg_wdata[6];
-
   assign ie0_0_e_7_wd = reg_wdata[7];
-
   assign ie0_0_e_8_wd = reg_wdata[8];
-
   assign ie0_0_e_9_wd = reg_wdata[9];
-
   assign ie0_0_e_10_wd = reg_wdata[10];
-
   assign ie0_0_e_11_wd = reg_wdata[11];
-
   assign ie0_0_e_12_wd = reg_wdata[12];
-
   assign ie0_0_e_13_wd = reg_wdata[13];
-
   assign ie0_0_e_14_wd = reg_wdata[14];
-
   assign ie0_0_e_15_wd = reg_wdata[15];
-
   assign ie0_0_e_16_wd = reg_wdata[16];
-
   assign ie0_0_e_17_wd = reg_wdata[17];
-
   assign ie0_0_e_18_wd = reg_wdata[18];
-
   assign ie0_0_e_19_wd = reg_wdata[19];
-
   assign ie0_0_e_20_wd = reg_wdata[20];
-
   assign ie0_0_e_21_wd = reg_wdata[21];
-
   assign ie0_0_e_22_wd = reg_wdata[22];
-
   assign ie0_0_e_23_wd = reg_wdata[23];
-
   assign ie0_0_e_24_wd = reg_wdata[24];
-
   assign ie0_0_e_25_wd = reg_wdata[25];
-
   assign ie0_0_e_26_wd = reg_wdata[26];
-
   assign ie0_0_e_27_wd = reg_wdata[27];
-
   assign ie0_0_e_28_wd = reg_wdata[28];
-
   assign ie0_0_e_29_wd = reg_wdata[29];
-
   assign ie0_0_e_30_wd = reg_wdata[30];
-
   assign ie0_0_e_31_wd = reg_wdata[31];
-  assign ie0_1_we = addr_hit[138] & reg_we & !reg_error;
+
+  assign ie0_1_we = addr_valid & (addr_idx == 138) & reg_we & !reg_error;
 
   assign ie0_1_e_32_wd = reg_wdata[0];
-
   assign ie0_1_e_33_wd = reg_wdata[1];
-
   assign ie0_1_e_34_wd = reg_wdata[2];
-
   assign ie0_1_e_35_wd = reg_wdata[3];
-
   assign ie0_1_e_36_wd = reg_wdata[4];
-
   assign ie0_1_e_37_wd = reg_wdata[5];
-
   assign ie0_1_e_38_wd = reg_wdata[6];
-
   assign ie0_1_e_39_wd = reg_wdata[7];
-
   assign ie0_1_e_40_wd = reg_wdata[8];
-
   assign ie0_1_e_41_wd = reg_wdata[9];
-
   assign ie0_1_e_42_wd = reg_wdata[10];
-
   assign ie0_1_e_43_wd = reg_wdata[11];
-
   assign ie0_1_e_44_wd = reg_wdata[12];
-
   assign ie0_1_e_45_wd = reg_wdata[13];
-
   assign ie0_1_e_46_wd = reg_wdata[14];
-
   assign ie0_1_e_47_wd = reg_wdata[15];
-
   assign ie0_1_e_48_wd = reg_wdata[16];
-
   assign ie0_1_e_49_wd = reg_wdata[17];
-
   assign ie0_1_e_50_wd = reg_wdata[18];
-
   assign ie0_1_e_51_wd = reg_wdata[19];
-
   assign ie0_1_e_52_wd = reg_wdata[20];
-
   assign ie0_1_e_53_wd = reg_wdata[21];
-
   assign ie0_1_e_54_wd = reg_wdata[22];
-
   assign ie0_1_e_55_wd = reg_wdata[23];
-
   assign ie0_1_e_56_wd = reg_wdata[24];
-
   assign ie0_1_e_57_wd = reg_wdata[25];
-
   assign ie0_1_e_58_wd = reg_wdata[26];
-
   assign ie0_1_e_59_wd = reg_wdata[27];
-
   assign ie0_1_e_60_wd = reg_wdata[28];
-
   assign ie0_1_e_61_wd = reg_wdata[29];
-
   assign ie0_1_e_62_wd = reg_wdata[30];
-
   assign ie0_1_e_63_wd = reg_wdata[31];
-  assign ie0_2_we = addr_hit[139] & reg_we & !reg_error;
+
+  assign ie0_2_we = addr_valid & (addr_idx == 139) & reg_we & !reg_error;
 
   assign ie0_2_e_64_wd = reg_wdata[0];
-
   assign ie0_2_e_65_wd = reg_wdata[1];
-
   assign ie0_2_e_66_wd = reg_wdata[2];
-
   assign ie0_2_e_67_wd = reg_wdata[3];
-
   assign ie0_2_e_68_wd = reg_wdata[4];
-
   assign ie0_2_e_69_wd = reg_wdata[5];
-
   assign ie0_2_e_70_wd = reg_wdata[6];
-
   assign ie0_2_e_71_wd = reg_wdata[7];
-
   assign ie0_2_e_72_wd = reg_wdata[8];
-
   assign ie0_2_e_73_wd = reg_wdata[9];
-
   assign ie0_2_e_74_wd = reg_wdata[10];
-
   assign ie0_2_e_75_wd = reg_wdata[11];
-
   assign ie0_2_e_76_wd = reg_wdata[12];
-
   assign ie0_2_e_77_wd = reg_wdata[13];
-
   assign ie0_2_e_78_wd = reg_wdata[14];
-
   assign ie0_2_e_79_wd = reg_wdata[15];
-
   assign ie0_2_e_80_wd = reg_wdata[16];
-
   assign ie0_2_e_81_wd = reg_wdata[17];
-
   assign ie0_2_e_82_wd = reg_wdata[18];
-
   assign ie0_2_e_83_wd = reg_wdata[19];
-
   assign ie0_2_e_84_wd = reg_wdata[20];
-
   assign ie0_2_e_85_wd = reg_wdata[21];
-
   assign ie0_2_e_86_wd = reg_wdata[22];
-
   assign ie0_2_e_87_wd = reg_wdata[23];
-
   assign ie0_2_e_88_wd = reg_wdata[24];
-
   assign ie0_2_e_89_wd = reg_wdata[25];
-
   assign ie0_2_e_90_wd = reg_wdata[26];
-
   assign ie0_2_e_91_wd = reg_wdata[27];
-
   assign ie0_2_e_92_wd = reg_wdata[28];
-
   assign ie0_2_e_93_wd = reg_wdata[29];
-
   assign ie0_2_e_94_wd = reg_wdata[30];
-
   assign ie0_2_e_95_wd = reg_wdata[31];
-  assign ie0_3_we = addr_hit[140] & reg_we & !reg_error;
+
+  assign ie0_3_we = addr_valid & (addr_idx == 140) & reg_we & !reg_error;
 
   assign ie0_3_e_96_wd = reg_wdata[0];
-
   assign ie0_3_e_97_wd = reg_wdata[1];
-
   assign ie0_3_e_98_wd = reg_wdata[2];
-
   assign ie0_3_e_99_wd = reg_wdata[3];
-
   assign ie0_3_e_100_wd = reg_wdata[4];
-
   assign ie0_3_e_101_wd = reg_wdata[5];
-
   assign ie0_3_e_102_wd = reg_wdata[6];
-
   assign ie0_3_e_103_wd = reg_wdata[7];
-
   assign ie0_3_e_104_wd = reg_wdata[8];
-
   assign ie0_3_e_105_wd = reg_wdata[9];
-
   assign ie0_3_e_106_wd = reg_wdata[10];
-
   assign ie0_3_e_107_wd = reg_wdata[11];
-
   assign ie0_3_e_108_wd = reg_wdata[12];
-
   assign ie0_3_e_109_wd = reg_wdata[13];
-
   assign ie0_3_e_110_wd = reg_wdata[14];
-
   assign ie0_3_e_111_wd = reg_wdata[15];
-
   assign ie0_3_e_112_wd = reg_wdata[16];
-
   assign ie0_3_e_113_wd = reg_wdata[17];
-
   assign ie0_3_e_114_wd = reg_wdata[18];
-
   assign ie0_3_e_115_wd = reg_wdata[19];
-
   assign ie0_3_e_116_wd = reg_wdata[20];
-
   assign ie0_3_e_117_wd = reg_wdata[21];
-
   assign ie0_3_e_118_wd = reg_wdata[22];
-
   assign ie0_3_e_119_wd = reg_wdata[23];
-
   assign ie0_3_e_120_wd = reg_wdata[24];
-
   assign ie0_3_e_121_wd = reg_wdata[25];
-
   assign ie0_3_e_122_wd = reg_wdata[26];
-
   assign ie0_3_e_123_wd = reg_wdata[27];
-
   assign ie0_3_e_124_wd = reg_wdata[28];
-
   assign ie0_3_e_125_wd = reg_wdata[29];
-
   assign ie0_3_e_126_wd = reg_wdata[30];
-
   assign ie0_3_e_127_wd = reg_wdata[31];
-  assign ie0_4_we = addr_hit[141] & reg_we & !reg_error;
+
+  assign ie0_4_we = addr_valid & (addr_idx == 141) & reg_we & !reg_error;
 
   assign ie0_4_e_128_wd = reg_wdata[0];
-
   assign ie0_4_e_129_wd = reg_wdata[1];
-
   assign ie0_4_e_130_wd = reg_wdata[2];
-
   assign ie0_4_e_131_wd = reg_wdata[3];
-  assign threshold0_we = addr_hit[142] & reg_we & !reg_error;
+
+  assign threshold0_we = addr_valid & (addr_idx == 142) & reg_we & !reg_error;
 
   assign threshold0_wd = reg_wdata[1:0];
-  assign cc0_re = addr_hit[143] & reg_re & !reg_error;
-  assign cc0_we = addr_hit[143] & reg_we & !reg_error;
+
+  assign cc0_re = addr_valid & (addr_idx == 143) & reg_re & !reg_error;
+  assign cc0_we = addr_valid & (addr_idx == 143) & reg_we & !reg_error;
 
   assign cc0_wd = reg_wdata[7:0];
-  assign msip0_we = addr_hit[144] & reg_we & !reg_error;
+
+  assign msip0_we = addr_valid & (addr_idx == 144) & reg_we & !reg_error;
 
   assign msip0_wd = reg_wdata[0];
-  assign alert_test_we = addr_hit[145] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 145) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -13150,850 +13182,855 @@ module rv_plic_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[1:0] = prio_0_qs;
-      end
-
-      addr_hit[1]: begin
-        reg_rdata_next[1:0] = prio_1_qs;
-      end
-
-      addr_hit[2]: begin
-        reg_rdata_next[1:0] = prio_2_qs;
-      end
-
-      addr_hit[3]: begin
-        reg_rdata_next[1:0] = prio_3_qs;
-      end
-
-      addr_hit[4]: begin
-        reg_rdata_next[1:0] = prio_4_qs;
-      end
-
-      addr_hit[5]: begin
-        reg_rdata_next[1:0] = prio_5_qs;
-      end
-
-      addr_hit[6]: begin
-        reg_rdata_next[1:0] = prio_6_qs;
-      end
-
-      addr_hit[7]: begin
-        reg_rdata_next[1:0] = prio_7_qs;
-      end
-
-      addr_hit[8]: begin
-        reg_rdata_next[1:0] = prio_8_qs;
-      end
-
-      addr_hit[9]: begin
-        reg_rdata_next[1:0] = prio_9_qs;
-      end
-
-      addr_hit[10]: begin
-        reg_rdata_next[1:0] = prio_10_qs;
-      end
-
-      addr_hit[11]: begin
-        reg_rdata_next[1:0] = prio_11_qs;
-      end
-
-      addr_hit[12]: begin
-        reg_rdata_next[1:0] = prio_12_qs;
-      end
-
-      addr_hit[13]: begin
-        reg_rdata_next[1:0] = prio_13_qs;
-      end
-
-      addr_hit[14]: begin
-        reg_rdata_next[1:0] = prio_14_qs;
-      end
-
-      addr_hit[15]: begin
-        reg_rdata_next[1:0] = prio_15_qs;
-      end
-
-      addr_hit[16]: begin
-        reg_rdata_next[1:0] = prio_16_qs;
-      end
-
-      addr_hit[17]: begin
-        reg_rdata_next[1:0] = prio_17_qs;
-      end
-
-      addr_hit[18]: begin
-        reg_rdata_next[1:0] = prio_18_qs;
-      end
-
-      addr_hit[19]: begin
-        reg_rdata_next[1:0] = prio_19_qs;
-      end
-
-      addr_hit[20]: begin
-        reg_rdata_next[1:0] = prio_20_qs;
-      end
-
-      addr_hit[21]: begin
-        reg_rdata_next[1:0] = prio_21_qs;
-      end
-
-      addr_hit[22]: begin
-        reg_rdata_next[1:0] = prio_22_qs;
-      end
-
-      addr_hit[23]: begin
-        reg_rdata_next[1:0] = prio_23_qs;
-      end
-
-      addr_hit[24]: begin
-        reg_rdata_next[1:0] = prio_24_qs;
-      end
-
-      addr_hit[25]: begin
-        reg_rdata_next[1:0] = prio_25_qs;
-      end
-
-      addr_hit[26]: begin
-        reg_rdata_next[1:0] = prio_26_qs;
-      end
-
-      addr_hit[27]: begin
-        reg_rdata_next[1:0] = prio_27_qs;
-      end
-
-      addr_hit[28]: begin
-        reg_rdata_next[1:0] = prio_28_qs;
-      end
-
-      addr_hit[29]: begin
-        reg_rdata_next[1:0] = prio_29_qs;
-      end
-
-      addr_hit[30]: begin
-        reg_rdata_next[1:0] = prio_30_qs;
-      end
-
-      addr_hit[31]: begin
-        reg_rdata_next[1:0] = prio_31_qs;
-      end
-
-      addr_hit[32]: begin
-        reg_rdata_next[1:0] = prio_32_qs;
-      end
-
-      addr_hit[33]: begin
-        reg_rdata_next[1:0] = prio_33_qs;
-      end
-
-      addr_hit[34]: begin
-        reg_rdata_next[1:0] = prio_34_qs;
-      end
-
-      addr_hit[35]: begin
-        reg_rdata_next[1:0] = prio_35_qs;
-      end
-
-      addr_hit[36]: begin
-        reg_rdata_next[1:0] = prio_36_qs;
-      end
-
-      addr_hit[37]: begin
-        reg_rdata_next[1:0] = prio_37_qs;
-      end
-
-      addr_hit[38]: begin
-        reg_rdata_next[1:0] = prio_38_qs;
-      end
-
-      addr_hit[39]: begin
-        reg_rdata_next[1:0] = prio_39_qs;
-      end
-
-      addr_hit[40]: begin
-        reg_rdata_next[1:0] = prio_40_qs;
-      end
-
-      addr_hit[41]: begin
-        reg_rdata_next[1:0] = prio_41_qs;
-      end
-
-      addr_hit[42]: begin
-        reg_rdata_next[1:0] = prio_42_qs;
-      end
-
-      addr_hit[43]: begin
-        reg_rdata_next[1:0] = prio_43_qs;
-      end
-
-      addr_hit[44]: begin
-        reg_rdata_next[1:0] = prio_44_qs;
-      end
-
-      addr_hit[45]: begin
-        reg_rdata_next[1:0] = prio_45_qs;
-      end
-
-      addr_hit[46]: begin
-        reg_rdata_next[1:0] = prio_46_qs;
-      end
-
-      addr_hit[47]: begin
-        reg_rdata_next[1:0] = prio_47_qs;
-      end
-
-      addr_hit[48]: begin
-        reg_rdata_next[1:0] = prio_48_qs;
-      end
-
-      addr_hit[49]: begin
-        reg_rdata_next[1:0] = prio_49_qs;
-      end
-
-      addr_hit[50]: begin
-        reg_rdata_next[1:0] = prio_50_qs;
-      end
-
-      addr_hit[51]: begin
-        reg_rdata_next[1:0] = prio_51_qs;
-      end
-
-      addr_hit[52]: begin
-        reg_rdata_next[1:0] = prio_52_qs;
-      end
-
-      addr_hit[53]: begin
-        reg_rdata_next[1:0] = prio_53_qs;
-      end
-
-      addr_hit[54]: begin
-        reg_rdata_next[1:0] = prio_54_qs;
-      end
-
-      addr_hit[55]: begin
-        reg_rdata_next[1:0] = prio_55_qs;
-      end
-
-      addr_hit[56]: begin
-        reg_rdata_next[1:0] = prio_56_qs;
-      end
-
-      addr_hit[57]: begin
-        reg_rdata_next[1:0] = prio_57_qs;
-      end
-
-      addr_hit[58]: begin
-        reg_rdata_next[1:0] = prio_58_qs;
-      end
-
-      addr_hit[59]: begin
-        reg_rdata_next[1:0] = prio_59_qs;
-      end
-
-      addr_hit[60]: begin
-        reg_rdata_next[1:0] = prio_60_qs;
-      end
-
-      addr_hit[61]: begin
-        reg_rdata_next[1:0] = prio_61_qs;
-      end
-
-      addr_hit[62]: begin
-        reg_rdata_next[1:0] = prio_62_qs;
-      end
-
-      addr_hit[63]: begin
-        reg_rdata_next[1:0] = prio_63_qs;
-      end
-
-      addr_hit[64]: begin
-        reg_rdata_next[1:0] = prio_64_qs;
-      end
-
-      addr_hit[65]: begin
-        reg_rdata_next[1:0] = prio_65_qs;
-      end
-
-      addr_hit[66]: begin
-        reg_rdata_next[1:0] = prio_66_qs;
-      end
-
-      addr_hit[67]: begin
-        reg_rdata_next[1:0] = prio_67_qs;
-      end
-
-      addr_hit[68]: begin
-        reg_rdata_next[1:0] = prio_68_qs;
-      end
-
-      addr_hit[69]: begin
-        reg_rdata_next[1:0] = prio_69_qs;
-      end
-
-      addr_hit[70]: begin
-        reg_rdata_next[1:0] = prio_70_qs;
-      end
-
-      addr_hit[71]: begin
-        reg_rdata_next[1:0] = prio_71_qs;
-      end
-
-      addr_hit[72]: begin
-        reg_rdata_next[1:0] = prio_72_qs;
-      end
-
-      addr_hit[73]: begin
-        reg_rdata_next[1:0] = prio_73_qs;
-      end
-
-      addr_hit[74]: begin
-        reg_rdata_next[1:0] = prio_74_qs;
-      end
-
-      addr_hit[75]: begin
-        reg_rdata_next[1:0] = prio_75_qs;
-      end
-
-      addr_hit[76]: begin
-        reg_rdata_next[1:0] = prio_76_qs;
-      end
-
-      addr_hit[77]: begin
-        reg_rdata_next[1:0] = prio_77_qs;
-      end
-
-      addr_hit[78]: begin
-        reg_rdata_next[1:0] = prio_78_qs;
-      end
-
-      addr_hit[79]: begin
-        reg_rdata_next[1:0] = prio_79_qs;
-      end
-
-      addr_hit[80]: begin
-        reg_rdata_next[1:0] = prio_80_qs;
-      end
-
-      addr_hit[81]: begin
-        reg_rdata_next[1:0] = prio_81_qs;
-      end
-
-      addr_hit[82]: begin
-        reg_rdata_next[1:0] = prio_82_qs;
-      end
-
-      addr_hit[83]: begin
-        reg_rdata_next[1:0] = prio_83_qs;
-      end
-
-      addr_hit[84]: begin
-        reg_rdata_next[1:0] = prio_84_qs;
-      end
-
-      addr_hit[85]: begin
-        reg_rdata_next[1:0] = prio_85_qs;
-      end
-
-      addr_hit[86]: begin
-        reg_rdata_next[1:0] = prio_86_qs;
-      end
-
-      addr_hit[87]: begin
-        reg_rdata_next[1:0] = prio_87_qs;
-      end
-
-      addr_hit[88]: begin
-        reg_rdata_next[1:0] = prio_88_qs;
-      end
-
-      addr_hit[89]: begin
-        reg_rdata_next[1:0] = prio_89_qs;
-      end
-
-      addr_hit[90]: begin
-        reg_rdata_next[1:0] = prio_90_qs;
-      end
-
-      addr_hit[91]: begin
-        reg_rdata_next[1:0] = prio_91_qs;
-      end
-
-      addr_hit[92]: begin
-        reg_rdata_next[1:0] = prio_92_qs;
-      end
-
-      addr_hit[93]: begin
-        reg_rdata_next[1:0] = prio_93_qs;
-      end
-
-      addr_hit[94]: begin
-        reg_rdata_next[1:0] = prio_94_qs;
-      end
-
-      addr_hit[95]: begin
-        reg_rdata_next[1:0] = prio_95_qs;
-      end
-
-      addr_hit[96]: begin
-        reg_rdata_next[1:0] = prio_96_qs;
-      end
-
-      addr_hit[97]: begin
-        reg_rdata_next[1:0] = prio_97_qs;
-      end
-
-      addr_hit[98]: begin
-        reg_rdata_next[1:0] = prio_98_qs;
-      end
-
-      addr_hit[99]: begin
-        reg_rdata_next[1:0] = prio_99_qs;
-      end
-
-      addr_hit[100]: begin
-        reg_rdata_next[1:0] = prio_100_qs;
-      end
-
-      addr_hit[101]: begin
-        reg_rdata_next[1:0] = prio_101_qs;
-      end
-
-      addr_hit[102]: begin
-        reg_rdata_next[1:0] = prio_102_qs;
-      end
-
-      addr_hit[103]: begin
-        reg_rdata_next[1:0] = prio_103_qs;
-      end
-
-      addr_hit[104]: begin
-        reg_rdata_next[1:0] = prio_104_qs;
-      end
-
-      addr_hit[105]: begin
-        reg_rdata_next[1:0] = prio_105_qs;
-      end
-
-      addr_hit[106]: begin
-        reg_rdata_next[1:0] = prio_106_qs;
-      end
-
-      addr_hit[107]: begin
-        reg_rdata_next[1:0] = prio_107_qs;
-      end
-
-      addr_hit[108]: begin
-        reg_rdata_next[1:0] = prio_108_qs;
-      end
-
-      addr_hit[109]: begin
-        reg_rdata_next[1:0] = prio_109_qs;
-      end
-
-      addr_hit[110]: begin
-        reg_rdata_next[1:0] = prio_110_qs;
-      end
-
-      addr_hit[111]: begin
-        reg_rdata_next[1:0] = prio_111_qs;
-      end
-
-      addr_hit[112]: begin
-        reg_rdata_next[1:0] = prio_112_qs;
-      end
-
-      addr_hit[113]: begin
-        reg_rdata_next[1:0] = prio_113_qs;
-      end
-
-      addr_hit[114]: begin
-        reg_rdata_next[1:0] = prio_114_qs;
-      end
-
-      addr_hit[115]: begin
-        reg_rdata_next[1:0] = prio_115_qs;
-      end
-
-      addr_hit[116]: begin
-        reg_rdata_next[1:0] = prio_116_qs;
-      end
-
-      addr_hit[117]: begin
-        reg_rdata_next[1:0] = prio_117_qs;
-      end
-
-      addr_hit[118]: begin
-        reg_rdata_next[1:0] = prio_118_qs;
-      end
-
-      addr_hit[119]: begin
-        reg_rdata_next[1:0] = prio_119_qs;
-      end
-
-      addr_hit[120]: begin
-        reg_rdata_next[1:0] = prio_120_qs;
-      end
-
-      addr_hit[121]: begin
-        reg_rdata_next[1:0] = prio_121_qs;
-      end
-
-      addr_hit[122]: begin
-        reg_rdata_next[1:0] = prio_122_qs;
-      end
-
-      addr_hit[123]: begin
-        reg_rdata_next[1:0] = prio_123_qs;
-      end
-
-      addr_hit[124]: begin
-        reg_rdata_next[1:0] = prio_124_qs;
-      end
-
-      addr_hit[125]: begin
-        reg_rdata_next[1:0] = prio_125_qs;
-      end
-
-      addr_hit[126]: begin
-        reg_rdata_next[1:0] = prio_126_qs;
-      end
-
-      addr_hit[127]: begin
-        reg_rdata_next[1:0] = prio_127_qs;
-      end
-
-      addr_hit[128]: begin
-        reg_rdata_next[1:0] = prio_128_qs;
-      end
-
-      addr_hit[129]: begin
-        reg_rdata_next[1:0] = prio_129_qs;
-      end
-
-      addr_hit[130]: begin
-        reg_rdata_next[1:0] = prio_130_qs;
-      end
-
-      addr_hit[131]: begin
-        reg_rdata_next[1:0] = prio_131_qs;
-      end
-
-      addr_hit[132]: begin
-        reg_rdata_next[0] = ip_0_p_0_qs;
-        reg_rdata_next[1] = ip_0_p_1_qs;
-        reg_rdata_next[2] = ip_0_p_2_qs;
-        reg_rdata_next[3] = ip_0_p_3_qs;
-        reg_rdata_next[4] = ip_0_p_4_qs;
-        reg_rdata_next[5] = ip_0_p_5_qs;
-        reg_rdata_next[6] = ip_0_p_6_qs;
-        reg_rdata_next[7] = ip_0_p_7_qs;
-        reg_rdata_next[8] = ip_0_p_8_qs;
-        reg_rdata_next[9] = ip_0_p_9_qs;
-        reg_rdata_next[10] = ip_0_p_10_qs;
-        reg_rdata_next[11] = ip_0_p_11_qs;
-        reg_rdata_next[12] = ip_0_p_12_qs;
-        reg_rdata_next[13] = ip_0_p_13_qs;
-        reg_rdata_next[14] = ip_0_p_14_qs;
-        reg_rdata_next[15] = ip_0_p_15_qs;
-        reg_rdata_next[16] = ip_0_p_16_qs;
-        reg_rdata_next[17] = ip_0_p_17_qs;
-        reg_rdata_next[18] = ip_0_p_18_qs;
-        reg_rdata_next[19] = ip_0_p_19_qs;
-        reg_rdata_next[20] = ip_0_p_20_qs;
-        reg_rdata_next[21] = ip_0_p_21_qs;
-        reg_rdata_next[22] = ip_0_p_22_qs;
-        reg_rdata_next[23] = ip_0_p_23_qs;
-        reg_rdata_next[24] = ip_0_p_24_qs;
-        reg_rdata_next[25] = ip_0_p_25_qs;
-        reg_rdata_next[26] = ip_0_p_26_qs;
-        reg_rdata_next[27] = ip_0_p_27_qs;
-        reg_rdata_next[28] = ip_0_p_28_qs;
-        reg_rdata_next[29] = ip_0_p_29_qs;
-        reg_rdata_next[30] = ip_0_p_30_qs;
-        reg_rdata_next[31] = ip_0_p_31_qs;
-      end
-
-      addr_hit[133]: begin
-        reg_rdata_next[0] = ip_1_p_32_qs;
-        reg_rdata_next[1] = ip_1_p_33_qs;
-        reg_rdata_next[2] = ip_1_p_34_qs;
-        reg_rdata_next[3] = ip_1_p_35_qs;
-        reg_rdata_next[4] = ip_1_p_36_qs;
-        reg_rdata_next[5] = ip_1_p_37_qs;
-        reg_rdata_next[6] = ip_1_p_38_qs;
-        reg_rdata_next[7] = ip_1_p_39_qs;
-        reg_rdata_next[8] = ip_1_p_40_qs;
-        reg_rdata_next[9] = ip_1_p_41_qs;
-        reg_rdata_next[10] = ip_1_p_42_qs;
-        reg_rdata_next[11] = ip_1_p_43_qs;
-        reg_rdata_next[12] = ip_1_p_44_qs;
-        reg_rdata_next[13] = ip_1_p_45_qs;
-        reg_rdata_next[14] = ip_1_p_46_qs;
-        reg_rdata_next[15] = ip_1_p_47_qs;
-        reg_rdata_next[16] = ip_1_p_48_qs;
-        reg_rdata_next[17] = ip_1_p_49_qs;
-        reg_rdata_next[18] = ip_1_p_50_qs;
-        reg_rdata_next[19] = ip_1_p_51_qs;
-        reg_rdata_next[20] = ip_1_p_52_qs;
-        reg_rdata_next[21] = ip_1_p_53_qs;
-        reg_rdata_next[22] = ip_1_p_54_qs;
-        reg_rdata_next[23] = ip_1_p_55_qs;
-        reg_rdata_next[24] = ip_1_p_56_qs;
-        reg_rdata_next[25] = ip_1_p_57_qs;
-        reg_rdata_next[26] = ip_1_p_58_qs;
-        reg_rdata_next[27] = ip_1_p_59_qs;
-        reg_rdata_next[28] = ip_1_p_60_qs;
-        reg_rdata_next[29] = ip_1_p_61_qs;
-        reg_rdata_next[30] = ip_1_p_62_qs;
-        reg_rdata_next[31] = ip_1_p_63_qs;
-      end
-
-      addr_hit[134]: begin
-        reg_rdata_next[0] = ip_2_p_64_qs;
-        reg_rdata_next[1] = ip_2_p_65_qs;
-        reg_rdata_next[2] = ip_2_p_66_qs;
-        reg_rdata_next[3] = ip_2_p_67_qs;
-        reg_rdata_next[4] = ip_2_p_68_qs;
-        reg_rdata_next[5] = ip_2_p_69_qs;
-        reg_rdata_next[6] = ip_2_p_70_qs;
-        reg_rdata_next[7] = ip_2_p_71_qs;
-        reg_rdata_next[8] = ip_2_p_72_qs;
-        reg_rdata_next[9] = ip_2_p_73_qs;
-        reg_rdata_next[10] = ip_2_p_74_qs;
-        reg_rdata_next[11] = ip_2_p_75_qs;
-        reg_rdata_next[12] = ip_2_p_76_qs;
-        reg_rdata_next[13] = ip_2_p_77_qs;
-        reg_rdata_next[14] = ip_2_p_78_qs;
-        reg_rdata_next[15] = ip_2_p_79_qs;
-        reg_rdata_next[16] = ip_2_p_80_qs;
-        reg_rdata_next[17] = ip_2_p_81_qs;
-        reg_rdata_next[18] = ip_2_p_82_qs;
-        reg_rdata_next[19] = ip_2_p_83_qs;
-        reg_rdata_next[20] = ip_2_p_84_qs;
-        reg_rdata_next[21] = ip_2_p_85_qs;
-        reg_rdata_next[22] = ip_2_p_86_qs;
-        reg_rdata_next[23] = ip_2_p_87_qs;
-        reg_rdata_next[24] = ip_2_p_88_qs;
-        reg_rdata_next[25] = ip_2_p_89_qs;
-        reg_rdata_next[26] = ip_2_p_90_qs;
-        reg_rdata_next[27] = ip_2_p_91_qs;
-        reg_rdata_next[28] = ip_2_p_92_qs;
-        reg_rdata_next[29] = ip_2_p_93_qs;
-        reg_rdata_next[30] = ip_2_p_94_qs;
-        reg_rdata_next[31] = ip_2_p_95_qs;
-      end
-
-      addr_hit[135]: begin
-        reg_rdata_next[0] = ip_3_p_96_qs;
-        reg_rdata_next[1] = ip_3_p_97_qs;
-        reg_rdata_next[2] = ip_3_p_98_qs;
-        reg_rdata_next[3] = ip_3_p_99_qs;
-        reg_rdata_next[4] = ip_3_p_100_qs;
-        reg_rdata_next[5] = ip_3_p_101_qs;
-        reg_rdata_next[6] = ip_3_p_102_qs;
-        reg_rdata_next[7] = ip_3_p_103_qs;
-        reg_rdata_next[8] = ip_3_p_104_qs;
-        reg_rdata_next[9] = ip_3_p_105_qs;
-        reg_rdata_next[10] = ip_3_p_106_qs;
-        reg_rdata_next[11] = ip_3_p_107_qs;
-        reg_rdata_next[12] = ip_3_p_108_qs;
-        reg_rdata_next[13] = ip_3_p_109_qs;
-        reg_rdata_next[14] = ip_3_p_110_qs;
-        reg_rdata_next[15] = ip_3_p_111_qs;
-        reg_rdata_next[16] = ip_3_p_112_qs;
-        reg_rdata_next[17] = ip_3_p_113_qs;
-        reg_rdata_next[18] = ip_3_p_114_qs;
-        reg_rdata_next[19] = ip_3_p_115_qs;
-        reg_rdata_next[20] = ip_3_p_116_qs;
-        reg_rdata_next[21] = ip_3_p_117_qs;
-        reg_rdata_next[22] = ip_3_p_118_qs;
-        reg_rdata_next[23] = ip_3_p_119_qs;
-        reg_rdata_next[24] = ip_3_p_120_qs;
-        reg_rdata_next[25] = ip_3_p_121_qs;
-        reg_rdata_next[26] = ip_3_p_122_qs;
-        reg_rdata_next[27] = ip_3_p_123_qs;
-        reg_rdata_next[28] = ip_3_p_124_qs;
-        reg_rdata_next[29] = ip_3_p_125_qs;
-        reg_rdata_next[30] = ip_3_p_126_qs;
-        reg_rdata_next[31] = ip_3_p_127_qs;
-      end
-
-      addr_hit[136]: begin
-        reg_rdata_next[0] = ip_4_p_128_qs;
-        reg_rdata_next[1] = ip_4_p_129_qs;
-        reg_rdata_next[2] = ip_4_p_130_qs;
-        reg_rdata_next[3] = ip_4_p_131_qs;
-      end
-
-      addr_hit[137]: begin
-        reg_rdata_next[0] = ie0_0_e_0_qs;
-        reg_rdata_next[1] = ie0_0_e_1_qs;
-        reg_rdata_next[2] = ie0_0_e_2_qs;
-        reg_rdata_next[3] = ie0_0_e_3_qs;
-        reg_rdata_next[4] = ie0_0_e_4_qs;
-        reg_rdata_next[5] = ie0_0_e_5_qs;
-        reg_rdata_next[6] = ie0_0_e_6_qs;
-        reg_rdata_next[7] = ie0_0_e_7_qs;
-        reg_rdata_next[8] = ie0_0_e_8_qs;
-        reg_rdata_next[9] = ie0_0_e_9_qs;
-        reg_rdata_next[10] = ie0_0_e_10_qs;
-        reg_rdata_next[11] = ie0_0_e_11_qs;
-        reg_rdata_next[12] = ie0_0_e_12_qs;
-        reg_rdata_next[13] = ie0_0_e_13_qs;
-        reg_rdata_next[14] = ie0_0_e_14_qs;
-        reg_rdata_next[15] = ie0_0_e_15_qs;
-        reg_rdata_next[16] = ie0_0_e_16_qs;
-        reg_rdata_next[17] = ie0_0_e_17_qs;
-        reg_rdata_next[18] = ie0_0_e_18_qs;
-        reg_rdata_next[19] = ie0_0_e_19_qs;
-        reg_rdata_next[20] = ie0_0_e_20_qs;
-        reg_rdata_next[21] = ie0_0_e_21_qs;
-        reg_rdata_next[22] = ie0_0_e_22_qs;
-        reg_rdata_next[23] = ie0_0_e_23_qs;
-        reg_rdata_next[24] = ie0_0_e_24_qs;
-        reg_rdata_next[25] = ie0_0_e_25_qs;
-        reg_rdata_next[26] = ie0_0_e_26_qs;
-        reg_rdata_next[27] = ie0_0_e_27_qs;
-        reg_rdata_next[28] = ie0_0_e_28_qs;
-        reg_rdata_next[29] = ie0_0_e_29_qs;
-        reg_rdata_next[30] = ie0_0_e_30_qs;
-        reg_rdata_next[31] = ie0_0_e_31_qs;
-      end
-
-      addr_hit[138]: begin
-        reg_rdata_next[0] = ie0_1_e_32_qs;
-        reg_rdata_next[1] = ie0_1_e_33_qs;
-        reg_rdata_next[2] = ie0_1_e_34_qs;
-        reg_rdata_next[3] = ie0_1_e_35_qs;
-        reg_rdata_next[4] = ie0_1_e_36_qs;
-        reg_rdata_next[5] = ie0_1_e_37_qs;
-        reg_rdata_next[6] = ie0_1_e_38_qs;
-        reg_rdata_next[7] = ie0_1_e_39_qs;
-        reg_rdata_next[8] = ie0_1_e_40_qs;
-        reg_rdata_next[9] = ie0_1_e_41_qs;
-        reg_rdata_next[10] = ie0_1_e_42_qs;
-        reg_rdata_next[11] = ie0_1_e_43_qs;
-        reg_rdata_next[12] = ie0_1_e_44_qs;
-        reg_rdata_next[13] = ie0_1_e_45_qs;
-        reg_rdata_next[14] = ie0_1_e_46_qs;
-        reg_rdata_next[15] = ie0_1_e_47_qs;
-        reg_rdata_next[16] = ie0_1_e_48_qs;
-        reg_rdata_next[17] = ie0_1_e_49_qs;
-        reg_rdata_next[18] = ie0_1_e_50_qs;
-        reg_rdata_next[19] = ie0_1_e_51_qs;
-        reg_rdata_next[20] = ie0_1_e_52_qs;
-        reg_rdata_next[21] = ie0_1_e_53_qs;
-        reg_rdata_next[22] = ie0_1_e_54_qs;
-        reg_rdata_next[23] = ie0_1_e_55_qs;
-        reg_rdata_next[24] = ie0_1_e_56_qs;
-        reg_rdata_next[25] = ie0_1_e_57_qs;
-        reg_rdata_next[26] = ie0_1_e_58_qs;
-        reg_rdata_next[27] = ie0_1_e_59_qs;
-        reg_rdata_next[28] = ie0_1_e_60_qs;
-        reg_rdata_next[29] = ie0_1_e_61_qs;
-        reg_rdata_next[30] = ie0_1_e_62_qs;
-        reg_rdata_next[31] = ie0_1_e_63_qs;
-      end
-
-      addr_hit[139]: begin
-        reg_rdata_next[0] = ie0_2_e_64_qs;
-        reg_rdata_next[1] = ie0_2_e_65_qs;
-        reg_rdata_next[2] = ie0_2_e_66_qs;
-        reg_rdata_next[3] = ie0_2_e_67_qs;
-        reg_rdata_next[4] = ie0_2_e_68_qs;
-        reg_rdata_next[5] = ie0_2_e_69_qs;
-        reg_rdata_next[6] = ie0_2_e_70_qs;
-        reg_rdata_next[7] = ie0_2_e_71_qs;
-        reg_rdata_next[8] = ie0_2_e_72_qs;
-        reg_rdata_next[9] = ie0_2_e_73_qs;
-        reg_rdata_next[10] = ie0_2_e_74_qs;
-        reg_rdata_next[11] = ie0_2_e_75_qs;
-        reg_rdata_next[12] = ie0_2_e_76_qs;
-        reg_rdata_next[13] = ie0_2_e_77_qs;
-        reg_rdata_next[14] = ie0_2_e_78_qs;
-        reg_rdata_next[15] = ie0_2_e_79_qs;
-        reg_rdata_next[16] = ie0_2_e_80_qs;
-        reg_rdata_next[17] = ie0_2_e_81_qs;
-        reg_rdata_next[18] = ie0_2_e_82_qs;
-        reg_rdata_next[19] = ie0_2_e_83_qs;
-        reg_rdata_next[20] = ie0_2_e_84_qs;
-        reg_rdata_next[21] = ie0_2_e_85_qs;
-        reg_rdata_next[22] = ie0_2_e_86_qs;
-        reg_rdata_next[23] = ie0_2_e_87_qs;
-        reg_rdata_next[24] = ie0_2_e_88_qs;
-        reg_rdata_next[25] = ie0_2_e_89_qs;
-        reg_rdata_next[26] = ie0_2_e_90_qs;
-        reg_rdata_next[27] = ie0_2_e_91_qs;
-        reg_rdata_next[28] = ie0_2_e_92_qs;
-        reg_rdata_next[29] = ie0_2_e_93_qs;
-        reg_rdata_next[30] = ie0_2_e_94_qs;
-        reg_rdata_next[31] = ie0_2_e_95_qs;
-      end
-
-      addr_hit[140]: begin
-        reg_rdata_next[0] = ie0_3_e_96_qs;
-        reg_rdata_next[1] = ie0_3_e_97_qs;
-        reg_rdata_next[2] = ie0_3_e_98_qs;
-        reg_rdata_next[3] = ie0_3_e_99_qs;
-        reg_rdata_next[4] = ie0_3_e_100_qs;
-        reg_rdata_next[5] = ie0_3_e_101_qs;
-        reg_rdata_next[6] = ie0_3_e_102_qs;
-        reg_rdata_next[7] = ie0_3_e_103_qs;
-        reg_rdata_next[8] = ie0_3_e_104_qs;
-        reg_rdata_next[9] = ie0_3_e_105_qs;
-        reg_rdata_next[10] = ie0_3_e_106_qs;
-        reg_rdata_next[11] = ie0_3_e_107_qs;
-        reg_rdata_next[12] = ie0_3_e_108_qs;
-        reg_rdata_next[13] = ie0_3_e_109_qs;
-        reg_rdata_next[14] = ie0_3_e_110_qs;
-        reg_rdata_next[15] = ie0_3_e_111_qs;
-        reg_rdata_next[16] = ie0_3_e_112_qs;
-        reg_rdata_next[17] = ie0_3_e_113_qs;
-        reg_rdata_next[18] = ie0_3_e_114_qs;
-        reg_rdata_next[19] = ie0_3_e_115_qs;
-        reg_rdata_next[20] = ie0_3_e_116_qs;
-        reg_rdata_next[21] = ie0_3_e_117_qs;
-        reg_rdata_next[22] = ie0_3_e_118_qs;
-        reg_rdata_next[23] = ie0_3_e_119_qs;
-        reg_rdata_next[24] = ie0_3_e_120_qs;
-        reg_rdata_next[25] = ie0_3_e_121_qs;
-        reg_rdata_next[26] = ie0_3_e_122_qs;
-        reg_rdata_next[27] = ie0_3_e_123_qs;
-        reg_rdata_next[28] = ie0_3_e_124_qs;
-        reg_rdata_next[29] = ie0_3_e_125_qs;
-        reg_rdata_next[30] = ie0_3_e_126_qs;
-        reg_rdata_next[31] = ie0_3_e_127_qs;
-      end
-
-      addr_hit[141]: begin
-        reg_rdata_next[0] = ie0_4_e_128_qs;
-        reg_rdata_next[1] = ie0_4_e_129_qs;
-        reg_rdata_next[2] = ie0_4_e_130_qs;
-        reg_rdata_next[3] = ie0_4_e_131_qs;
-      end
-
-      addr_hit[142]: begin
-        reg_rdata_next[1:0] = threshold0_qs;
-      end
-
-      addr_hit[143]: begin
-        reg_rdata_next[7:0] = cc0_qs;
-      end
-
-      addr_hit[144]: begin
-        reg_rdata_next[0] = msip0_qs;
-      end
-
-      addr_hit[145]: begin
-        reg_rdata_next[0] = '0;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[1:0] = prio_0_qs;
+        end
+
+        1: begin
+          reg_rdata_next[1:0] = prio_1_qs;
+        end
+
+        2: begin
+          reg_rdata_next[1:0] = prio_2_qs;
+        end
+
+        3: begin
+          reg_rdata_next[1:0] = prio_3_qs;
+        end
+
+        4: begin
+          reg_rdata_next[1:0] = prio_4_qs;
+        end
+
+        5: begin
+          reg_rdata_next[1:0] = prio_5_qs;
+        end
+
+        6: begin
+          reg_rdata_next[1:0] = prio_6_qs;
+        end
+
+        7: begin
+          reg_rdata_next[1:0] = prio_7_qs;
+        end
+
+        8: begin
+          reg_rdata_next[1:0] = prio_8_qs;
+        end
+
+        9: begin
+          reg_rdata_next[1:0] = prio_9_qs;
+        end
+
+        10: begin
+          reg_rdata_next[1:0] = prio_10_qs;
+        end
+
+        11: begin
+          reg_rdata_next[1:0] = prio_11_qs;
+        end
+
+        12: begin
+          reg_rdata_next[1:0] = prio_12_qs;
+        end
+
+        13: begin
+          reg_rdata_next[1:0] = prio_13_qs;
+        end
+
+        14: begin
+          reg_rdata_next[1:0] = prio_14_qs;
+        end
+
+        15: begin
+          reg_rdata_next[1:0] = prio_15_qs;
+        end
+
+        16: begin
+          reg_rdata_next[1:0] = prio_16_qs;
+        end
+
+        17: begin
+          reg_rdata_next[1:0] = prio_17_qs;
+        end
+
+        18: begin
+          reg_rdata_next[1:0] = prio_18_qs;
+        end
+
+        19: begin
+          reg_rdata_next[1:0] = prio_19_qs;
+        end
+
+        20: begin
+          reg_rdata_next[1:0] = prio_20_qs;
+        end
+
+        21: begin
+          reg_rdata_next[1:0] = prio_21_qs;
+        end
+
+        22: begin
+          reg_rdata_next[1:0] = prio_22_qs;
+        end
+
+        23: begin
+          reg_rdata_next[1:0] = prio_23_qs;
+        end
+
+        24: begin
+          reg_rdata_next[1:0] = prio_24_qs;
+        end
+
+        25: begin
+          reg_rdata_next[1:0] = prio_25_qs;
+        end
+
+        26: begin
+          reg_rdata_next[1:0] = prio_26_qs;
+        end
+
+        27: begin
+          reg_rdata_next[1:0] = prio_27_qs;
+        end
+
+        28: begin
+          reg_rdata_next[1:0] = prio_28_qs;
+        end
+
+        29: begin
+          reg_rdata_next[1:0] = prio_29_qs;
+        end
+
+        30: begin
+          reg_rdata_next[1:0] = prio_30_qs;
+        end
+
+        31: begin
+          reg_rdata_next[1:0] = prio_31_qs;
+        end
+
+        32: begin
+          reg_rdata_next[1:0] = prio_32_qs;
+        end
+
+        33: begin
+          reg_rdata_next[1:0] = prio_33_qs;
+        end
+
+        34: begin
+          reg_rdata_next[1:0] = prio_34_qs;
+        end
+
+        35: begin
+          reg_rdata_next[1:0] = prio_35_qs;
+        end
+
+        36: begin
+          reg_rdata_next[1:0] = prio_36_qs;
+        end
+
+        37: begin
+          reg_rdata_next[1:0] = prio_37_qs;
+        end
+
+        38: begin
+          reg_rdata_next[1:0] = prio_38_qs;
+        end
+
+        39: begin
+          reg_rdata_next[1:0] = prio_39_qs;
+        end
+
+        40: begin
+          reg_rdata_next[1:0] = prio_40_qs;
+        end
+
+        41: begin
+          reg_rdata_next[1:0] = prio_41_qs;
+        end
+
+        42: begin
+          reg_rdata_next[1:0] = prio_42_qs;
+        end
+
+        43: begin
+          reg_rdata_next[1:0] = prio_43_qs;
+        end
+
+        44: begin
+          reg_rdata_next[1:0] = prio_44_qs;
+        end
+
+        45: begin
+          reg_rdata_next[1:0] = prio_45_qs;
+        end
+
+        46: begin
+          reg_rdata_next[1:0] = prio_46_qs;
+        end
+
+        47: begin
+          reg_rdata_next[1:0] = prio_47_qs;
+        end
+
+        48: begin
+          reg_rdata_next[1:0] = prio_48_qs;
+        end
+
+        49: begin
+          reg_rdata_next[1:0] = prio_49_qs;
+        end
+
+        50: begin
+          reg_rdata_next[1:0] = prio_50_qs;
+        end
+
+        51: begin
+          reg_rdata_next[1:0] = prio_51_qs;
+        end
+
+        52: begin
+          reg_rdata_next[1:0] = prio_52_qs;
+        end
+
+        53: begin
+          reg_rdata_next[1:0] = prio_53_qs;
+        end
+
+        54: begin
+          reg_rdata_next[1:0] = prio_54_qs;
+        end
+
+        55: begin
+          reg_rdata_next[1:0] = prio_55_qs;
+        end
+
+        56: begin
+          reg_rdata_next[1:0] = prio_56_qs;
+        end
+
+        57: begin
+          reg_rdata_next[1:0] = prio_57_qs;
+        end
+
+        58: begin
+          reg_rdata_next[1:0] = prio_58_qs;
+        end
+
+        59: begin
+          reg_rdata_next[1:0] = prio_59_qs;
+        end
+
+        60: begin
+          reg_rdata_next[1:0] = prio_60_qs;
+        end
+
+        61: begin
+          reg_rdata_next[1:0] = prio_61_qs;
+        end
+
+        62: begin
+          reg_rdata_next[1:0] = prio_62_qs;
+        end
+
+        63: begin
+          reg_rdata_next[1:0] = prio_63_qs;
+        end
+
+        64: begin
+          reg_rdata_next[1:0] = prio_64_qs;
+        end
+
+        65: begin
+          reg_rdata_next[1:0] = prio_65_qs;
+        end
+
+        66: begin
+          reg_rdata_next[1:0] = prio_66_qs;
+        end
+
+        67: begin
+          reg_rdata_next[1:0] = prio_67_qs;
+        end
+
+        68: begin
+          reg_rdata_next[1:0] = prio_68_qs;
+        end
+
+        69: begin
+          reg_rdata_next[1:0] = prio_69_qs;
+        end
+
+        70: begin
+          reg_rdata_next[1:0] = prio_70_qs;
+        end
+
+        71: begin
+          reg_rdata_next[1:0] = prio_71_qs;
+        end
+
+        72: begin
+          reg_rdata_next[1:0] = prio_72_qs;
+        end
+
+        73: begin
+          reg_rdata_next[1:0] = prio_73_qs;
+        end
+
+        74: begin
+          reg_rdata_next[1:0] = prio_74_qs;
+        end
+
+        75: begin
+          reg_rdata_next[1:0] = prio_75_qs;
+        end
+
+        76: begin
+          reg_rdata_next[1:0] = prio_76_qs;
+        end
+
+        77: begin
+          reg_rdata_next[1:0] = prio_77_qs;
+        end
+
+        78: begin
+          reg_rdata_next[1:0] = prio_78_qs;
+        end
+
+        79: begin
+          reg_rdata_next[1:0] = prio_79_qs;
+        end
+
+        80: begin
+          reg_rdata_next[1:0] = prio_80_qs;
+        end
+
+        81: begin
+          reg_rdata_next[1:0] = prio_81_qs;
+        end
+
+        82: begin
+          reg_rdata_next[1:0] = prio_82_qs;
+        end
+
+        83: begin
+          reg_rdata_next[1:0] = prio_83_qs;
+        end
+
+        84: begin
+          reg_rdata_next[1:0] = prio_84_qs;
+        end
+
+        85: begin
+          reg_rdata_next[1:0] = prio_85_qs;
+        end
+
+        86: begin
+          reg_rdata_next[1:0] = prio_86_qs;
+        end
+
+        87: begin
+          reg_rdata_next[1:0] = prio_87_qs;
+        end
+
+        88: begin
+          reg_rdata_next[1:0] = prio_88_qs;
+        end
+
+        89: begin
+          reg_rdata_next[1:0] = prio_89_qs;
+        end
+
+        90: begin
+          reg_rdata_next[1:0] = prio_90_qs;
+        end
+
+        91: begin
+          reg_rdata_next[1:0] = prio_91_qs;
+        end
+
+        92: begin
+          reg_rdata_next[1:0] = prio_92_qs;
+        end
+
+        93: begin
+          reg_rdata_next[1:0] = prio_93_qs;
+        end
+
+        94: begin
+          reg_rdata_next[1:0] = prio_94_qs;
+        end
+
+        95: begin
+          reg_rdata_next[1:0] = prio_95_qs;
+        end
+
+        96: begin
+          reg_rdata_next[1:0] = prio_96_qs;
+        end
+
+        97: begin
+          reg_rdata_next[1:0] = prio_97_qs;
+        end
+
+        98: begin
+          reg_rdata_next[1:0] = prio_98_qs;
+        end
+
+        99: begin
+          reg_rdata_next[1:0] = prio_99_qs;
+        end
+
+        100: begin
+          reg_rdata_next[1:0] = prio_100_qs;
+        end
+
+        101: begin
+          reg_rdata_next[1:0] = prio_101_qs;
+        end
+
+        102: begin
+          reg_rdata_next[1:0] = prio_102_qs;
+        end
+
+        103: begin
+          reg_rdata_next[1:0] = prio_103_qs;
+        end
+
+        104: begin
+          reg_rdata_next[1:0] = prio_104_qs;
+        end
+
+        105: begin
+          reg_rdata_next[1:0] = prio_105_qs;
+        end
+
+        106: begin
+          reg_rdata_next[1:0] = prio_106_qs;
+        end
+
+        107: begin
+          reg_rdata_next[1:0] = prio_107_qs;
+        end
+
+        108: begin
+          reg_rdata_next[1:0] = prio_108_qs;
+        end
+
+        109: begin
+          reg_rdata_next[1:0] = prio_109_qs;
+        end
+
+        110: begin
+          reg_rdata_next[1:0] = prio_110_qs;
+        end
+
+        111: begin
+          reg_rdata_next[1:0] = prio_111_qs;
+        end
+
+        112: begin
+          reg_rdata_next[1:0] = prio_112_qs;
+        end
+
+        113: begin
+          reg_rdata_next[1:0] = prio_113_qs;
+        end
+
+        114: begin
+          reg_rdata_next[1:0] = prio_114_qs;
+        end
+
+        115: begin
+          reg_rdata_next[1:0] = prio_115_qs;
+        end
+
+        116: begin
+          reg_rdata_next[1:0] = prio_116_qs;
+        end
+
+        117: begin
+          reg_rdata_next[1:0] = prio_117_qs;
+        end
+
+        118: begin
+          reg_rdata_next[1:0] = prio_118_qs;
+        end
+
+        119: begin
+          reg_rdata_next[1:0] = prio_119_qs;
+        end
+
+        120: begin
+          reg_rdata_next[1:0] = prio_120_qs;
+        end
+
+        121: begin
+          reg_rdata_next[1:0] = prio_121_qs;
+        end
+
+        122: begin
+          reg_rdata_next[1:0] = prio_122_qs;
+        end
+
+        123: begin
+          reg_rdata_next[1:0] = prio_123_qs;
+        end
+
+        124: begin
+          reg_rdata_next[1:0] = prio_124_qs;
+        end
+
+        125: begin
+          reg_rdata_next[1:0] = prio_125_qs;
+        end
+
+        126: begin
+          reg_rdata_next[1:0] = prio_126_qs;
+        end
+
+        127: begin
+          reg_rdata_next[1:0] = prio_127_qs;
+        end
+
+        128: begin
+          reg_rdata_next[1:0] = prio_128_qs;
+        end
+
+        129: begin
+          reg_rdata_next[1:0] = prio_129_qs;
+        end
+
+        130: begin
+          reg_rdata_next[1:0] = prio_130_qs;
+        end
+
+        131: begin
+          reg_rdata_next[1:0] = prio_131_qs;
+        end
+
+        132: begin
+          reg_rdata_next[0] = ip_0_p_0_qs;
+          reg_rdata_next[1] = ip_0_p_1_qs;
+          reg_rdata_next[2] = ip_0_p_2_qs;
+          reg_rdata_next[3] = ip_0_p_3_qs;
+          reg_rdata_next[4] = ip_0_p_4_qs;
+          reg_rdata_next[5] = ip_0_p_5_qs;
+          reg_rdata_next[6] = ip_0_p_6_qs;
+          reg_rdata_next[7] = ip_0_p_7_qs;
+          reg_rdata_next[8] = ip_0_p_8_qs;
+          reg_rdata_next[9] = ip_0_p_9_qs;
+          reg_rdata_next[10] = ip_0_p_10_qs;
+          reg_rdata_next[11] = ip_0_p_11_qs;
+          reg_rdata_next[12] = ip_0_p_12_qs;
+          reg_rdata_next[13] = ip_0_p_13_qs;
+          reg_rdata_next[14] = ip_0_p_14_qs;
+          reg_rdata_next[15] = ip_0_p_15_qs;
+          reg_rdata_next[16] = ip_0_p_16_qs;
+          reg_rdata_next[17] = ip_0_p_17_qs;
+          reg_rdata_next[18] = ip_0_p_18_qs;
+          reg_rdata_next[19] = ip_0_p_19_qs;
+          reg_rdata_next[20] = ip_0_p_20_qs;
+          reg_rdata_next[21] = ip_0_p_21_qs;
+          reg_rdata_next[22] = ip_0_p_22_qs;
+          reg_rdata_next[23] = ip_0_p_23_qs;
+          reg_rdata_next[24] = ip_0_p_24_qs;
+          reg_rdata_next[25] = ip_0_p_25_qs;
+          reg_rdata_next[26] = ip_0_p_26_qs;
+          reg_rdata_next[27] = ip_0_p_27_qs;
+          reg_rdata_next[28] = ip_0_p_28_qs;
+          reg_rdata_next[29] = ip_0_p_29_qs;
+          reg_rdata_next[30] = ip_0_p_30_qs;
+          reg_rdata_next[31] = ip_0_p_31_qs;
+        end
+
+        133: begin
+          reg_rdata_next[0] = ip_1_p_32_qs;
+          reg_rdata_next[1] = ip_1_p_33_qs;
+          reg_rdata_next[2] = ip_1_p_34_qs;
+          reg_rdata_next[3] = ip_1_p_35_qs;
+          reg_rdata_next[4] = ip_1_p_36_qs;
+          reg_rdata_next[5] = ip_1_p_37_qs;
+          reg_rdata_next[6] = ip_1_p_38_qs;
+          reg_rdata_next[7] = ip_1_p_39_qs;
+          reg_rdata_next[8] = ip_1_p_40_qs;
+          reg_rdata_next[9] = ip_1_p_41_qs;
+          reg_rdata_next[10] = ip_1_p_42_qs;
+          reg_rdata_next[11] = ip_1_p_43_qs;
+          reg_rdata_next[12] = ip_1_p_44_qs;
+          reg_rdata_next[13] = ip_1_p_45_qs;
+          reg_rdata_next[14] = ip_1_p_46_qs;
+          reg_rdata_next[15] = ip_1_p_47_qs;
+          reg_rdata_next[16] = ip_1_p_48_qs;
+          reg_rdata_next[17] = ip_1_p_49_qs;
+          reg_rdata_next[18] = ip_1_p_50_qs;
+          reg_rdata_next[19] = ip_1_p_51_qs;
+          reg_rdata_next[20] = ip_1_p_52_qs;
+          reg_rdata_next[21] = ip_1_p_53_qs;
+          reg_rdata_next[22] = ip_1_p_54_qs;
+          reg_rdata_next[23] = ip_1_p_55_qs;
+          reg_rdata_next[24] = ip_1_p_56_qs;
+          reg_rdata_next[25] = ip_1_p_57_qs;
+          reg_rdata_next[26] = ip_1_p_58_qs;
+          reg_rdata_next[27] = ip_1_p_59_qs;
+          reg_rdata_next[28] = ip_1_p_60_qs;
+          reg_rdata_next[29] = ip_1_p_61_qs;
+          reg_rdata_next[30] = ip_1_p_62_qs;
+          reg_rdata_next[31] = ip_1_p_63_qs;
+        end
+
+        134: begin
+          reg_rdata_next[0] = ip_2_p_64_qs;
+          reg_rdata_next[1] = ip_2_p_65_qs;
+          reg_rdata_next[2] = ip_2_p_66_qs;
+          reg_rdata_next[3] = ip_2_p_67_qs;
+          reg_rdata_next[4] = ip_2_p_68_qs;
+          reg_rdata_next[5] = ip_2_p_69_qs;
+          reg_rdata_next[6] = ip_2_p_70_qs;
+          reg_rdata_next[7] = ip_2_p_71_qs;
+          reg_rdata_next[8] = ip_2_p_72_qs;
+          reg_rdata_next[9] = ip_2_p_73_qs;
+          reg_rdata_next[10] = ip_2_p_74_qs;
+          reg_rdata_next[11] = ip_2_p_75_qs;
+          reg_rdata_next[12] = ip_2_p_76_qs;
+          reg_rdata_next[13] = ip_2_p_77_qs;
+          reg_rdata_next[14] = ip_2_p_78_qs;
+          reg_rdata_next[15] = ip_2_p_79_qs;
+          reg_rdata_next[16] = ip_2_p_80_qs;
+          reg_rdata_next[17] = ip_2_p_81_qs;
+          reg_rdata_next[18] = ip_2_p_82_qs;
+          reg_rdata_next[19] = ip_2_p_83_qs;
+          reg_rdata_next[20] = ip_2_p_84_qs;
+          reg_rdata_next[21] = ip_2_p_85_qs;
+          reg_rdata_next[22] = ip_2_p_86_qs;
+          reg_rdata_next[23] = ip_2_p_87_qs;
+          reg_rdata_next[24] = ip_2_p_88_qs;
+          reg_rdata_next[25] = ip_2_p_89_qs;
+          reg_rdata_next[26] = ip_2_p_90_qs;
+          reg_rdata_next[27] = ip_2_p_91_qs;
+          reg_rdata_next[28] = ip_2_p_92_qs;
+          reg_rdata_next[29] = ip_2_p_93_qs;
+          reg_rdata_next[30] = ip_2_p_94_qs;
+          reg_rdata_next[31] = ip_2_p_95_qs;
+        end
+
+        135: begin
+          reg_rdata_next[0] = ip_3_p_96_qs;
+          reg_rdata_next[1] = ip_3_p_97_qs;
+          reg_rdata_next[2] = ip_3_p_98_qs;
+          reg_rdata_next[3] = ip_3_p_99_qs;
+          reg_rdata_next[4] = ip_3_p_100_qs;
+          reg_rdata_next[5] = ip_3_p_101_qs;
+          reg_rdata_next[6] = ip_3_p_102_qs;
+          reg_rdata_next[7] = ip_3_p_103_qs;
+          reg_rdata_next[8] = ip_3_p_104_qs;
+          reg_rdata_next[9] = ip_3_p_105_qs;
+          reg_rdata_next[10] = ip_3_p_106_qs;
+          reg_rdata_next[11] = ip_3_p_107_qs;
+          reg_rdata_next[12] = ip_3_p_108_qs;
+          reg_rdata_next[13] = ip_3_p_109_qs;
+          reg_rdata_next[14] = ip_3_p_110_qs;
+          reg_rdata_next[15] = ip_3_p_111_qs;
+          reg_rdata_next[16] = ip_3_p_112_qs;
+          reg_rdata_next[17] = ip_3_p_113_qs;
+          reg_rdata_next[18] = ip_3_p_114_qs;
+          reg_rdata_next[19] = ip_3_p_115_qs;
+          reg_rdata_next[20] = ip_3_p_116_qs;
+          reg_rdata_next[21] = ip_3_p_117_qs;
+          reg_rdata_next[22] = ip_3_p_118_qs;
+          reg_rdata_next[23] = ip_3_p_119_qs;
+          reg_rdata_next[24] = ip_3_p_120_qs;
+          reg_rdata_next[25] = ip_3_p_121_qs;
+          reg_rdata_next[26] = ip_3_p_122_qs;
+          reg_rdata_next[27] = ip_3_p_123_qs;
+          reg_rdata_next[28] = ip_3_p_124_qs;
+          reg_rdata_next[29] = ip_3_p_125_qs;
+          reg_rdata_next[30] = ip_3_p_126_qs;
+          reg_rdata_next[31] = ip_3_p_127_qs;
+        end
+
+        136: begin
+          reg_rdata_next[0] = ip_4_p_128_qs;
+          reg_rdata_next[1] = ip_4_p_129_qs;
+          reg_rdata_next[2] = ip_4_p_130_qs;
+          reg_rdata_next[3] = ip_4_p_131_qs;
+        end
+
+        137: begin
+          reg_rdata_next[0] = ie0_0_e_0_qs;
+          reg_rdata_next[1] = ie0_0_e_1_qs;
+          reg_rdata_next[2] = ie0_0_e_2_qs;
+          reg_rdata_next[3] = ie0_0_e_3_qs;
+          reg_rdata_next[4] = ie0_0_e_4_qs;
+          reg_rdata_next[5] = ie0_0_e_5_qs;
+          reg_rdata_next[6] = ie0_0_e_6_qs;
+          reg_rdata_next[7] = ie0_0_e_7_qs;
+          reg_rdata_next[8] = ie0_0_e_8_qs;
+          reg_rdata_next[9] = ie0_0_e_9_qs;
+          reg_rdata_next[10] = ie0_0_e_10_qs;
+          reg_rdata_next[11] = ie0_0_e_11_qs;
+          reg_rdata_next[12] = ie0_0_e_12_qs;
+          reg_rdata_next[13] = ie0_0_e_13_qs;
+          reg_rdata_next[14] = ie0_0_e_14_qs;
+          reg_rdata_next[15] = ie0_0_e_15_qs;
+          reg_rdata_next[16] = ie0_0_e_16_qs;
+          reg_rdata_next[17] = ie0_0_e_17_qs;
+          reg_rdata_next[18] = ie0_0_e_18_qs;
+          reg_rdata_next[19] = ie0_0_e_19_qs;
+          reg_rdata_next[20] = ie0_0_e_20_qs;
+          reg_rdata_next[21] = ie0_0_e_21_qs;
+          reg_rdata_next[22] = ie0_0_e_22_qs;
+          reg_rdata_next[23] = ie0_0_e_23_qs;
+          reg_rdata_next[24] = ie0_0_e_24_qs;
+          reg_rdata_next[25] = ie0_0_e_25_qs;
+          reg_rdata_next[26] = ie0_0_e_26_qs;
+          reg_rdata_next[27] = ie0_0_e_27_qs;
+          reg_rdata_next[28] = ie0_0_e_28_qs;
+          reg_rdata_next[29] = ie0_0_e_29_qs;
+          reg_rdata_next[30] = ie0_0_e_30_qs;
+          reg_rdata_next[31] = ie0_0_e_31_qs;
+        end
+
+        138: begin
+          reg_rdata_next[0] = ie0_1_e_32_qs;
+          reg_rdata_next[1] = ie0_1_e_33_qs;
+          reg_rdata_next[2] = ie0_1_e_34_qs;
+          reg_rdata_next[3] = ie0_1_e_35_qs;
+          reg_rdata_next[4] = ie0_1_e_36_qs;
+          reg_rdata_next[5] = ie0_1_e_37_qs;
+          reg_rdata_next[6] = ie0_1_e_38_qs;
+          reg_rdata_next[7] = ie0_1_e_39_qs;
+          reg_rdata_next[8] = ie0_1_e_40_qs;
+          reg_rdata_next[9] = ie0_1_e_41_qs;
+          reg_rdata_next[10] = ie0_1_e_42_qs;
+          reg_rdata_next[11] = ie0_1_e_43_qs;
+          reg_rdata_next[12] = ie0_1_e_44_qs;
+          reg_rdata_next[13] = ie0_1_e_45_qs;
+          reg_rdata_next[14] = ie0_1_e_46_qs;
+          reg_rdata_next[15] = ie0_1_e_47_qs;
+          reg_rdata_next[16] = ie0_1_e_48_qs;
+          reg_rdata_next[17] = ie0_1_e_49_qs;
+          reg_rdata_next[18] = ie0_1_e_50_qs;
+          reg_rdata_next[19] = ie0_1_e_51_qs;
+          reg_rdata_next[20] = ie0_1_e_52_qs;
+          reg_rdata_next[21] = ie0_1_e_53_qs;
+          reg_rdata_next[22] = ie0_1_e_54_qs;
+          reg_rdata_next[23] = ie0_1_e_55_qs;
+          reg_rdata_next[24] = ie0_1_e_56_qs;
+          reg_rdata_next[25] = ie0_1_e_57_qs;
+          reg_rdata_next[26] = ie0_1_e_58_qs;
+          reg_rdata_next[27] = ie0_1_e_59_qs;
+          reg_rdata_next[28] = ie0_1_e_60_qs;
+          reg_rdata_next[29] = ie0_1_e_61_qs;
+          reg_rdata_next[30] = ie0_1_e_62_qs;
+          reg_rdata_next[31] = ie0_1_e_63_qs;
+        end
+
+        139: begin
+          reg_rdata_next[0] = ie0_2_e_64_qs;
+          reg_rdata_next[1] = ie0_2_e_65_qs;
+          reg_rdata_next[2] = ie0_2_e_66_qs;
+          reg_rdata_next[3] = ie0_2_e_67_qs;
+          reg_rdata_next[4] = ie0_2_e_68_qs;
+          reg_rdata_next[5] = ie0_2_e_69_qs;
+          reg_rdata_next[6] = ie0_2_e_70_qs;
+          reg_rdata_next[7] = ie0_2_e_71_qs;
+          reg_rdata_next[8] = ie0_2_e_72_qs;
+          reg_rdata_next[9] = ie0_2_e_73_qs;
+          reg_rdata_next[10] = ie0_2_e_74_qs;
+          reg_rdata_next[11] = ie0_2_e_75_qs;
+          reg_rdata_next[12] = ie0_2_e_76_qs;
+          reg_rdata_next[13] = ie0_2_e_77_qs;
+          reg_rdata_next[14] = ie0_2_e_78_qs;
+          reg_rdata_next[15] = ie0_2_e_79_qs;
+          reg_rdata_next[16] = ie0_2_e_80_qs;
+          reg_rdata_next[17] = ie0_2_e_81_qs;
+          reg_rdata_next[18] = ie0_2_e_82_qs;
+          reg_rdata_next[19] = ie0_2_e_83_qs;
+          reg_rdata_next[20] = ie0_2_e_84_qs;
+          reg_rdata_next[21] = ie0_2_e_85_qs;
+          reg_rdata_next[22] = ie0_2_e_86_qs;
+          reg_rdata_next[23] = ie0_2_e_87_qs;
+          reg_rdata_next[24] = ie0_2_e_88_qs;
+          reg_rdata_next[25] = ie0_2_e_89_qs;
+          reg_rdata_next[26] = ie0_2_e_90_qs;
+          reg_rdata_next[27] = ie0_2_e_91_qs;
+          reg_rdata_next[28] = ie0_2_e_92_qs;
+          reg_rdata_next[29] = ie0_2_e_93_qs;
+          reg_rdata_next[30] = ie0_2_e_94_qs;
+          reg_rdata_next[31] = ie0_2_e_95_qs;
+        end
+
+        140: begin
+          reg_rdata_next[0] = ie0_3_e_96_qs;
+          reg_rdata_next[1] = ie0_3_e_97_qs;
+          reg_rdata_next[2] = ie0_3_e_98_qs;
+          reg_rdata_next[3] = ie0_3_e_99_qs;
+          reg_rdata_next[4] = ie0_3_e_100_qs;
+          reg_rdata_next[5] = ie0_3_e_101_qs;
+          reg_rdata_next[6] = ie0_3_e_102_qs;
+          reg_rdata_next[7] = ie0_3_e_103_qs;
+          reg_rdata_next[8] = ie0_3_e_104_qs;
+          reg_rdata_next[9] = ie0_3_e_105_qs;
+          reg_rdata_next[10] = ie0_3_e_106_qs;
+          reg_rdata_next[11] = ie0_3_e_107_qs;
+          reg_rdata_next[12] = ie0_3_e_108_qs;
+          reg_rdata_next[13] = ie0_3_e_109_qs;
+          reg_rdata_next[14] = ie0_3_e_110_qs;
+          reg_rdata_next[15] = ie0_3_e_111_qs;
+          reg_rdata_next[16] = ie0_3_e_112_qs;
+          reg_rdata_next[17] = ie0_3_e_113_qs;
+          reg_rdata_next[18] = ie0_3_e_114_qs;
+          reg_rdata_next[19] = ie0_3_e_115_qs;
+          reg_rdata_next[20] = ie0_3_e_116_qs;
+          reg_rdata_next[21] = ie0_3_e_117_qs;
+          reg_rdata_next[22] = ie0_3_e_118_qs;
+          reg_rdata_next[23] = ie0_3_e_119_qs;
+          reg_rdata_next[24] = ie0_3_e_120_qs;
+          reg_rdata_next[25] = ie0_3_e_121_qs;
+          reg_rdata_next[26] = ie0_3_e_122_qs;
+          reg_rdata_next[27] = ie0_3_e_123_qs;
+          reg_rdata_next[28] = ie0_3_e_124_qs;
+          reg_rdata_next[29] = ie0_3_e_125_qs;
+          reg_rdata_next[30] = ie0_3_e_126_qs;
+          reg_rdata_next[31] = ie0_3_e_127_qs;
+        end
+
+        141: begin
+          reg_rdata_next[0] = ie0_4_e_128_qs;
+          reg_rdata_next[1] = ie0_4_e_129_qs;
+          reg_rdata_next[2] = ie0_4_e_130_qs;
+          reg_rdata_next[3] = ie0_4_e_131_qs;
+        end
+
+        142: begin
+          reg_rdata_next[1:0] = threshold0_qs;
+        end
+
+        143: begin
+          reg_rdata_next[7:0] = cc0_qs;
+        end
+
+        144: begin
+          reg_rdata_next[0] = msip0_qs;
+        end
+
+        145: begin
+          reg_rdata_next[0] = '0;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -14018,7 +14055,7 @@ module rv_plic_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

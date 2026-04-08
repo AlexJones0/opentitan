@@ -2938,353 +2938,418 @@ module keymgr_reg_top (
 
 
 
-  logic [62:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == KEYMGR_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == KEYMGR_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == KEYMGR_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == KEYMGR_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == KEYMGR_CFG_REGWEN_OFFSET);
-    addr_hit[ 5] = (reg_addr == KEYMGR_START_OFFSET);
-    addr_hit[ 6] = (reg_addr == KEYMGR_CONTROL_SHADOWED_OFFSET);
-    addr_hit[ 7] = (reg_addr == KEYMGR_SIDELOAD_CLEAR_OFFSET);
-    addr_hit[ 8] = (reg_addr == KEYMGR_RESEED_INTERVAL_REGWEN_OFFSET);
-    addr_hit[ 9] = (reg_addr == KEYMGR_RESEED_INTERVAL_SHADOWED_OFFSET);
-    addr_hit[10] = (reg_addr == KEYMGR_SW_BINDING_REGWEN_OFFSET);
-    addr_hit[11] = (reg_addr == KEYMGR_SEALING_SW_BINDING_0_OFFSET);
-    addr_hit[12] = (reg_addr == KEYMGR_SEALING_SW_BINDING_1_OFFSET);
-    addr_hit[13] = (reg_addr == KEYMGR_SEALING_SW_BINDING_2_OFFSET);
-    addr_hit[14] = (reg_addr == KEYMGR_SEALING_SW_BINDING_3_OFFSET);
-    addr_hit[15] = (reg_addr == KEYMGR_SEALING_SW_BINDING_4_OFFSET);
-    addr_hit[16] = (reg_addr == KEYMGR_SEALING_SW_BINDING_5_OFFSET);
-    addr_hit[17] = (reg_addr == KEYMGR_SEALING_SW_BINDING_6_OFFSET);
-    addr_hit[18] = (reg_addr == KEYMGR_SEALING_SW_BINDING_7_OFFSET);
-    addr_hit[19] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_0_OFFSET);
-    addr_hit[20] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_1_OFFSET);
-    addr_hit[21] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_2_OFFSET);
-    addr_hit[22] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_3_OFFSET);
-    addr_hit[23] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_4_OFFSET);
-    addr_hit[24] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_5_OFFSET);
-    addr_hit[25] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_6_OFFSET);
-    addr_hit[26] = (reg_addr == KEYMGR_ATTEST_SW_BINDING_7_OFFSET);
-    addr_hit[27] = (reg_addr == KEYMGR_SALT_0_OFFSET);
-    addr_hit[28] = (reg_addr == KEYMGR_SALT_1_OFFSET);
-    addr_hit[29] = (reg_addr == KEYMGR_SALT_2_OFFSET);
-    addr_hit[30] = (reg_addr == KEYMGR_SALT_3_OFFSET);
-    addr_hit[31] = (reg_addr == KEYMGR_SALT_4_OFFSET);
-    addr_hit[32] = (reg_addr == KEYMGR_SALT_5_OFFSET);
-    addr_hit[33] = (reg_addr == KEYMGR_SALT_6_OFFSET);
-    addr_hit[34] = (reg_addr == KEYMGR_SALT_7_OFFSET);
-    addr_hit[35] = (reg_addr == KEYMGR_KEY_VERSION_OFFSET);
-    addr_hit[36] = (reg_addr == KEYMGR_MAX_CREATOR_KEY_VER_REGWEN_OFFSET);
-    addr_hit[37] = (reg_addr == KEYMGR_MAX_CREATOR_KEY_VER_SHADOWED_OFFSET);
-    addr_hit[38] = (reg_addr == KEYMGR_MAX_OWNER_INT_KEY_VER_REGWEN_OFFSET);
-    addr_hit[39] = (reg_addr == KEYMGR_MAX_OWNER_INT_KEY_VER_SHADOWED_OFFSET);
-    addr_hit[40] = (reg_addr == KEYMGR_MAX_OWNER_KEY_VER_REGWEN_OFFSET);
-    addr_hit[41] = (reg_addr == KEYMGR_MAX_OWNER_KEY_VER_SHADOWED_OFFSET);
-    addr_hit[42] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_0_OFFSET);
-    addr_hit[43] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_1_OFFSET);
-    addr_hit[44] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_2_OFFSET);
-    addr_hit[45] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_3_OFFSET);
-    addr_hit[46] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_4_OFFSET);
-    addr_hit[47] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_5_OFFSET);
-    addr_hit[48] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_6_OFFSET);
-    addr_hit[49] = (reg_addr == KEYMGR_SW_SHARE0_OUTPUT_7_OFFSET);
-    addr_hit[50] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_0_OFFSET);
-    addr_hit[51] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_1_OFFSET);
-    addr_hit[52] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_2_OFFSET);
-    addr_hit[53] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_3_OFFSET);
-    addr_hit[54] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_4_OFFSET);
-    addr_hit[55] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_5_OFFSET);
-    addr_hit[56] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_6_OFFSET);
-    addr_hit[57] = (reg_addr == KEYMGR_SW_SHARE1_OUTPUT_7_OFFSET);
-    addr_hit[58] = (reg_addr == KEYMGR_WORKING_STATE_OFFSET);
-    addr_hit[59] = (reg_addr == KEYMGR_OP_STATUS_OFFSET);
-    addr_hit[60] = (reg_addr == KEYMGR_ERR_CODE_OFFSET);
-    addr_hit[61] = (reg_addr == KEYMGR_FAULT_STATUS_OFFSET);
-    addr_hit[62] = (reg_addr == KEYMGR_DEBUG_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      KEYMGR_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      KEYMGR_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      KEYMGR_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      KEYMGR_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      KEYMGR_CFG_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      KEYMGR_START_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      KEYMGR_CONTROL_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      KEYMGR_SIDELOAD_CLEAR_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      KEYMGR_RESEED_INTERVAL_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      KEYMGR_RESEED_INTERVAL_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      KEYMGR_SW_BINDING_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      KEYMGR_SEALING_SW_BINDING_0_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      KEYMGR_SEALING_SW_BINDING_1_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      KEYMGR_SEALING_SW_BINDING_2_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      KEYMGR_SEALING_SW_BINDING_3_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      KEYMGR_SEALING_SW_BINDING_4_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      KEYMGR_SEALING_SW_BINDING_5_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      KEYMGR_SEALING_SW_BINDING_6_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      KEYMGR_SEALING_SW_BINDING_7_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      KEYMGR_ATTEST_SW_BINDING_0_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      KEYMGR_ATTEST_SW_BINDING_1_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      KEYMGR_ATTEST_SW_BINDING_2_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      KEYMGR_ATTEST_SW_BINDING_3_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      KEYMGR_ATTEST_SW_BINDING_4_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      KEYMGR_ATTEST_SW_BINDING_5_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      KEYMGR_ATTEST_SW_BINDING_6_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      KEYMGR_ATTEST_SW_BINDING_7_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      KEYMGR_SALT_0_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      KEYMGR_SALT_1_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      KEYMGR_SALT_2_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      KEYMGR_SALT_3_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      KEYMGR_SALT_4_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      KEYMGR_SALT_5_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      KEYMGR_SALT_6_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      KEYMGR_SALT_7_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      KEYMGR_KEY_VERSION_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      KEYMGR_MAX_CREATOR_KEY_VER_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      KEYMGR_MAX_CREATOR_KEY_VER_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      KEYMGR_MAX_OWNER_INT_KEY_VER_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      KEYMGR_MAX_OWNER_INT_KEY_VER_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      KEYMGR_MAX_OWNER_KEY_VER_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      KEYMGR_MAX_OWNER_KEY_VER_SHADOWED_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      KEYMGR_SW_SHARE0_OUTPUT_0_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      KEYMGR_SW_SHARE0_OUTPUT_1_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      KEYMGR_SW_SHARE0_OUTPUT_2_OFFSET: begin addr_valid = 1; addr_idx = 44; end
+      KEYMGR_SW_SHARE0_OUTPUT_3_OFFSET: begin addr_valid = 1; addr_idx = 45; end
+      KEYMGR_SW_SHARE0_OUTPUT_4_OFFSET: begin addr_valid = 1; addr_idx = 46; end
+      KEYMGR_SW_SHARE0_OUTPUT_5_OFFSET: begin addr_valid = 1; addr_idx = 47; end
+      KEYMGR_SW_SHARE0_OUTPUT_6_OFFSET: begin addr_valid = 1; addr_idx = 48; end
+      KEYMGR_SW_SHARE0_OUTPUT_7_OFFSET: begin addr_valid = 1; addr_idx = 49; end
+      KEYMGR_SW_SHARE1_OUTPUT_0_OFFSET: begin addr_valid = 1; addr_idx = 50; end
+      KEYMGR_SW_SHARE1_OUTPUT_1_OFFSET: begin addr_valid = 1; addr_idx = 51; end
+      KEYMGR_SW_SHARE1_OUTPUT_2_OFFSET: begin addr_valid = 1; addr_idx = 52; end
+      KEYMGR_SW_SHARE1_OUTPUT_3_OFFSET: begin addr_valid = 1; addr_idx = 53; end
+      KEYMGR_SW_SHARE1_OUTPUT_4_OFFSET: begin addr_valid = 1; addr_idx = 54; end
+      KEYMGR_SW_SHARE1_OUTPUT_5_OFFSET: begin addr_valid = 1; addr_idx = 55; end
+      KEYMGR_SW_SHARE1_OUTPUT_6_OFFSET: begin addr_valid = 1; addr_idx = 56; end
+      KEYMGR_SW_SHARE1_OUTPUT_7_OFFSET: begin addr_valid = 1; addr_idx = 57; end
+      KEYMGR_WORKING_STATE_OFFSET: begin addr_valid = 1; addr_idx = 58; end
+      KEYMGR_OP_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 59; end
+      KEYMGR_ERR_CODE_OFFSET: begin addr_valid = 1; addr_idx = 60; end
+      KEYMGR_FAULT_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 61; end
+      KEYMGR_DEBUG_OFFSET: begin addr_valid = 1; addr_idx = 62; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(KEYMGR_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(KEYMGR_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(KEYMGR_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(KEYMGR_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(KEYMGR_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(KEYMGR_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(KEYMGR_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(KEYMGR_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(KEYMGR_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(KEYMGR_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(KEYMGR_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(KEYMGR_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(KEYMGR_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(KEYMGR_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(KEYMGR_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(KEYMGR_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(KEYMGR_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(KEYMGR_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(KEYMGR_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(KEYMGR_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(KEYMGR_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(KEYMGR_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(KEYMGR_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(KEYMGR_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(KEYMGR_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(KEYMGR_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(KEYMGR_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(KEYMGR_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(KEYMGR_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(KEYMGR_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(KEYMGR_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(KEYMGR_PERMIT[31] & ~reg_be))) |
-               (addr_hit[32] & (|(KEYMGR_PERMIT[32] & ~reg_be))) |
-               (addr_hit[33] & (|(KEYMGR_PERMIT[33] & ~reg_be))) |
-               (addr_hit[34] & (|(KEYMGR_PERMIT[34] & ~reg_be))) |
-               (addr_hit[35] & (|(KEYMGR_PERMIT[35] & ~reg_be))) |
-               (addr_hit[36] & (|(KEYMGR_PERMIT[36] & ~reg_be))) |
-               (addr_hit[37] & (|(KEYMGR_PERMIT[37] & ~reg_be))) |
-               (addr_hit[38] & (|(KEYMGR_PERMIT[38] & ~reg_be))) |
-               (addr_hit[39] & (|(KEYMGR_PERMIT[39] & ~reg_be))) |
-               (addr_hit[40] & (|(KEYMGR_PERMIT[40] & ~reg_be))) |
-               (addr_hit[41] & (|(KEYMGR_PERMIT[41] & ~reg_be))) |
-               (addr_hit[42] & (|(KEYMGR_PERMIT[42] & ~reg_be))) |
-               (addr_hit[43] & (|(KEYMGR_PERMIT[43] & ~reg_be))) |
-               (addr_hit[44] & (|(KEYMGR_PERMIT[44] & ~reg_be))) |
-               (addr_hit[45] & (|(KEYMGR_PERMIT[45] & ~reg_be))) |
-               (addr_hit[46] & (|(KEYMGR_PERMIT[46] & ~reg_be))) |
-               (addr_hit[47] & (|(KEYMGR_PERMIT[47] & ~reg_be))) |
-               (addr_hit[48] & (|(KEYMGR_PERMIT[48] & ~reg_be))) |
-               (addr_hit[49] & (|(KEYMGR_PERMIT[49] & ~reg_be))) |
-               (addr_hit[50] & (|(KEYMGR_PERMIT[50] & ~reg_be))) |
-               (addr_hit[51] & (|(KEYMGR_PERMIT[51] & ~reg_be))) |
-               (addr_hit[52] & (|(KEYMGR_PERMIT[52] & ~reg_be))) |
-               (addr_hit[53] & (|(KEYMGR_PERMIT[53] & ~reg_be))) |
-               (addr_hit[54] & (|(KEYMGR_PERMIT[54] & ~reg_be))) |
-               (addr_hit[55] & (|(KEYMGR_PERMIT[55] & ~reg_be))) |
-               (addr_hit[56] & (|(KEYMGR_PERMIT[56] & ~reg_be))) |
-               (addr_hit[57] & (|(KEYMGR_PERMIT[57] & ~reg_be))) |
-               (addr_hit[58] & (|(KEYMGR_PERMIT[58] & ~reg_be))) |
-               (addr_hit[59] & (|(KEYMGR_PERMIT[59] & ~reg_be))) |
-               (addr_hit[60] & (|(KEYMGR_PERMIT[60] & ~reg_be))) |
-               (addr_hit[61] & (|(KEYMGR_PERMIT[61] & ~reg_be))) |
-               (addr_hit[62] & (|(KEYMGR_PERMIT[62] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(KEYMGR_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(KEYMGR_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(KEYMGR_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(KEYMGR_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(KEYMGR_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(KEYMGR_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(KEYMGR_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(KEYMGR_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(KEYMGR_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(KEYMGR_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(KEYMGR_PERMIT[10] & ~reg_be);
+        11: wr_err = |(KEYMGR_PERMIT[11] & ~reg_be);
+        12: wr_err = |(KEYMGR_PERMIT[12] & ~reg_be);
+        13: wr_err = |(KEYMGR_PERMIT[13] & ~reg_be);
+        14: wr_err = |(KEYMGR_PERMIT[14] & ~reg_be);
+        15: wr_err = |(KEYMGR_PERMIT[15] & ~reg_be);
+        16: wr_err = |(KEYMGR_PERMIT[16] & ~reg_be);
+        17: wr_err = |(KEYMGR_PERMIT[17] & ~reg_be);
+        18: wr_err = |(KEYMGR_PERMIT[18] & ~reg_be);
+        19: wr_err = |(KEYMGR_PERMIT[19] & ~reg_be);
+        20: wr_err = |(KEYMGR_PERMIT[20] & ~reg_be);
+        21: wr_err = |(KEYMGR_PERMIT[21] & ~reg_be);
+        22: wr_err = |(KEYMGR_PERMIT[22] & ~reg_be);
+        23: wr_err = |(KEYMGR_PERMIT[23] & ~reg_be);
+        24: wr_err = |(KEYMGR_PERMIT[24] & ~reg_be);
+        25: wr_err = |(KEYMGR_PERMIT[25] & ~reg_be);
+        26: wr_err = |(KEYMGR_PERMIT[26] & ~reg_be);
+        27: wr_err = |(KEYMGR_PERMIT[27] & ~reg_be);
+        28: wr_err = |(KEYMGR_PERMIT[28] & ~reg_be);
+        29: wr_err = |(KEYMGR_PERMIT[29] & ~reg_be);
+        30: wr_err = |(KEYMGR_PERMIT[30] & ~reg_be);
+        31: wr_err = |(KEYMGR_PERMIT[31] & ~reg_be);
+        32: wr_err = |(KEYMGR_PERMIT[32] & ~reg_be);
+        33: wr_err = |(KEYMGR_PERMIT[33] & ~reg_be);
+        34: wr_err = |(KEYMGR_PERMIT[34] & ~reg_be);
+        35: wr_err = |(KEYMGR_PERMIT[35] & ~reg_be);
+        36: wr_err = |(KEYMGR_PERMIT[36] & ~reg_be);
+        37: wr_err = |(KEYMGR_PERMIT[37] & ~reg_be);
+        38: wr_err = |(KEYMGR_PERMIT[38] & ~reg_be);
+        39: wr_err = |(KEYMGR_PERMIT[39] & ~reg_be);
+        40: wr_err = |(KEYMGR_PERMIT[40] & ~reg_be);
+        41: wr_err = |(KEYMGR_PERMIT[41] & ~reg_be);
+        42: wr_err = |(KEYMGR_PERMIT[42] & ~reg_be);
+        43: wr_err = |(KEYMGR_PERMIT[43] & ~reg_be);
+        44: wr_err = |(KEYMGR_PERMIT[44] & ~reg_be);
+        45: wr_err = |(KEYMGR_PERMIT[45] & ~reg_be);
+        46: wr_err = |(KEYMGR_PERMIT[46] & ~reg_be);
+        47: wr_err = |(KEYMGR_PERMIT[47] & ~reg_be);
+        48: wr_err = |(KEYMGR_PERMIT[48] & ~reg_be);
+        49: wr_err = |(KEYMGR_PERMIT[49] & ~reg_be);
+        50: wr_err = |(KEYMGR_PERMIT[50] & ~reg_be);
+        51: wr_err = |(KEYMGR_PERMIT[51] & ~reg_be);
+        52: wr_err = |(KEYMGR_PERMIT[52] & ~reg_be);
+        53: wr_err = |(KEYMGR_PERMIT[53] & ~reg_be);
+        54: wr_err = |(KEYMGR_PERMIT[54] & ~reg_be);
+        55: wr_err = |(KEYMGR_PERMIT[55] & ~reg_be);
+        56: wr_err = |(KEYMGR_PERMIT[56] & ~reg_be);
+        57: wr_err = |(KEYMGR_PERMIT[57] & ~reg_be);
+        58: wr_err = |(KEYMGR_PERMIT[58] & ~reg_be);
+        59: wr_err = |(KEYMGR_PERMIT[59] & ~reg_be);
+        60: wr_err = |(KEYMGR_PERMIT[60] & ~reg_be);
+        61: wr_err = |(KEYMGR_PERMIT[61] & ~reg_be);
+        62: wr_err = |(KEYMGR_PERMIT[62] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_wd = reg_wdata[0];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_wd = reg_wdata[0];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_wd = reg_wdata[0];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_recov_operation_err_wd = reg_wdata[0];
-
   assign alert_test_fatal_fault_err_wd = reg_wdata[1];
-  assign cfg_regwen_re = addr_hit[4] & reg_re & !reg_error;
-  assign start_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign cfg_regwen_re = addr_valid & (addr_idx == 4) & reg_re & !reg_error;
+
+  assign start_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign start_wd = reg_wdata[0];
-  assign control_shadowed_re = addr_hit[6] & reg_re & !reg_error;
-  assign control_shadowed_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign control_shadowed_re = addr_valid & (addr_idx == 6) & reg_re & !reg_error;
+  assign control_shadowed_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign control_shadowed_operation_wd = reg_wdata[6:4];
-
   assign control_shadowed_cdi_sel_wd = reg_wdata[7];
-
   assign control_shadowed_dest_sel_wd = reg_wdata[13:12];
-  assign sideload_clear_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign sideload_clear_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign sideload_clear_wd = reg_wdata[2:0];
-  assign reseed_interval_regwen_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign reseed_interval_regwen_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign reseed_interval_regwen_wd = reg_wdata[0];
-  assign reseed_interval_shadowed_re = addr_hit[9] & reg_re & !reg_error;
-  assign reseed_interval_shadowed_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign reseed_interval_shadowed_re = addr_valid & (addr_idx == 9) & reg_re & !reg_error;
+  assign reseed_interval_shadowed_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign reseed_interval_shadowed_wd = reg_wdata[15:0];
-  assign sw_binding_regwen_re = addr_hit[10] & reg_re & !reg_error;
-  assign sw_binding_regwen_we = addr_hit[10] & reg_we & !reg_error;
+
+  assign sw_binding_regwen_re = addr_valid & (addr_idx == 10) & reg_re & !reg_error;
+  assign sw_binding_regwen_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign sw_binding_regwen_wd = reg_wdata[0];
-  assign sealing_sw_binding_0_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_0_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign sealing_sw_binding_0_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_1_we = addr_hit[12] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_1_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
   assign sealing_sw_binding_1_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_2_we = addr_hit[13] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_2_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
   assign sealing_sw_binding_2_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_3_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_3_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign sealing_sw_binding_3_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_4_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_4_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign sealing_sw_binding_4_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_5_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_5_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign sealing_sw_binding_5_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_6_we = addr_hit[17] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_6_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
   assign sealing_sw_binding_6_wd = reg_wdata[31:0];
-  assign sealing_sw_binding_7_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign sealing_sw_binding_7_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign sealing_sw_binding_7_wd = reg_wdata[31:0];
-  assign attest_sw_binding_0_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign attest_sw_binding_0_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign attest_sw_binding_0_wd = reg_wdata[31:0];
-  assign attest_sw_binding_1_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign attest_sw_binding_1_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign attest_sw_binding_1_wd = reg_wdata[31:0];
-  assign attest_sw_binding_2_we = addr_hit[21] & reg_we & !reg_error;
+
+  assign attest_sw_binding_2_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
   assign attest_sw_binding_2_wd = reg_wdata[31:0];
-  assign attest_sw_binding_3_we = addr_hit[22] & reg_we & !reg_error;
+
+  assign attest_sw_binding_3_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign attest_sw_binding_3_wd = reg_wdata[31:0];
-  assign attest_sw_binding_4_we = addr_hit[23] & reg_we & !reg_error;
+
+  assign attest_sw_binding_4_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign attest_sw_binding_4_wd = reg_wdata[31:0];
-  assign attest_sw_binding_5_we = addr_hit[24] & reg_we & !reg_error;
+
+  assign attest_sw_binding_5_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
   assign attest_sw_binding_5_wd = reg_wdata[31:0];
-  assign attest_sw_binding_6_we = addr_hit[25] & reg_we & !reg_error;
+
+  assign attest_sw_binding_6_we = addr_valid & (addr_idx == 25) & reg_we & !reg_error;
 
   assign attest_sw_binding_6_wd = reg_wdata[31:0];
-  assign attest_sw_binding_7_we = addr_hit[26] & reg_we & !reg_error;
+
+  assign attest_sw_binding_7_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
   assign attest_sw_binding_7_wd = reg_wdata[31:0];
-  assign salt_0_we = addr_hit[27] & reg_we & !reg_error;
+
+  assign salt_0_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
   assign salt_0_wd = reg_wdata[31:0];
-  assign salt_1_we = addr_hit[28] & reg_we & !reg_error;
+
+  assign salt_1_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
   assign salt_1_wd = reg_wdata[31:0];
-  assign salt_2_we = addr_hit[29] & reg_we & !reg_error;
+
+  assign salt_2_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
   assign salt_2_wd = reg_wdata[31:0];
-  assign salt_3_we = addr_hit[30] & reg_we & !reg_error;
+
+  assign salt_3_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
   assign salt_3_wd = reg_wdata[31:0];
-  assign salt_4_we = addr_hit[31] & reg_we & !reg_error;
+
+  assign salt_4_we = addr_valid & (addr_idx == 31) & reg_we & !reg_error;
 
   assign salt_4_wd = reg_wdata[31:0];
-  assign salt_5_we = addr_hit[32] & reg_we & !reg_error;
+
+  assign salt_5_we = addr_valid & (addr_idx == 32) & reg_we & !reg_error;
 
   assign salt_5_wd = reg_wdata[31:0];
-  assign salt_6_we = addr_hit[33] & reg_we & !reg_error;
+
+  assign salt_6_we = addr_valid & (addr_idx == 33) & reg_we & !reg_error;
 
   assign salt_6_wd = reg_wdata[31:0];
-  assign salt_7_we = addr_hit[34] & reg_we & !reg_error;
+
+  assign salt_7_we = addr_valid & (addr_idx == 34) & reg_we & !reg_error;
 
   assign salt_7_wd = reg_wdata[31:0];
-  assign key_version_we = addr_hit[35] & reg_we & !reg_error;
+
+  assign key_version_we = addr_valid & (addr_idx == 35) & reg_we & !reg_error;
 
   assign key_version_wd = reg_wdata[31:0];
-  assign max_creator_key_ver_regwen_we = addr_hit[36] & reg_we & !reg_error;
+
+  assign max_creator_key_ver_regwen_we = addr_valid & (addr_idx == 36) & reg_we & !reg_error;
 
   assign max_creator_key_ver_regwen_wd = reg_wdata[0];
-  assign max_creator_key_ver_shadowed_re = addr_hit[37] & reg_re & !reg_error;
-  assign max_creator_key_ver_shadowed_we = addr_hit[37] & reg_we & !reg_error;
+
+  assign max_creator_key_ver_shadowed_re = addr_valid & (addr_idx == 37) & reg_re & !reg_error;
+  assign max_creator_key_ver_shadowed_we = addr_valid & (addr_idx == 37) & reg_we & !reg_error;
 
   assign max_creator_key_ver_shadowed_wd = reg_wdata[31:0];
-  assign max_owner_int_key_ver_regwen_we = addr_hit[38] & reg_we & !reg_error;
+
+  assign max_owner_int_key_ver_regwen_we = addr_valid & (addr_idx == 38) & reg_we & !reg_error;
 
   assign max_owner_int_key_ver_regwen_wd = reg_wdata[0];
-  assign max_owner_int_key_ver_shadowed_re = addr_hit[39] & reg_re & !reg_error;
-  assign max_owner_int_key_ver_shadowed_we = addr_hit[39] & reg_we & !reg_error;
+
+  assign max_owner_int_key_ver_shadowed_re = addr_valid & (addr_idx == 39) & reg_re & !reg_error;
+  assign max_owner_int_key_ver_shadowed_we = addr_valid & (addr_idx == 39) & reg_we & !reg_error;
 
   assign max_owner_int_key_ver_shadowed_wd = reg_wdata[31:0];
-  assign max_owner_key_ver_regwen_we = addr_hit[40] & reg_we & !reg_error;
+
+  assign max_owner_key_ver_regwen_we = addr_valid & (addr_idx == 40) & reg_we & !reg_error;
 
   assign max_owner_key_ver_regwen_wd = reg_wdata[0];
-  assign max_owner_key_ver_shadowed_re = addr_hit[41] & reg_re & !reg_error;
-  assign max_owner_key_ver_shadowed_we = addr_hit[41] & reg_we & !reg_error;
+
+  assign max_owner_key_ver_shadowed_re = addr_valid & (addr_idx == 41) & reg_re & !reg_error;
+  assign max_owner_key_ver_shadowed_we = addr_valid & (addr_idx == 41) & reg_we & !reg_error;
 
   assign max_owner_key_ver_shadowed_wd = reg_wdata[31:0];
-  assign sw_share0_output_0_re = addr_hit[42] & reg_re & !reg_error;
+
+  assign sw_share0_output_0_re = addr_valid & (addr_idx == 42) & reg_re & !reg_error;
 
   assign sw_share0_output_0_wd = '1;
-  assign sw_share0_output_1_re = addr_hit[43] & reg_re & !reg_error;
+
+  assign sw_share0_output_1_re = addr_valid & (addr_idx == 43) & reg_re & !reg_error;
 
   assign sw_share0_output_1_wd = '1;
-  assign sw_share0_output_2_re = addr_hit[44] & reg_re & !reg_error;
+
+  assign sw_share0_output_2_re = addr_valid & (addr_idx == 44) & reg_re & !reg_error;
 
   assign sw_share0_output_2_wd = '1;
-  assign sw_share0_output_3_re = addr_hit[45] & reg_re & !reg_error;
+
+  assign sw_share0_output_3_re = addr_valid & (addr_idx == 45) & reg_re & !reg_error;
 
   assign sw_share0_output_3_wd = '1;
-  assign sw_share0_output_4_re = addr_hit[46] & reg_re & !reg_error;
+
+  assign sw_share0_output_4_re = addr_valid & (addr_idx == 46) & reg_re & !reg_error;
 
   assign sw_share0_output_4_wd = '1;
-  assign sw_share0_output_5_re = addr_hit[47] & reg_re & !reg_error;
+
+  assign sw_share0_output_5_re = addr_valid & (addr_idx == 47) & reg_re & !reg_error;
 
   assign sw_share0_output_5_wd = '1;
-  assign sw_share0_output_6_re = addr_hit[48] & reg_re & !reg_error;
+
+  assign sw_share0_output_6_re = addr_valid & (addr_idx == 48) & reg_re & !reg_error;
 
   assign sw_share0_output_6_wd = '1;
-  assign sw_share0_output_7_re = addr_hit[49] & reg_re & !reg_error;
+
+  assign sw_share0_output_7_re = addr_valid & (addr_idx == 49) & reg_re & !reg_error;
 
   assign sw_share0_output_7_wd = '1;
-  assign sw_share1_output_0_re = addr_hit[50] & reg_re & !reg_error;
+
+  assign sw_share1_output_0_re = addr_valid & (addr_idx == 50) & reg_re & !reg_error;
 
   assign sw_share1_output_0_wd = '1;
-  assign sw_share1_output_1_re = addr_hit[51] & reg_re & !reg_error;
+
+  assign sw_share1_output_1_re = addr_valid & (addr_idx == 51) & reg_re & !reg_error;
 
   assign sw_share1_output_1_wd = '1;
-  assign sw_share1_output_2_re = addr_hit[52] & reg_re & !reg_error;
+
+  assign sw_share1_output_2_re = addr_valid & (addr_idx == 52) & reg_re & !reg_error;
 
   assign sw_share1_output_2_wd = '1;
-  assign sw_share1_output_3_re = addr_hit[53] & reg_re & !reg_error;
+
+  assign sw_share1_output_3_re = addr_valid & (addr_idx == 53) & reg_re & !reg_error;
 
   assign sw_share1_output_3_wd = '1;
-  assign sw_share1_output_4_re = addr_hit[54] & reg_re & !reg_error;
+
+  assign sw_share1_output_4_re = addr_valid & (addr_idx == 54) & reg_re & !reg_error;
 
   assign sw_share1_output_4_wd = '1;
-  assign sw_share1_output_5_re = addr_hit[55] & reg_re & !reg_error;
+
+  assign sw_share1_output_5_re = addr_valid & (addr_idx == 55) & reg_re & !reg_error;
 
   assign sw_share1_output_5_wd = '1;
-  assign sw_share1_output_6_re = addr_hit[56] & reg_re & !reg_error;
+
+  assign sw_share1_output_6_re = addr_valid & (addr_idx == 56) & reg_re & !reg_error;
 
   assign sw_share1_output_6_wd = '1;
-  assign sw_share1_output_7_re = addr_hit[57] & reg_re & !reg_error;
+
+  assign sw_share1_output_7_re = addr_valid & (addr_idx == 57) & reg_re & !reg_error;
 
   assign sw_share1_output_7_wd = '1;
-  assign op_status_we = addr_hit[59] & reg_we & !reg_error;
+
+
+  assign op_status_we = addr_valid & (addr_idx == 59) & reg_we & !reg_error;
 
   assign op_status_wd = reg_wdata[1:0];
-  assign err_code_we = addr_hit[60] & reg_we & !reg_error;
+
+  assign err_code_we = addr_valid & (addr_idx == 60) & reg_we & !reg_error;
 
   assign err_code_invalid_op_wd = reg_wdata[0];
-
   assign err_code_invalid_kmac_input_wd = reg_wdata[1];
-
   assign err_code_invalid_shadow_update_wd = reg_wdata[2];
-  assign debug_we = addr_hit[62] & reg_we & !reg_error;
+
+
+  assign debug_we = addr_valid & (addr_idx == 62) & reg_we & !reg_error;
 
   assign debug_invalid_creator_seed_wd = reg_wdata[0];
-
   assign debug_invalid_owner_seed_wd = reg_wdata[1];
-
   assign debug_invalid_dev_id_wd = reg_wdata[2];
-
   assign debug_invalid_health_state_wd = reg_wdata[3];
-
   assign debug_invalid_key_version_wd = reg_wdata[4];
-
   assign debug_invalid_key_wd = reg_wdata[5];
-
   assign debug_invalid_digest_wd = reg_wdata[6];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -3355,288 +3420,293 @@ module keymgr_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = cfg_regwen_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = cfg_regwen_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[0] = start_qs;
-      end
+        5: begin
+          reg_rdata_next[0] = start_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[6:4] = control_shadowed_operation_qs;
-        reg_rdata_next[7] = control_shadowed_cdi_sel_qs;
-        reg_rdata_next[13:12] = control_shadowed_dest_sel_qs;
-      end
+        6: begin
+          reg_rdata_next[6:4] = control_shadowed_operation_qs;
+          reg_rdata_next[7] = control_shadowed_cdi_sel_qs;
+          reg_rdata_next[13:12] = control_shadowed_dest_sel_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[2:0] = sideload_clear_qs;
-      end
+        7: begin
+          reg_rdata_next[2:0] = sideload_clear_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[0] = reseed_interval_regwen_qs;
-      end
+        8: begin
+          reg_rdata_next[0] = reseed_interval_regwen_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[15:0] = reseed_interval_shadowed_qs;
-      end
+        9: begin
+          reg_rdata_next[15:0] = reseed_interval_shadowed_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[0] = sw_binding_regwen_qs;
-      end
+        10: begin
+          reg_rdata_next[0] = sw_binding_regwen_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_0_qs;
-      end
+        11: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_0_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_1_qs;
-      end
+        12: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_1_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_2_qs;
-      end
+        13: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_2_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_3_qs;
-      end
+        14: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_3_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_4_qs;
-      end
+        15: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_4_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_5_qs;
-      end
+        16: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_5_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_6_qs;
-      end
+        17: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_6_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[31:0] = sealing_sw_binding_7_qs;
-      end
+        18: begin
+          reg_rdata_next[31:0] = sealing_sw_binding_7_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_0_qs;
-      end
+        19: begin
+          reg_rdata_next[31:0] = attest_sw_binding_0_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_1_qs;
-      end
+        20: begin
+          reg_rdata_next[31:0] = attest_sw_binding_1_qs;
+        end
 
-      addr_hit[21]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_2_qs;
-      end
+        21: begin
+          reg_rdata_next[31:0] = attest_sw_binding_2_qs;
+        end
 
-      addr_hit[22]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_3_qs;
-      end
+        22: begin
+          reg_rdata_next[31:0] = attest_sw_binding_3_qs;
+        end
 
-      addr_hit[23]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_4_qs;
-      end
+        23: begin
+          reg_rdata_next[31:0] = attest_sw_binding_4_qs;
+        end
 
-      addr_hit[24]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_5_qs;
-      end
+        24: begin
+          reg_rdata_next[31:0] = attest_sw_binding_5_qs;
+        end
 
-      addr_hit[25]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_6_qs;
-      end
+        25: begin
+          reg_rdata_next[31:0] = attest_sw_binding_6_qs;
+        end
 
-      addr_hit[26]: begin
-        reg_rdata_next[31:0] = attest_sw_binding_7_qs;
-      end
+        26: begin
+          reg_rdata_next[31:0] = attest_sw_binding_7_qs;
+        end
 
-      addr_hit[27]: begin
-        reg_rdata_next[31:0] = salt_0_qs;
-      end
+        27: begin
+          reg_rdata_next[31:0] = salt_0_qs;
+        end
 
-      addr_hit[28]: begin
-        reg_rdata_next[31:0] = salt_1_qs;
-      end
+        28: begin
+          reg_rdata_next[31:0] = salt_1_qs;
+        end
 
-      addr_hit[29]: begin
-        reg_rdata_next[31:0] = salt_2_qs;
-      end
+        29: begin
+          reg_rdata_next[31:0] = salt_2_qs;
+        end
 
-      addr_hit[30]: begin
-        reg_rdata_next[31:0] = salt_3_qs;
-      end
+        30: begin
+          reg_rdata_next[31:0] = salt_3_qs;
+        end
 
-      addr_hit[31]: begin
-        reg_rdata_next[31:0] = salt_4_qs;
-      end
+        31: begin
+          reg_rdata_next[31:0] = salt_4_qs;
+        end
 
-      addr_hit[32]: begin
-        reg_rdata_next[31:0] = salt_5_qs;
-      end
+        32: begin
+          reg_rdata_next[31:0] = salt_5_qs;
+        end
 
-      addr_hit[33]: begin
-        reg_rdata_next[31:0] = salt_6_qs;
-      end
+        33: begin
+          reg_rdata_next[31:0] = salt_6_qs;
+        end
 
-      addr_hit[34]: begin
-        reg_rdata_next[31:0] = salt_7_qs;
-      end
+        34: begin
+          reg_rdata_next[31:0] = salt_7_qs;
+        end
 
-      addr_hit[35]: begin
-        reg_rdata_next[31:0] = key_version_qs;
-      end
+        35: begin
+          reg_rdata_next[31:0] = key_version_qs;
+        end
 
-      addr_hit[36]: begin
-        reg_rdata_next[0] = max_creator_key_ver_regwen_qs;
-      end
+        36: begin
+          reg_rdata_next[0] = max_creator_key_ver_regwen_qs;
+        end
 
-      addr_hit[37]: begin
-        reg_rdata_next[31:0] = max_creator_key_ver_shadowed_qs;
-      end
+        37: begin
+          reg_rdata_next[31:0] = max_creator_key_ver_shadowed_qs;
+        end
 
-      addr_hit[38]: begin
-        reg_rdata_next[0] = max_owner_int_key_ver_regwen_qs;
-      end
+        38: begin
+          reg_rdata_next[0] = max_owner_int_key_ver_regwen_qs;
+        end
 
-      addr_hit[39]: begin
-        reg_rdata_next[31:0] = max_owner_int_key_ver_shadowed_qs;
-      end
+        39: begin
+          reg_rdata_next[31:0] = max_owner_int_key_ver_shadowed_qs;
+        end
 
-      addr_hit[40]: begin
-        reg_rdata_next[0] = max_owner_key_ver_regwen_qs;
-      end
+        40: begin
+          reg_rdata_next[0] = max_owner_key_ver_regwen_qs;
+        end
 
-      addr_hit[41]: begin
-        reg_rdata_next[31:0] = max_owner_key_ver_shadowed_qs;
-      end
+        41: begin
+          reg_rdata_next[31:0] = max_owner_key_ver_shadowed_qs;
+        end
 
-      addr_hit[42]: begin
-        reg_rdata_next[31:0] = sw_share0_output_0_qs;
-      end
+        42: begin
+          reg_rdata_next[31:0] = sw_share0_output_0_qs;
+        end
 
-      addr_hit[43]: begin
-        reg_rdata_next[31:0] = sw_share0_output_1_qs;
-      end
+        43: begin
+          reg_rdata_next[31:0] = sw_share0_output_1_qs;
+        end
 
-      addr_hit[44]: begin
-        reg_rdata_next[31:0] = sw_share0_output_2_qs;
-      end
+        44: begin
+          reg_rdata_next[31:0] = sw_share0_output_2_qs;
+        end
 
-      addr_hit[45]: begin
-        reg_rdata_next[31:0] = sw_share0_output_3_qs;
-      end
+        45: begin
+          reg_rdata_next[31:0] = sw_share0_output_3_qs;
+        end
 
-      addr_hit[46]: begin
-        reg_rdata_next[31:0] = sw_share0_output_4_qs;
-      end
+        46: begin
+          reg_rdata_next[31:0] = sw_share0_output_4_qs;
+        end
 
-      addr_hit[47]: begin
-        reg_rdata_next[31:0] = sw_share0_output_5_qs;
-      end
+        47: begin
+          reg_rdata_next[31:0] = sw_share0_output_5_qs;
+        end
 
-      addr_hit[48]: begin
-        reg_rdata_next[31:0] = sw_share0_output_6_qs;
-      end
+        48: begin
+          reg_rdata_next[31:0] = sw_share0_output_6_qs;
+        end
 
-      addr_hit[49]: begin
-        reg_rdata_next[31:0] = sw_share0_output_7_qs;
-      end
+        49: begin
+          reg_rdata_next[31:0] = sw_share0_output_7_qs;
+        end
 
-      addr_hit[50]: begin
-        reg_rdata_next[31:0] = sw_share1_output_0_qs;
-      end
+        50: begin
+          reg_rdata_next[31:0] = sw_share1_output_0_qs;
+        end
 
-      addr_hit[51]: begin
-        reg_rdata_next[31:0] = sw_share1_output_1_qs;
-      end
+        51: begin
+          reg_rdata_next[31:0] = sw_share1_output_1_qs;
+        end
 
-      addr_hit[52]: begin
-        reg_rdata_next[31:0] = sw_share1_output_2_qs;
-      end
+        52: begin
+          reg_rdata_next[31:0] = sw_share1_output_2_qs;
+        end
 
-      addr_hit[53]: begin
-        reg_rdata_next[31:0] = sw_share1_output_3_qs;
-      end
+        53: begin
+          reg_rdata_next[31:0] = sw_share1_output_3_qs;
+        end
 
-      addr_hit[54]: begin
-        reg_rdata_next[31:0] = sw_share1_output_4_qs;
-      end
+        54: begin
+          reg_rdata_next[31:0] = sw_share1_output_4_qs;
+        end
 
-      addr_hit[55]: begin
-        reg_rdata_next[31:0] = sw_share1_output_5_qs;
-      end
+        55: begin
+          reg_rdata_next[31:0] = sw_share1_output_5_qs;
+        end
 
-      addr_hit[56]: begin
-        reg_rdata_next[31:0] = sw_share1_output_6_qs;
-      end
+        56: begin
+          reg_rdata_next[31:0] = sw_share1_output_6_qs;
+        end
 
-      addr_hit[57]: begin
-        reg_rdata_next[31:0] = sw_share1_output_7_qs;
-      end
+        57: begin
+          reg_rdata_next[31:0] = sw_share1_output_7_qs;
+        end
 
-      addr_hit[58]: begin
-        reg_rdata_next[2:0] = working_state_qs;
-      end
+        58: begin
+          reg_rdata_next[2:0] = working_state_qs;
+        end
 
-      addr_hit[59]: begin
-        reg_rdata_next[1:0] = op_status_qs;
-      end
+        59: begin
+          reg_rdata_next[1:0] = op_status_qs;
+        end
 
-      addr_hit[60]: begin
-        reg_rdata_next[0] = err_code_invalid_op_qs;
-        reg_rdata_next[1] = err_code_invalid_kmac_input_qs;
-        reg_rdata_next[2] = err_code_invalid_shadow_update_qs;
-      end
+        60: begin
+          reg_rdata_next[0] = err_code_invalid_op_qs;
+          reg_rdata_next[1] = err_code_invalid_kmac_input_qs;
+          reg_rdata_next[2] = err_code_invalid_shadow_update_qs;
+        end
 
-      addr_hit[61]: begin
-        reg_rdata_next[0] = fault_status_cmd_qs;
-        reg_rdata_next[1] = fault_status_kmac_fsm_qs;
-        reg_rdata_next[2] = fault_status_kmac_done_qs;
-        reg_rdata_next[3] = fault_status_kmac_op_qs;
-        reg_rdata_next[4] = fault_status_kmac_out_qs;
-        reg_rdata_next[5] = fault_status_regfile_intg_qs;
-        reg_rdata_next[6] = fault_status_shadow_qs;
-        reg_rdata_next[7] = fault_status_ctrl_fsm_intg_qs;
-        reg_rdata_next[8] = fault_status_ctrl_fsm_chk_qs;
-        reg_rdata_next[9] = fault_status_ctrl_fsm_cnt_qs;
-        reg_rdata_next[10] = fault_status_reseed_cnt_qs;
-        reg_rdata_next[11] = fault_status_side_ctrl_fsm_qs;
-        reg_rdata_next[12] = fault_status_side_ctrl_sel_qs;
-        reg_rdata_next[13] = fault_status_key_ecc_qs;
-      end
+        61: begin
+          reg_rdata_next[0] = fault_status_cmd_qs;
+          reg_rdata_next[1] = fault_status_kmac_fsm_qs;
+          reg_rdata_next[2] = fault_status_kmac_done_qs;
+          reg_rdata_next[3] = fault_status_kmac_op_qs;
+          reg_rdata_next[4] = fault_status_kmac_out_qs;
+          reg_rdata_next[5] = fault_status_regfile_intg_qs;
+          reg_rdata_next[6] = fault_status_shadow_qs;
+          reg_rdata_next[7] = fault_status_ctrl_fsm_intg_qs;
+          reg_rdata_next[8] = fault_status_ctrl_fsm_chk_qs;
+          reg_rdata_next[9] = fault_status_ctrl_fsm_cnt_qs;
+          reg_rdata_next[10] = fault_status_reseed_cnt_qs;
+          reg_rdata_next[11] = fault_status_side_ctrl_fsm_qs;
+          reg_rdata_next[12] = fault_status_side_ctrl_sel_qs;
+          reg_rdata_next[13] = fault_status_key_ecc_qs;
+        end
 
-      addr_hit[62]: begin
-        reg_rdata_next[0] = debug_invalid_creator_seed_qs;
-        reg_rdata_next[1] = debug_invalid_owner_seed_qs;
-        reg_rdata_next[2] = debug_invalid_dev_id_qs;
-        reg_rdata_next[3] = debug_invalid_health_state_qs;
-        reg_rdata_next[4] = debug_invalid_key_version_qs;
-        reg_rdata_next[5] = debug_invalid_key_qs;
-        reg_rdata_next[6] = debug_invalid_digest_qs;
-      end
+        62: begin
+          reg_rdata_next[0] = debug_invalid_creator_seed_qs;
+          reg_rdata_next[1] = debug_invalid_owner_seed_qs;
+          reg_rdata_next[2] = debug_invalid_dev_id_qs;
+          reg_rdata_next[3] = debug_invalid_health_state_qs;
+          reg_rdata_next[4] = debug_invalid_key_version_qs;
+          reg_rdata_next[5] = debug_invalid_key_qs;
+          reg_rdata_next[6] = debug_invalid_digest_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -3700,7 +3770,7 @@ module keymgr_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

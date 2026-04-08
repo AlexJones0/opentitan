@@ -8368,685 +8368,508 @@ module usbdev_reg_top (
 
 
 
-  logic [42:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == USBDEV_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == USBDEV_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == USBDEV_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == USBDEV_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == USBDEV_USBCTRL_OFFSET);
-    addr_hit[ 5] = (reg_addr == USBDEV_EP_OUT_ENABLE_OFFSET);
-    addr_hit[ 6] = (reg_addr == USBDEV_EP_IN_ENABLE_OFFSET);
-    addr_hit[ 7] = (reg_addr == USBDEV_USBSTAT_OFFSET);
-    addr_hit[ 8] = (reg_addr == USBDEV_AVOUTBUFFER_OFFSET);
-    addr_hit[ 9] = (reg_addr == USBDEV_AVSETUPBUFFER_OFFSET);
-    addr_hit[10] = (reg_addr == USBDEV_RXFIFO_OFFSET);
-    addr_hit[11] = (reg_addr == USBDEV_RXENABLE_SETUP_OFFSET);
-    addr_hit[12] = (reg_addr == USBDEV_RXENABLE_OUT_OFFSET);
-    addr_hit[13] = (reg_addr == USBDEV_SET_NAK_OUT_OFFSET);
-    addr_hit[14] = (reg_addr == USBDEV_IN_SENT_OFFSET);
-    addr_hit[15] = (reg_addr == USBDEV_OUT_STALL_OFFSET);
-    addr_hit[16] = (reg_addr == USBDEV_IN_STALL_OFFSET);
-    addr_hit[17] = (reg_addr == USBDEV_CONFIGIN_0_OFFSET);
-    addr_hit[18] = (reg_addr == USBDEV_CONFIGIN_1_OFFSET);
-    addr_hit[19] = (reg_addr == USBDEV_CONFIGIN_2_OFFSET);
-    addr_hit[20] = (reg_addr == USBDEV_CONFIGIN_3_OFFSET);
-    addr_hit[21] = (reg_addr == USBDEV_CONFIGIN_4_OFFSET);
-    addr_hit[22] = (reg_addr == USBDEV_CONFIGIN_5_OFFSET);
-    addr_hit[23] = (reg_addr == USBDEV_CONFIGIN_6_OFFSET);
-    addr_hit[24] = (reg_addr == USBDEV_CONFIGIN_7_OFFSET);
-    addr_hit[25] = (reg_addr == USBDEV_CONFIGIN_8_OFFSET);
-    addr_hit[26] = (reg_addr == USBDEV_CONFIGIN_9_OFFSET);
-    addr_hit[27] = (reg_addr == USBDEV_CONFIGIN_10_OFFSET);
-    addr_hit[28] = (reg_addr == USBDEV_CONFIGIN_11_OFFSET);
-    addr_hit[29] = (reg_addr == USBDEV_OUT_ISO_OFFSET);
-    addr_hit[30] = (reg_addr == USBDEV_IN_ISO_OFFSET);
-    addr_hit[31] = (reg_addr == USBDEV_OUT_DATA_TOGGLE_OFFSET);
-    addr_hit[32] = (reg_addr == USBDEV_IN_DATA_TOGGLE_OFFSET);
-    addr_hit[33] = (reg_addr == USBDEV_PHY_PINS_SENSE_OFFSET);
-    addr_hit[34] = (reg_addr == USBDEV_PHY_PINS_DRIVE_OFFSET);
-    addr_hit[35] = (reg_addr == USBDEV_PHY_CONFIG_OFFSET);
-    addr_hit[36] = (reg_addr == USBDEV_WAKE_CONTROL_OFFSET);
-    addr_hit[37] = (reg_addr == USBDEV_WAKE_EVENTS_OFFSET);
-    addr_hit[38] = (reg_addr == USBDEV_FIFO_CTRL_OFFSET);
-    addr_hit[39] = (reg_addr == USBDEV_COUNT_OUT_OFFSET);
-    addr_hit[40] = (reg_addr == USBDEV_COUNT_IN_OFFSET);
-    addr_hit[41] = (reg_addr == USBDEV_COUNT_NODATA_IN_OFFSET);
-    addr_hit[42] = (reg_addr == USBDEV_COUNT_ERRORS_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      USBDEV_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      USBDEV_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      USBDEV_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      USBDEV_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      USBDEV_USBCTRL_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      USBDEV_EP_OUT_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      USBDEV_EP_IN_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      USBDEV_USBSTAT_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      USBDEV_AVOUTBUFFER_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      USBDEV_AVSETUPBUFFER_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      USBDEV_RXFIFO_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      USBDEV_RXENABLE_SETUP_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      USBDEV_RXENABLE_OUT_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      USBDEV_SET_NAK_OUT_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      USBDEV_IN_SENT_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      USBDEV_OUT_STALL_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      USBDEV_IN_STALL_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      USBDEV_CONFIGIN_0_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      USBDEV_CONFIGIN_1_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      USBDEV_CONFIGIN_2_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      USBDEV_CONFIGIN_3_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      USBDEV_CONFIGIN_4_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      USBDEV_CONFIGIN_5_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      USBDEV_CONFIGIN_6_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      USBDEV_CONFIGIN_7_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      USBDEV_CONFIGIN_8_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      USBDEV_CONFIGIN_9_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      USBDEV_CONFIGIN_10_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      USBDEV_CONFIGIN_11_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      USBDEV_OUT_ISO_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      USBDEV_IN_ISO_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      USBDEV_OUT_DATA_TOGGLE_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      USBDEV_IN_DATA_TOGGLE_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      USBDEV_PHY_PINS_SENSE_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      USBDEV_PHY_PINS_DRIVE_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      USBDEV_PHY_CONFIG_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      USBDEV_WAKE_CONTROL_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      USBDEV_WAKE_EVENTS_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      USBDEV_FIFO_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      USBDEV_COUNT_OUT_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      USBDEV_COUNT_IN_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      USBDEV_COUNT_NODATA_IN_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      USBDEV_COUNT_ERRORS_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(USBDEV_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(USBDEV_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(USBDEV_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(USBDEV_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(USBDEV_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(USBDEV_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(USBDEV_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(USBDEV_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(USBDEV_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(USBDEV_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(USBDEV_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(USBDEV_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(USBDEV_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(USBDEV_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(USBDEV_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(USBDEV_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(USBDEV_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(USBDEV_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(USBDEV_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(USBDEV_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(USBDEV_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(USBDEV_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(USBDEV_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(USBDEV_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(USBDEV_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(USBDEV_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(USBDEV_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(USBDEV_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(USBDEV_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(USBDEV_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(USBDEV_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(USBDEV_PERMIT[31] & ~reg_be))) |
-               (addr_hit[32] & (|(USBDEV_PERMIT[32] & ~reg_be))) |
-               (addr_hit[33] & (|(USBDEV_PERMIT[33] & ~reg_be))) |
-               (addr_hit[34] & (|(USBDEV_PERMIT[34] & ~reg_be))) |
-               (addr_hit[35] & (|(USBDEV_PERMIT[35] & ~reg_be))) |
-               (addr_hit[36] & (|(USBDEV_PERMIT[36] & ~reg_be))) |
-               (addr_hit[37] & (|(USBDEV_PERMIT[37] & ~reg_be))) |
-               (addr_hit[38] & (|(USBDEV_PERMIT[38] & ~reg_be))) |
-               (addr_hit[39] & (|(USBDEV_PERMIT[39] & ~reg_be))) |
-               (addr_hit[40] & (|(USBDEV_PERMIT[40] & ~reg_be))) |
-               (addr_hit[41] & (|(USBDEV_PERMIT[41] & ~reg_be))) |
-               (addr_hit[42] & (|(USBDEV_PERMIT[42] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(USBDEV_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(USBDEV_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(USBDEV_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(USBDEV_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(USBDEV_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(USBDEV_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(USBDEV_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(USBDEV_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(USBDEV_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(USBDEV_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(USBDEV_PERMIT[10] & ~reg_be);
+        11: wr_err = |(USBDEV_PERMIT[11] & ~reg_be);
+        12: wr_err = |(USBDEV_PERMIT[12] & ~reg_be);
+        13: wr_err = |(USBDEV_PERMIT[13] & ~reg_be);
+        14: wr_err = |(USBDEV_PERMIT[14] & ~reg_be);
+        15: wr_err = |(USBDEV_PERMIT[15] & ~reg_be);
+        16: wr_err = |(USBDEV_PERMIT[16] & ~reg_be);
+        17: wr_err = |(USBDEV_PERMIT[17] & ~reg_be);
+        18: wr_err = |(USBDEV_PERMIT[18] & ~reg_be);
+        19: wr_err = |(USBDEV_PERMIT[19] & ~reg_be);
+        20: wr_err = |(USBDEV_PERMIT[20] & ~reg_be);
+        21: wr_err = |(USBDEV_PERMIT[21] & ~reg_be);
+        22: wr_err = |(USBDEV_PERMIT[22] & ~reg_be);
+        23: wr_err = |(USBDEV_PERMIT[23] & ~reg_be);
+        24: wr_err = |(USBDEV_PERMIT[24] & ~reg_be);
+        25: wr_err = |(USBDEV_PERMIT[25] & ~reg_be);
+        26: wr_err = |(USBDEV_PERMIT[26] & ~reg_be);
+        27: wr_err = |(USBDEV_PERMIT[27] & ~reg_be);
+        28: wr_err = |(USBDEV_PERMIT[28] & ~reg_be);
+        29: wr_err = |(USBDEV_PERMIT[29] & ~reg_be);
+        30: wr_err = |(USBDEV_PERMIT[30] & ~reg_be);
+        31: wr_err = |(USBDEV_PERMIT[31] & ~reg_be);
+        32: wr_err = |(USBDEV_PERMIT[32] & ~reg_be);
+        33: wr_err = |(USBDEV_PERMIT[33] & ~reg_be);
+        34: wr_err = |(USBDEV_PERMIT[34] & ~reg_be);
+        35: wr_err = |(USBDEV_PERMIT[35] & ~reg_be);
+        36: wr_err = |(USBDEV_PERMIT[36] & ~reg_be);
+        37: wr_err = |(USBDEV_PERMIT[37] & ~reg_be);
+        38: wr_err = |(USBDEV_PERMIT[38] & ~reg_be);
+        39: wr_err = |(USBDEV_PERMIT[39] & ~reg_be);
+        40: wr_err = |(USBDEV_PERMIT[40] & ~reg_be);
+        41: wr_err = |(USBDEV_PERMIT[41] & ~reg_be);
+        42: wr_err = |(USBDEV_PERMIT[42] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
-
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
   assign intr_state_disconnected_wd = reg_wdata[2];
-
   assign intr_state_host_lost_wd = reg_wdata[3];
-
   assign intr_state_link_reset_wd = reg_wdata[4];
-
   assign intr_state_link_suspend_wd = reg_wdata[5];
-
   assign intr_state_link_resume_wd = reg_wdata[6];
-
   assign intr_state_av_overflow_wd = reg_wdata[9];
-
   assign intr_state_link_in_err_wd = reg_wdata[10];
-
   assign intr_state_rx_crc_err_wd = reg_wdata[11];
-
   assign intr_state_rx_pid_err_wd = reg_wdata[12];
-
   assign intr_state_rx_bitstuff_err_wd = reg_wdata[13];
-
   assign intr_state_frame_wd = reg_wdata[14];
-
   assign intr_state_powered_wd = reg_wdata[15];
-
   assign intr_state_link_out_err_wd = reg_wdata[16];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_pkt_received_wd = reg_wdata[0];
-
   assign intr_enable_pkt_sent_wd = reg_wdata[1];
-
   assign intr_enable_disconnected_wd = reg_wdata[2];
-
   assign intr_enable_host_lost_wd = reg_wdata[3];
-
   assign intr_enable_link_reset_wd = reg_wdata[4];
-
   assign intr_enable_link_suspend_wd = reg_wdata[5];
-
   assign intr_enable_link_resume_wd = reg_wdata[6];
-
   assign intr_enable_av_out_empty_wd = reg_wdata[7];
-
   assign intr_enable_rx_full_wd = reg_wdata[8];
-
   assign intr_enable_av_overflow_wd = reg_wdata[9];
-
   assign intr_enable_link_in_err_wd = reg_wdata[10];
-
   assign intr_enable_rx_crc_err_wd = reg_wdata[11];
-
   assign intr_enable_rx_pid_err_wd = reg_wdata[12];
-
   assign intr_enable_rx_bitstuff_err_wd = reg_wdata[13];
-
   assign intr_enable_frame_wd = reg_wdata[14];
-
   assign intr_enable_powered_wd = reg_wdata[15];
-
   assign intr_enable_link_out_err_wd = reg_wdata[16];
-
   assign intr_enable_av_setup_empty_wd = reg_wdata[17];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_pkt_received_wd = reg_wdata[0];
-
   assign intr_test_pkt_sent_wd = reg_wdata[1];
-
   assign intr_test_disconnected_wd = reg_wdata[2];
-
   assign intr_test_host_lost_wd = reg_wdata[3];
-
   assign intr_test_link_reset_wd = reg_wdata[4];
-
   assign intr_test_link_suspend_wd = reg_wdata[5];
-
   assign intr_test_link_resume_wd = reg_wdata[6];
-
   assign intr_test_av_out_empty_wd = reg_wdata[7];
-
   assign intr_test_rx_full_wd = reg_wdata[8];
-
   assign intr_test_av_overflow_wd = reg_wdata[9];
-
   assign intr_test_link_in_err_wd = reg_wdata[10];
-
   assign intr_test_rx_crc_err_wd = reg_wdata[11];
-
   assign intr_test_rx_pid_err_wd = reg_wdata[12];
-
   assign intr_test_rx_bitstuff_err_wd = reg_wdata[13];
-
   assign intr_test_frame_wd = reg_wdata[14];
-
   assign intr_test_powered_wd = reg_wdata[15];
-
   assign intr_test_link_out_err_wd = reg_wdata[16];
-
   assign intr_test_av_setup_empty_wd = reg_wdata[17];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign usbctrl_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign usbctrl_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign usbctrl_enable_wd = reg_wdata[0];
-
   assign usbctrl_resume_link_active_wd = reg_wdata[1];
-
   assign usbctrl_device_address_wd = reg_wdata[22:16];
-  assign ep_out_enable_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign ep_out_enable_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign ep_out_enable_enable_0_wd = reg_wdata[0];
-
   assign ep_out_enable_enable_1_wd = reg_wdata[1];
-
   assign ep_out_enable_enable_2_wd = reg_wdata[2];
-
   assign ep_out_enable_enable_3_wd = reg_wdata[3];
-
   assign ep_out_enable_enable_4_wd = reg_wdata[4];
-
   assign ep_out_enable_enable_5_wd = reg_wdata[5];
-
   assign ep_out_enable_enable_6_wd = reg_wdata[6];
-
   assign ep_out_enable_enable_7_wd = reg_wdata[7];
-
   assign ep_out_enable_enable_8_wd = reg_wdata[8];
-
   assign ep_out_enable_enable_9_wd = reg_wdata[9];
-
   assign ep_out_enable_enable_10_wd = reg_wdata[10];
-
   assign ep_out_enable_enable_11_wd = reg_wdata[11];
-  assign ep_in_enable_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign ep_in_enable_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign ep_in_enable_enable_0_wd = reg_wdata[0];
-
   assign ep_in_enable_enable_1_wd = reg_wdata[1];
-
   assign ep_in_enable_enable_2_wd = reg_wdata[2];
-
   assign ep_in_enable_enable_3_wd = reg_wdata[3];
-
   assign ep_in_enable_enable_4_wd = reg_wdata[4];
-
   assign ep_in_enable_enable_5_wd = reg_wdata[5];
-
   assign ep_in_enable_enable_6_wd = reg_wdata[6];
-
   assign ep_in_enable_enable_7_wd = reg_wdata[7];
-
   assign ep_in_enable_enable_8_wd = reg_wdata[8];
-
   assign ep_in_enable_enable_9_wd = reg_wdata[9];
-
   assign ep_in_enable_enable_10_wd = reg_wdata[10];
-
   assign ep_in_enable_enable_11_wd = reg_wdata[11];
-  assign usbstat_re = addr_hit[7] & reg_re & !reg_error;
-  assign avoutbuffer_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign usbstat_re = addr_valid & (addr_idx == 7) & reg_re & !reg_error;
+
+  assign avoutbuffer_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign avoutbuffer_wd = reg_wdata[4:0];
-  assign avsetupbuffer_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign avsetupbuffer_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign avsetupbuffer_wd = reg_wdata[4:0];
-  assign rxfifo_re = addr_hit[10] & reg_re & !reg_error;
-  assign rxenable_setup_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign rxfifo_re = addr_valid & (addr_idx == 10) & reg_re & !reg_error;
+
+  assign rxenable_setup_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign rxenable_setup_setup_0_wd = reg_wdata[0];
-
   assign rxenable_setup_setup_1_wd = reg_wdata[1];
-
   assign rxenable_setup_setup_2_wd = reg_wdata[2];
-
   assign rxenable_setup_setup_3_wd = reg_wdata[3];
-
   assign rxenable_setup_setup_4_wd = reg_wdata[4];
-
   assign rxenable_setup_setup_5_wd = reg_wdata[5];
-
   assign rxenable_setup_setup_6_wd = reg_wdata[6];
-
   assign rxenable_setup_setup_7_wd = reg_wdata[7];
-
   assign rxenable_setup_setup_8_wd = reg_wdata[8];
-
   assign rxenable_setup_setup_9_wd = reg_wdata[9];
-
   assign rxenable_setup_setup_10_wd = reg_wdata[10];
-
   assign rxenable_setup_setup_11_wd = reg_wdata[11];
-  assign rxenable_out_re = addr_hit[12] & reg_re & !reg_error;
-  assign rxenable_out_we = addr_hit[12] & reg_we & !reg_error;
+
+  assign rxenable_out_re = addr_valid & (addr_idx == 12) & reg_re & !reg_error;
+  assign rxenable_out_we = addr_valid & (addr_idx == 12) & reg_we & !reg_error;
 
   assign rxenable_out_out_wd = reg_wdata[11:0];
-
   assign rxenable_out_preserve_wd = reg_wdata[27:16];
-  assign set_nak_out_we = addr_hit[13] & reg_we & !reg_error;
+
+  assign set_nak_out_we = addr_valid & (addr_idx == 13) & reg_we & !reg_error;
 
   assign set_nak_out_enable_0_wd = reg_wdata[0];
-
   assign set_nak_out_enable_1_wd = reg_wdata[1];
-
   assign set_nak_out_enable_2_wd = reg_wdata[2];
-
   assign set_nak_out_enable_3_wd = reg_wdata[3];
-
   assign set_nak_out_enable_4_wd = reg_wdata[4];
-
   assign set_nak_out_enable_5_wd = reg_wdata[5];
-
   assign set_nak_out_enable_6_wd = reg_wdata[6];
-
   assign set_nak_out_enable_7_wd = reg_wdata[7];
-
   assign set_nak_out_enable_8_wd = reg_wdata[8];
-
   assign set_nak_out_enable_9_wd = reg_wdata[9];
-
   assign set_nak_out_enable_10_wd = reg_wdata[10];
-
   assign set_nak_out_enable_11_wd = reg_wdata[11];
-  assign in_sent_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign in_sent_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign in_sent_sent_0_wd = reg_wdata[0];
-
   assign in_sent_sent_1_wd = reg_wdata[1];
-
   assign in_sent_sent_2_wd = reg_wdata[2];
-
   assign in_sent_sent_3_wd = reg_wdata[3];
-
   assign in_sent_sent_4_wd = reg_wdata[4];
-
   assign in_sent_sent_5_wd = reg_wdata[5];
-
   assign in_sent_sent_6_wd = reg_wdata[6];
-
   assign in_sent_sent_7_wd = reg_wdata[7];
-
   assign in_sent_sent_8_wd = reg_wdata[8];
-
   assign in_sent_sent_9_wd = reg_wdata[9];
-
   assign in_sent_sent_10_wd = reg_wdata[10];
-
   assign in_sent_sent_11_wd = reg_wdata[11];
-  assign out_stall_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign out_stall_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign out_stall_endpoint_0_wd = reg_wdata[0];
-
   assign out_stall_endpoint_1_wd = reg_wdata[1];
-
   assign out_stall_endpoint_2_wd = reg_wdata[2];
-
   assign out_stall_endpoint_3_wd = reg_wdata[3];
-
   assign out_stall_endpoint_4_wd = reg_wdata[4];
-
   assign out_stall_endpoint_5_wd = reg_wdata[5];
-
   assign out_stall_endpoint_6_wd = reg_wdata[6];
-
   assign out_stall_endpoint_7_wd = reg_wdata[7];
-
   assign out_stall_endpoint_8_wd = reg_wdata[8];
-
   assign out_stall_endpoint_9_wd = reg_wdata[9];
-
   assign out_stall_endpoint_10_wd = reg_wdata[10];
-
   assign out_stall_endpoint_11_wd = reg_wdata[11];
-  assign in_stall_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign in_stall_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign in_stall_endpoint_0_wd = reg_wdata[0];
-
   assign in_stall_endpoint_1_wd = reg_wdata[1];
-
   assign in_stall_endpoint_2_wd = reg_wdata[2];
-
   assign in_stall_endpoint_3_wd = reg_wdata[3];
-
   assign in_stall_endpoint_4_wd = reg_wdata[4];
-
   assign in_stall_endpoint_5_wd = reg_wdata[5];
-
   assign in_stall_endpoint_6_wd = reg_wdata[6];
-
   assign in_stall_endpoint_7_wd = reg_wdata[7];
-
   assign in_stall_endpoint_8_wd = reg_wdata[8];
-
   assign in_stall_endpoint_9_wd = reg_wdata[9];
-
   assign in_stall_endpoint_10_wd = reg_wdata[10];
-
   assign in_stall_endpoint_11_wd = reg_wdata[11];
-  assign configin_0_we = addr_hit[17] & reg_we & !reg_error;
+
+  assign configin_0_we = addr_valid & (addr_idx == 17) & reg_we & !reg_error;
 
   assign configin_0_buffer_0_wd = reg_wdata[4:0];
-
   assign configin_0_size_0_wd = reg_wdata[14:8];
-
   assign configin_0_sending_0_wd = reg_wdata[29];
-
   assign configin_0_pend_0_wd = reg_wdata[30];
-
   assign configin_0_rdy_0_wd = reg_wdata[31];
-  assign configin_1_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign configin_1_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign configin_1_buffer_1_wd = reg_wdata[4:0];
-
   assign configin_1_size_1_wd = reg_wdata[14:8];
-
   assign configin_1_sending_1_wd = reg_wdata[29];
-
   assign configin_1_pend_1_wd = reg_wdata[30];
-
   assign configin_1_rdy_1_wd = reg_wdata[31];
-  assign configin_2_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign configin_2_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign configin_2_buffer_2_wd = reg_wdata[4:0];
-
   assign configin_2_size_2_wd = reg_wdata[14:8];
-
   assign configin_2_sending_2_wd = reg_wdata[29];
-
   assign configin_2_pend_2_wd = reg_wdata[30];
-
   assign configin_2_rdy_2_wd = reg_wdata[31];
-  assign configin_3_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign configin_3_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign configin_3_buffer_3_wd = reg_wdata[4:0];
-
   assign configin_3_size_3_wd = reg_wdata[14:8];
-
   assign configin_3_sending_3_wd = reg_wdata[29];
-
   assign configin_3_pend_3_wd = reg_wdata[30];
-
   assign configin_3_rdy_3_wd = reg_wdata[31];
-  assign configin_4_we = addr_hit[21] & reg_we & !reg_error;
+
+  assign configin_4_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
   assign configin_4_buffer_4_wd = reg_wdata[4:0];
-
   assign configin_4_size_4_wd = reg_wdata[14:8];
-
   assign configin_4_sending_4_wd = reg_wdata[29];
-
   assign configin_4_pend_4_wd = reg_wdata[30];
-
   assign configin_4_rdy_4_wd = reg_wdata[31];
-  assign configin_5_we = addr_hit[22] & reg_we & !reg_error;
+
+  assign configin_5_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign configin_5_buffer_5_wd = reg_wdata[4:0];
-
   assign configin_5_size_5_wd = reg_wdata[14:8];
-
   assign configin_5_sending_5_wd = reg_wdata[29];
-
   assign configin_5_pend_5_wd = reg_wdata[30];
-
   assign configin_5_rdy_5_wd = reg_wdata[31];
-  assign configin_6_we = addr_hit[23] & reg_we & !reg_error;
+
+  assign configin_6_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign configin_6_buffer_6_wd = reg_wdata[4:0];
-
   assign configin_6_size_6_wd = reg_wdata[14:8];
-
   assign configin_6_sending_6_wd = reg_wdata[29];
-
   assign configin_6_pend_6_wd = reg_wdata[30];
-
   assign configin_6_rdy_6_wd = reg_wdata[31];
-  assign configin_7_we = addr_hit[24] & reg_we & !reg_error;
+
+  assign configin_7_we = addr_valid & (addr_idx == 24) & reg_we & !reg_error;
 
   assign configin_7_buffer_7_wd = reg_wdata[4:0];
-
   assign configin_7_size_7_wd = reg_wdata[14:8];
-
   assign configin_7_sending_7_wd = reg_wdata[29];
-
   assign configin_7_pend_7_wd = reg_wdata[30];
-
   assign configin_7_rdy_7_wd = reg_wdata[31];
-  assign configin_8_we = addr_hit[25] & reg_we & !reg_error;
+
+  assign configin_8_we = addr_valid & (addr_idx == 25) & reg_we & !reg_error;
 
   assign configin_8_buffer_8_wd = reg_wdata[4:0];
-
   assign configin_8_size_8_wd = reg_wdata[14:8];
-
   assign configin_8_sending_8_wd = reg_wdata[29];
-
   assign configin_8_pend_8_wd = reg_wdata[30];
-
   assign configin_8_rdy_8_wd = reg_wdata[31];
-  assign configin_9_we = addr_hit[26] & reg_we & !reg_error;
+
+  assign configin_9_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
   assign configin_9_buffer_9_wd = reg_wdata[4:0];
-
   assign configin_9_size_9_wd = reg_wdata[14:8];
-
   assign configin_9_sending_9_wd = reg_wdata[29];
-
   assign configin_9_pend_9_wd = reg_wdata[30];
-
   assign configin_9_rdy_9_wd = reg_wdata[31];
-  assign configin_10_we = addr_hit[27] & reg_we & !reg_error;
+
+  assign configin_10_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
   assign configin_10_buffer_10_wd = reg_wdata[4:0];
-
   assign configin_10_size_10_wd = reg_wdata[14:8];
-
   assign configin_10_sending_10_wd = reg_wdata[29];
-
   assign configin_10_pend_10_wd = reg_wdata[30];
-
   assign configin_10_rdy_10_wd = reg_wdata[31];
-  assign configin_11_we = addr_hit[28] & reg_we & !reg_error;
+
+  assign configin_11_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
   assign configin_11_buffer_11_wd = reg_wdata[4:0];
-
   assign configin_11_size_11_wd = reg_wdata[14:8];
-
   assign configin_11_sending_11_wd = reg_wdata[29];
-
   assign configin_11_pend_11_wd = reg_wdata[30];
-
   assign configin_11_rdy_11_wd = reg_wdata[31];
-  assign out_iso_we = addr_hit[29] & reg_we & !reg_error;
+
+  assign out_iso_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
   assign out_iso_iso_0_wd = reg_wdata[0];
-
   assign out_iso_iso_1_wd = reg_wdata[1];
-
   assign out_iso_iso_2_wd = reg_wdata[2];
-
   assign out_iso_iso_3_wd = reg_wdata[3];
-
   assign out_iso_iso_4_wd = reg_wdata[4];
-
   assign out_iso_iso_5_wd = reg_wdata[5];
-
   assign out_iso_iso_6_wd = reg_wdata[6];
-
   assign out_iso_iso_7_wd = reg_wdata[7];
-
   assign out_iso_iso_8_wd = reg_wdata[8];
-
   assign out_iso_iso_9_wd = reg_wdata[9];
-
   assign out_iso_iso_10_wd = reg_wdata[10];
-
   assign out_iso_iso_11_wd = reg_wdata[11];
-  assign in_iso_we = addr_hit[30] & reg_we & !reg_error;
+
+  assign in_iso_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
   assign in_iso_iso_0_wd = reg_wdata[0];
-
   assign in_iso_iso_1_wd = reg_wdata[1];
-
   assign in_iso_iso_2_wd = reg_wdata[2];
-
   assign in_iso_iso_3_wd = reg_wdata[3];
-
   assign in_iso_iso_4_wd = reg_wdata[4];
-
   assign in_iso_iso_5_wd = reg_wdata[5];
-
   assign in_iso_iso_6_wd = reg_wdata[6];
-
   assign in_iso_iso_7_wd = reg_wdata[7];
-
   assign in_iso_iso_8_wd = reg_wdata[8];
-
   assign in_iso_iso_9_wd = reg_wdata[9];
-
   assign in_iso_iso_10_wd = reg_wdata[10];
-
   assign in_iso_iso_11_wd = reg_wdata[11];
-  assign out_data_toggle_re = addr_hit[31] & reg_re & !reg_error;
-  assign out_data_toggle_we = addr_hit[31] & reg_we & !reg_error;
+
+  assign out_data_toggle_re = addr_valid & (addr_idx == 31) & reg_re & !reg_error;
+  assign out_data_toggle_we = addr_valid & (addr_idx == 31) & reg_we & !reg_error;
 
   assign out_data_toggle_status_wd = reg_wdata[11:0];
-
   assign out_data_toggle_mask_wd = reg_wdata[27:16];
-  assign in_data_toggle_re = addr_hit[32] & reg_re & !reg_error;
-  assign in_data_toggle_we = addr_hit[32] & reg_we & !reg_error;
+
+  assign in_data_toggle_re = addr_valid & (addr_idx == 32) & reg_re & !reg_error;
+  assign in_data_toggle_we = addr_valid & (addr_idx == 32) & reg_we & !reg_error;
 
   assign in_data_toggle_status_wd = reg_wdata[11:0];
-
   assign in_data_toggle_mask_wd = reg_wdata[27:16];
-  assign phy_pins_sense_re = addr_hit[33] & reg_re & !reg_error;
-  assign phy_pins_drive_we = addr_hit[34] & reg_we & !reg_error;
+
+  assign phy_pins_sense_re = addr_valid & (addr_idx == 33) & reg_re & !reg_error;
+
+  assign phy_pins_drive_we = addr_valid & (addr_idx == 34) & reg_we & !reg_error;
 
   assign phy_pins_drive_dp_o_wd = reg_wdata[0];
-
   assign phy_pins_drive_dn_o_wd = reg_wdata[1];
-
   assign phy_pins_drive_d_o_wd = reg_wdata[2];
-
   assign phy_pins_drive_se0_o_wd = reg_wdata[3];
-
   assign phy_pins_drive_oe_o_wd = reg_wdata[4];
-
   assign phy_pins_drive_rx_enable_o_wd = reg_wdata[5];
-
   assign phy_pins_drive_dp_pullup_en_o_wd = reg_wdata[6];
-
   assign phy_pins_drive_dn_pullup_en_o_wd = reg_wdata[7];
-
   assign phy_pins_drive_en_wd = reg_wdata[16];
-  assign phy_config_we = addr_hit[35] & reg_we & !reg_error;
+
+  assign phy_config_we = addr_valid & (addr_idx == 35) & reg_we & !reg_error;
 
   assign phy_config_use_diff_rcvr_wd = reg_wdata[0];
-
   assign phy_config_tx_use_d_se0_wd = reg_wdata[1];
-
   assign phy_config_eop_single_bit_wd = reg_wdata[2];
-
   assign phy_config_pinflip_wd = reg_wdata[5];
-
   assign phy_config_usb_ref_disable_wd = reg_wdata[6];
-
   assign phy_config_tx_osc_test_mode_wd = reg_wdata[7];
-  assign wake_control_we = addr_hit[36] & reg_we & !reg_error;
+
+  assign wake_control_we = addr_valid & (addr_idx == 36) & reg_we & !reg_error;
 
 
-  assign fifo_ctrl_we = addr_hit[38] & reg_we & !reg_error;
+
+  assign fifo_ctrl_we = addr_valid & (addr_idx == 38) & reg_we & !reg_error;
 
   assign fifo_ctrl_avout_rst_wd = reg_wdata[0];
-
   assign fifo_ctrl_avsetup_rst_wd = reg_wdata[1];
-
   assign fifo_ctrl_rx_rst_wd = reg_wdata[2];
-  assign count_out_re = addr_hit[39] & reg_re & !reg_error;
-  assign count_out_we = addr_hit[39] & reg_we & !reg_error;
 
+  assign count_out_re = addr_valid & (addr_idx == 39) & reg_re & !reg_error;
+  assign count_out_we = addr_valid & (addr_idx == 39) & reg_we & !reg_error;
   assign count_out_datatog_out_wd = reg_wdata[12];
-
   assign count_out_drop_rx_wd = reg_wdata[13];
-
   assign count_out_drop_avout_wd = reg_wdata[14];
-
   assign count_out_ign_avsetup_wd = reg_wdata[15];
-
   assign count_out_endpoints_wd = reg_wdata[27:16];
-
   assign count_out_rst_wd = reg_wdata[31];
-  assign count_in_re = addr_hit[40] & reg_re & !reg_error;
-  assign count_in_we = addr_hit[40] & reg_we & !reg_error;
 
+  assign count_in_re = addr_valid & (addr_idx == 40) & reg_re & !reg_error;
+  assign count_in_we = addr_valid & (addr_idx == 40) & reg_we & !reg_error;
   assign count_in_nodata_wd = reg_wdata[13];
-
   assign count_in_nak_wd = reg_wdata[14];
-
   assign count_in_timeout_wd = reg_wdata[15];
-
   assign count_in_endpoints_wd = reg_wdata[27:16];
-
   assign count_in_rst_wd = reg_wdata[31];
-  assign count_nodata_in_re = addr_hit[41] & reg_re & !reg_error;
-  assign count_nodata_in_we = addr_hit[41] & reg_we & !reg_error;
 
+  assign count_nodata_in_re = addr_valid & (addr_idx == 41) & reg_re & !reg_error;
+  assign count_nodata_in_we = addr_valid & (addr_idx == 41) & reg_we & !reg_error;
   assign count_nodata_in_endpoints_wd = reg_wdata[27:16];
-
   assign count_nodata_in_rst_wd = reg_wdata[31];
-  assign count_errors_re = addr_hit[42] & reg_re & !reg_error;
-  assign count_errors_we = addr_hit[42] & reg_we & !reg_error;
 
+  assign count_errors_re = addr_valid & (addr_idx == 42) & reg_re & !reg_error;
+  assign count_errors_we = addr_valid & (addr_idx == 42) & reg_we & !reg_error;
   assign count_errors_pid_invalid_wd = reg_wdata[27];
-
   assign count_errors_bitstuff_wd = reg_wdata[28];
-
   assign count_errors_crc16_wd = reg_wdata[29];
-
   assign count_errors_crc5_wd = reg_wdata[30];
-
   assign count_errors_rst_wd = reg_wdata[31];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -9097,438 +8920,441 @@ module usbdev_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_pkt_received_qs;
-        reg_rdata_next[1] = intr_state_pkt_sent_qs;
-        reg_rdata_next[2] = intr_state_disconnected_qs;
-        reg_rdata_next[3] = intr_state_host_lost_qs;
-        reg_rdata_next[4] = intr_state_link_reset_qs;
-        reg_rdata_next[5] = intr_state_link_suspend_qs;
-        reg_rdata_next[6] = intr_state_link_resume_qs;
-        reg_rdata_next[7] = intr_state_av_out_empty_qs;
-        reg_rdata_next[8] = intr_state_rx_full_qs;
-        reg_rdata_next[9] = intr_state_av_overflow_qs;
-        reg_rdata_next[10] = intr_state_link_in_err_qs;
-        reg_rdata_next[11] = intr_state_rx_crc_err_qs;
-        reg_rdata_next[12] = intr_state_rx_pid_err_qs;
-        reg_rdata_next[13] = intr_state_rx_bitstuff_err_qs;
-        reg_rdata_next[14] = intr_state_frame_qs;
-        reg_rdata_next[15] = intr_state_powered_qs;
-        reg_rdata_next[16] = intr_state_link_out_err_qs;
-        reg_rdata_next[17] = intr_state_av_setup_empty_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_pkt_received_qs;
+          reg_rdata_next[1] = intr_state_pkt_sent_qs;
+          reg_rdata_next[2] = intr_state_disconnected_qs;
+          reg_rdata_next[3] = intr_state_host_lost_qs;
+          reg_rdata_next[4] = intr_state_link_reset_qs;
+          reg_rdata_next[5] = intr_state_link_suspend_qs;
+          reg_rdata_next[6] = intr_state_link_resume_qs;
+          reg_rdata_next[7] = intr_state_av_out_empty_qs;
+          reg_rdata_next[8] = intr_state_rx_full_qs;
+          reg_rdata_next[9] = intr_state_av_overflow_qs;
+          reg_rdata_next[10] = intr_state_link_in_err_qs;
+          reg_rdata_next[11] = intr_state_rx_crc_err_qs;
+          reg_rdata_next[12] = intr_state_rx_pid_err_qs;
+          reg_rdata_next[13] = intr_state_rx_bitstuff_err_qs;
+          reg_rdata_next[14] = intr_state_frame_qs;
+          reg_rdata_next[15] = intr_state_powered_qs;
+          reg_rdata_next[16] = intr_state_link_out_err_qs;
+          reg_rdata_next[17] = intr_state_av_setup_empty_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_pkt_received_qs;
-        reg_rdata_next[1] = intr_enable_pkt_sent_qs;
-        reg_rdata_next[2] = intr_enable_disconnected_qs;
-        reg_rdata_next[3] = intr_enable_host_lost_qs;
-        reg_rdata_next[4] = intr_enable_link_reset_qs;
-        reg_rdata_next[5] = intr_enable_link_suspend_qs;
-        reg_rdata_next[6] = intr_enable_link_resume_qs;
-        reg_rdata_next[7] = intr_enable_av_out_empty_qs;
-        reg_rdata_next[8] = intr_enable_rx_full_qs;
-        reg_rdata_next[9] = intr_enable_av_overflow_qs;
-        reg_rdata_next[10] = intr_enable_link_in_err_qs;
-        reg_rdata_next[11] = intr_enable_rx_crc_err_qs;
-        reg_rdata_next[12] = intr_enable_rx_pid_err_qs;
-        reg_rdata_next[13] = intr_enable_rx_bitstuff_err_qs;
-        reg_rdata_next[14] = intr_enable_frame_qs;
-        reg_rdata_next[15] = intr_enable_powered_qs;
-        reg_rdata_next[16] = intr_enable_link_out_err_qs;
-        reg_rdata_next[17] = intr_enable_av_setup_empty_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_pkt_received_qs;
+          reg_rdata_next[1] = intr_enable_pkt_sent_qs;
+          reg_rdata_next[2] = intr_enable_disconnected_qs;
+          reg_rdata_next[3] = intr_enable_host_lost_qs;
+          reg_rdata_next[4] = intr_enable_link_reset_qs;
+          reg_rdata_next[5] = intr_enable_link_suspend_qs;
+          reg_rdata_next[6] = intr_enable_link_resume_qs;
+          reg_rdata_next[7] = intr_enable_av_out_empty_qs;
+          reg_rdata_next[8] = intr_enable_rx_full_qs;
+          reg_rdata_next[9] = intr_enable_av_overflow_qs;
+          reg_rdata_next[10] = intr_enable_link_in_err_qs;
+          reg_rdata_next[11] = intr_enable_rx_crc_err_qs;
+          reg_rdata_next[12] = intr_enable_rx_pid_err_qs;
+          reg_rdata_next[13] = intr_enable_rx_bitstuff_err_qs;
+          reg_rdata_next[14] = intr_enable_frame_qs;
+          reg_rdata_next[15] = intr_enable_powered_qs;
+          reg_rdata_next[16] = intr_enable_link_out_err_qs;
+          reg_rdata_next[17] = intr_enable_av_setup_empty_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
-        reg_rdata_next[4] = '0;
-        reg_rdata_next[5] = '0;
-        reg_rdata_next[6] = '0;
-        reg_rdata_next[7] = '0;
-        reg_rdata_next[8] = '0;
-        reg_rdata_next[9] = '0;
-        reg_rdata_next[10] = '0;
-        reg_rdata_next[11] = '0;
-        reg_rdata_next[12] = '0;
-        reg_rdata_next[13] = '0;
-        reg_rdata_next[14] = '0;
-        reg_rdata_next[15] = '0;
-        reg_rdata_next[16] = '0;
-        reg_rdata_next[17] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+          reg_rdata_next[3] = '0;
+          reg_rdata_next[4] = '0;
+          reg_rdata_next[5] = '0;
+          reg_rdata_next[6] = '0;
+          reg_rdata_next[7] = '0;
+          reg_rdata_next[8] = '0;
+          reg_rdata_next[9] = '0;
+          reg_rdata_next[10] = '0;
+          reg_rdata_next[11] = '0;
+          reg_rdata_next[12] = '0;
+          reg_rdata_next[13] = '0;
+          reg_rdata_next[14] = '0;
+          reg_rdata_next[15] = '0;
+          reg_rdata_next[16] = '0;
+          reg_rdata_next[17] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = usbctrl_enable_qs;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[22:16] = usbctrl_device_address_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = usbctrl_enable_qs;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[22:16] = usbctrl_device_address_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[0] = ep_out_enable_enable_0_qs;
-        reg_rdata_next[1] = ep_out_enable_enable_1_qs;
-        reg_rdata_next[2] = ep_out_enable_enable_2_qs;
-        reg_rdata_next[3] = ep_out_enable_enable_3_qs;
-        reg_rdata_next[4] = ep_out_enable_enable_4_qs;
-        reg_rdata_next[5] = ep_out_enable_enable_5_qs;
-        reg_rdata_next[6] = ep_out_enable_enable_6_qs;
-        reg_rdata_next[7] = ep_out_enable_enable_7_qs;
-        reg_rdata_next[8] = ep_out_enable_enable_8_qs;
-        reg_rdata_next[9] = ep_out_enable_enable_9_qs;
-        reg_rdata_next[10] = ep_out_enable_enable_10_qs;
-        reg_rdata_next[11] = ep_out_enable_enable_11_qs;
-      end
+        5: begin
+          reg_rdata_next[0] = ep_out_enable_enable_0_qs;
+          reg_rdata_next[1] = ep_out_enable_enable_1_qs;
+          reg_rdata_next[2] = ep_out_enable_enable_2_qs;
+          reg_rdata_next[3] = ep_out_enable_enable_3_qs;
+          reg_rdata_next[4] = ep_out_enable_enable_4_qs;
+          reg_rdata_next[5] = ep_out_enable_enable_5_qs;
+          reg_rdata_next[6] = ep_out_enable_enable_6_qs;
+          reg_rdata_next[7] = ep_out_enable_enable_7_qs;
+          reg_rdata_next[8] = ep_out_enable_enable_8_qs;
+          reg_rdata_next[9] = ep_out_enable_enable_9_qs;
+          reg_rdata_next[10] = ep_out_enable_enable_10_qs;
+          reg_rdata_next[11] = ep_out_enable_enable_11_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[0] = ep_in_enable_enable_0_qs;
-        reg_rdata_next[1] = ep_in_enable_enable_1_qs;
-        reg_rdata_next[2] = ep_in_enable_enable_2_qs;
-        reg_rdata_next[3] = ep_in_enable_enable_3_qs;
-        reg_rdata_next[4] = ep_in_enable_enable_4_qs;
-        reg_rdata_next[5] = ep_in_enable_enable_5_qs;
-        reg_rdata_next[6] = ep_in_enable_enable_6_qs;
-        reg_rdata_next[7] = ep_in_enable_enable_7_qs;
-        reg_rdata_next[8] = ep_in_enable_enable_8_qs;
-        reg_rdata_next[9] = ep_in_enable_enable_9_qs;
-        reg_rdata_next[10] = ep_in_enable_enable_10_qs;
-        reg_rdata_next[11] = ep_in_enable_enable_11_qs;
-      end
+        6: begin
+          reg_rdata_next[0] = ep_in_enable_enable_0_qs;
+          reg_rdata_next[1] = ep_in_enable_enable_1_qs;
+          reg_rdata_next[2] = ep_in_enable_enable_2_qs;
+          reg_rdata_next[3] = ep_in_enable_enable_3_qs;
+          reg_rdata_next[4] = ep_in_enable_enable_4_qs;
+          reg_rdata_next[5] = ep_in_enable_enable_5_qs;
+          reg_rdata_next[6] = ep_in_enable_enable_6_qs;
+          reg_rdata_next[7] = ep_in_enable_enable_7_qs;
+          reg_rdata_next[8] = ep_in_enable_enable_8_qs;
+          reg_rdata_next[9] = ep_in_enable_enable_9_qs;
+          reg_rdata_next[10] = ep_in_enable_enable_10_qs;
+          reg_rdata_next[11] = ep_in_enable_enable_11_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[10:0] = usbstat_frame_qs;
-        reg_rdata_next[11] = usbstat_host_lost_qs;
-        reg_rdata_next[14:12] = usbstat_link_state_qs;
-        reg_rdata_next[15] = usbstat_sense_qs;
-        reg_rdata_next[19:16] = usbstat_av_out_depth_qs;
-        reg_rdata_next[22:20] = usbstat_av_setup_depth_qs;
-        reg_rdata_next[23] = usbstat_av_out_full_qs;
-        reg_rdata_next[27:24] = usbstat_rx_depth_qs;
-        reg_rdata_next[30] = usbstat_av_setup_full_qs;
-        reg_rdata_next[31] = usbstat_rx_empty_qs;
-      end
+        7: begin
+          reg_rdata_next[10:0] = usbstat_frame_qs;
+          reg_rdata_next[11] = usbstat_host_lost_qs;
+          reg_rdata_next[14:12] = usbstat_link_state_qs;
+          reg_rdata_next[15] = usbstat_sense_qs;
+          reg_rdata_next[19:16] = usbstat_av_out_depth_qs;
+          reg_rdata_next[22:20] = usbstat_av_setup_depth_qs;
+          reg_rdata_next[23] = usbstat_av_out_full_qs;
+          reg_rdata_next[27:24] = usbstat_rx_depth_qs;
+          reg_rdata_next[30] = usbstat_av_setup_full_qs;
+          reg_rdata_next[31] = usbstat_rx_empty_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[4:0] = '0;
-      end
+        8,9: begin
+          reg_rdata_next[4:0] = '0;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[4:0] = '0;
-      end
+        10: begin
+          reg_rdata_next[4:0] = rxfifo_buffer_qs;
+          reg_rdata_next[14:8] = rxfifo_size_qs;
+          reg_rdata_next[19] = rxfifo_setup_qs;
+          reg_rdata_next[23:20] = rxfifo_ep_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[4:0] = rxfifo_buffer_qs;
-        reg_rdata_next[14:8] = rxfifo_size_qs;
-        reg_rdata_next[19] = rxfifo_setup_qs;
-        reg_rdata_next[23:20] = rxfifo_ep_qs;
-      end
+        11: begin
+          reg_rdata_next[0] = rxenable_setup_setup_0_qs;
+          reg_rdata_next[1] = rxenable_setup_setup_1_qs;
+          reg_rdata_next[2] = rxenable_setup_setup_2_qs;
+          reg_rdata_next[3] = rxenable_setup_setup_3_qs;
+          reg_rdata_next[4] = rxenable_setup_setup_4_qs;
+          reg_rdata_next[5] = rxenable_setup_setup_5_qs;
+          reg_rdata_next[6] = rxenable_setup_setup_6_qs;
+          reg_rdata_next[7] = rxenable_setup_setup_7_qs;
+          reg_rdata_next[8] = rxenable_setup_setup_8_qs;
+          reg_rdata_next[9] = rxenable_setup_setup_9_qs;
+          reg_rdata_next[10] = rxenable_setup_setup_10_qs;
+          reg_rdata_next[11] = rxenable_setup_setup_11_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[0] = rxenable_setup_setup_0_qs;
-        reg_rdata_next[1] = rxenable_setup_setup_1_qs;
-        reg_rdata_next[2] = rxenable_setup_setup_2_qs;
-        reg_rdata_next[3] = rxenable_setup_setup_3_qs;
-        reg_rdata_next[4] = rxenable_setup_setup_4_qs;
-        reg_rdata_next[5] = rxenable_setup_setup_5_qs;
-        reg_rdata_next[6] = rxenable_setup_setup_6_qs;
-        reg_rdata_next[7] = rxenable_setup_setup_7_qs;
-        reg_rdata_next[8] = rxenable_setup_setup_8_qs;
-        reg_rdata_next[9] = rxenable_setup_setup_9_qs;
-        reg_rdata_next[10] = rxenable_setup_setup_10_qs;
-        reg_rdata_next[11] = rxenable_setup_setup_11_qs;
-      end
+        12: begin
+          reg_rdata_next[11:0] = rxenable_out_out_qs;
+          reg_rdata_next[27:16] = '0;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[11:0] = rxenable_out_out_qs;
-        reg_rdata_next[27:16] = '0;
-      end
+        13: begin
+          reg_rdata_next[0] = set_nak_out_enable_0_qs;
+          reg_rdata_next[1] = set_nak_out_enable_1_qs;
+          reg_rdata_next[2] = set_nak_out_enable_2_qs;
+          reg_rdata_next[3] = set_nak_out_enable_3_qs;
+          reg_rdata_next[4] = set_nak_out_enable_4_qs;
+          reg_rdata_next[5] = set_nak_out_enable_5_qs;
+          reg_rdata_next[6] = set_nak_out_enable_6_qs;
+          reg_rdata_next[7] = set_nak_out_enable_7_qs;
+          reg_rdata_next[8] = set_nak_out_enable_8_qs;
+          reg_rdata_next[9] = set_nak_out_enable_9_qs;
+          reg_rdata_next[10] = set_nak_out_enable_10_qs;
+          reg_rdata_next[11] = set_nak_out_enable_11_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[0] = set_nak_out_enable_0_qs;
-        reg_rdata_next[1] = set_nak_out_enable_1_qs;
-        reg_rdata_next[2] = set_nak_out_enable_2_qs;
-        reg_rdata_next[3] = set_nak_out_enable_3_qs;
-        reg_rdata_next[4] = set_nak_out_enable_4_qs;
-        reg_rdata_next[5] = set_nak_out_enable_5_qs;
-        reg_rdata_next[6] = set_nak_out_enable_6_qs;
-        reg_rdata_next[7] = set_nak_out_enable_7_qs;
-        reg_rdata_next[8] = set_nak_out_enable_8_qs;
-        reg_rdata_next[9] = set_nak_out_enable_9_qs;
-        reg_rdata_next[10] = set_nak_out_enable_10_qs;
-        reg_rdata_next[11] = set_nak_out_enable_11_qs;
-      end
+        14: begin
+          reg_rdata_next[0] = in_sent_sent_0_qs;
+          reg_rdata_next[1] = in_sent_sent_1_qs;
+          reg_rdata_next[2] = in_sent_sent_2_qs;
+          reg_rdata_next[3] = in_sent_sent_3_qs;
+          reg_rdata_next[4] = in_sent_sent_4_qs;
+          reg_rdata_next[5] = in_sent_sent_5_qs;
+          reg_rdata_next[6] = in_sent_sent_6_qs;
+          reg_rdata_next[7] = in_sent_sent_7_qs;
+          reg_rdata_next[8] = in_sent_sent_8_qs;
+          reg_rdata_next[9] = in_sent_sent_9_qs;
+          reg_rdata_next[10] = in_sent_sent_10_qs;
+          reg_rdata_next[11] = in_sent_sent_11_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[0] = in_sent_sent_0_qs;
-        reg_rdata_next[1] = in_sent_sent_1_qs;
-        reg_rdata_next[2] = in_sent_sent_2_qs;
-        reg_rdata_next[3] = in_sent_sent_3_qs;
-        reg_rdata_next[4] = in_sent_sent_4_qs;
-        reg_rdata_next[5] = in_sent_sent_5_qs;
-        reg_rdata_next[6] = in_sent_sent_6_qs;
-        reg_rdata_next[7] = in_sent_sent_7_qs;
-        reg_rdata_next[8] = in_sent_sent_8_qs;
-        reg_rdata_next[9] = in_sent_sent_9_qs;
-        reg_rdata_next[10] = in_sent_sent_10_qs;
-        reg_rdata_next[11] = in_sent_sent_11_qs;
-      end
+        15: begin
+          reg_rdata_next[0] = out_stall_endpoint_0_qs;
+          reg_rdata_next[1] = out_stall_endpoint_1_qs;
+          reg_rdata_next[2] = out_stall_endpoint_2_qs;
+          reg_rdata_next[3] = out_stall_endpoint_3_qs;
+          reg_rdata_next[4] = out_stall_endpoint_4_qs;
+          reg_rdata_next[5] = out_stall_endpoint_5_qs;
+          reg_rdata_next[6] = out_stall_endpoint_6_qs;
+          reg_rdata_next[7] = out_stall_endpoint_7_qs;
+          reg_rdata_next[8] = out_stall_endpoint_8_qs;
+          reg_rdata_next[9] = out_stall_endpoint_9_qs;
+          reg_rdata_next[10] = out_stall_endpoint_10_qs;
+          reg_rdata_next[11] = out_stall_endpoint_11_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[0] = out_stall_endpoint_0_qs;
-        reg_rdata_next[1] = out_stall_endpoint_1_qs;
-        reg_rdata_next[2] = out_stall_endpoint_2_qs;
-        reg_rdata_next[3] = out_stall_endpoint_3_qs;
-        reg_rdata_next[4] = out_stall_endpoint_4_qs;
-        reg_rdata_next[5] = out_stall_endpoint_5_qs;
-        reg_rdata_next[6] = out_stall_endpoint_6_qs;
-        reg_rdata_next[7] = out_stall_endpoint_7_qs;
-        reg_rdata_next[8] = out_stall_endpoint_8_qs;
-        reg_rdata_next[9] = out_stall_endpoint_9_qs;
-        reg_rdata_next[10] = out_stall_endpoint_10_qs;
-        reg_rdata_next[11] = out_stall_endpoint_11_qs;
-      end
+        16: begin
+          reg_rdata_next[0] = in_stall_endpoint_0_qs;
+          reg_rdata_next[1] = in_stall_endpoint_1_qs;
+          reg_rdata_next[2] = in_stall_endpoint_2_qs;
+          reg_rdata_next[3] = in_stall_endpoint_3_qs;
+          reg_rdata_next[4] = in_stall_endpoint_4_qs;
+          reg_rdata_next[5] = in_stall_endpoint_5_qs;
+          reg_rdata_next[6] = in_stall_endpoint_6_qs;
+          reg_rdata_next[7] = in_stall_endpoint_7_qs;
+          reg_rdata_next[8] = in_stall_endpoint_8_qs;
+          reg_rdata_next[9] = in_stall_endpoint_9_qs;
+          reg_rdata_next[10] = in_stall_endpoint_10_qs;
+          reg_rdata_next[11] = in_stall_endpoint_11_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[0] = in_stall_endpoint_0_qs;
-        reg_rdata_next[1] = in_stall_endpoint_1_qs;
-        reg_rdata_next[2] = in_stall_endpoint_2_qs;
-        reg_rdata_next[3] = in_stall_endpoint_3_qs;
-        reg_rdata_next[4] = in_stall_endpoint_4_qs;
-        reg_rdata_next[5] = in_stall_endpoint_5_qs;
-        reg_rdata_next[6] = in_stall_endpoint_6_qs;
-        reg_rdata_next[7] = in_stall_endpoint_7_qs;
-        reg_rdata_next[8] = in_stall_endpoint_8_qs;
-        reg_rdata_next[9] = in_stall_endpoint_9_qs;
-        reg_rdata_next[10] = in_stall_endpoint_10_qs;
-        reg_rdata_next[11] = in_stall_endpoint_11_qs;
-      end
+        17: begin
+          reg_rdata_next[4:0] = configin_0_buffer_0_qs;
+          reg_rdata_next[14:8] = configin_0_size_0_qs;
+          reg_rdata_next[29] = configin_0_sending_0_qs;
+          reg_rdata_next[30] = configin_0_pend_0_qs;
+          reg_rdata_next[31] = configin_0_rdy_0_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[4:0] = configin_0_buffer_0_qs;
-        reg_rdata_next[14:8] = configin_0_size_0_qs;
-        reg_rdata_next[29] = configin_0_sending_0_qs;
-        reg_rdata_next[30] = configin_0_pend_0_qs;
-        reg_rdata_next[31] = configin_0_rdy_0_qs;
-      end
+        18: begin
+          reg_rdata_next[4:0] = configin_1_buffer_1_qs;
+          reg_rdata_next[14:8] = configin_1_size_1_qs;
+          reg_rdata_next[29] = configin_1_sending_1_qs;
+          reg_rdata_next[30] = configin_1_pend_1_qs;
+          reg_rdata_next[31] = configin_1_rdy_1_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[4:0] = configin_1_buffer_1_qs;
-        reg_rdata_next[14:8] = configin_1_size_1_qs;
-        reg_rdata_next[29] = configin_1_sending_1_qs;
-        reg_rdata_next[30] = configin_1_pend_1_qs;
-        reg_rdata_next[31] = configin_1_rdy_1_qs;
-      end
+        19: begin
+          reg_rdata_next[4:0] = configin_2_buffer_2_qs;
+          reg_rdata_next[14:8] = configin_2_size_2_qs;
+          reg_rdata_next[29] = configin_2_sending_2_qs;
+          reg_rdata_next[30] = configin_2_pend_2_qs;
+          reg_rdata_next[31] = configin_2_rdy_2_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[4:0] = configin_2_buffer_2_qs;
-        reg_rdata_next[14:8] = configin_2_size_2_qs;
-        reg_rdata_next[29] = configin_2_sending_2_qs;
-        reg_rdata_next[30] = configin_2_pend_2_qs;
-        reg_rdata_next[31] = configin_2_rdy_2_qs;
-      end
+        20: begin
+          reg_rdata_next[4:0] = configin_3_buffer_3_qs;
+          reg_rdata_next[14:8] = configin_3_size_3_qs;
+          reg_rdata_next[29] = configin_3_sending_3_qs;
+          reg_rdata_next[30] = configin_3_pend_3_qs;
+          reg_rdata_next[31] = configin_3_rdy_3_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[4:0] = configin_3_buffer_3_qs;
-        reg_rdata_next[14:8] = configin_3_size_3_qs;
-        reg_rdata_next[29] = configin_3_sending_3_qs;
-        reg_rdata_next[30] = configin_3_pend_3_qs;
-        reg_rdata_next[31] = configin_3_rdy_3_qs;
-      end
+        21: begin
+          reg_rdata_next[4:0] = configin_4_buffer_4_qs;
+          reg_rdata_next[14:8] = configin_4_size_4_qs;
+          reg_rdata_next[29] = configin_4_sending_4_qs;
+          reg_rdata_next[30] = configin_4_pend_4_qs;
+          reg_rdata_next[31] = configin_4_rdy_4_qs;
+        end
 
-      addr_hit[21]: begin
-        reg_rdata_next[4:0] = configin_4_buffer_4_qs;
-        reg_rdata_next[14:8] = configin_4_size_4_qs;
-        reg_rdata_next[29] = configin_4_sending_4_qs;
-        reg_rdata_next[30] = configin_4_pend_4_qs;
-        reg_rdata_next[31] = configin_4_rdy_4_qs;
-      end
+        22: begin
+          reg_rdata_next[4:0] = configin_5_buffer_5_qs;
+          reg_rdata_next[14:8] = configin_5_size_5_qs;
+          reg_rdata_next[29] = configin_5_sending_5_qs;
+          reg_rdata_next[30] = configin_5_pend_5_qs;
+          reg_rdata_next[31] = configin_5_rdy_5_qs;
+        end
 
-      addr_hit[22]: begin
-        reg_rdata_next[4:0] = configin_5_buffer_5_qs;
-        reg_rdata_next[14:8] = configin_5_size_5_qs;
-        reg_rdata_next[29] = configin_5_sending_5_qs;
-        reg_rdata_next[30] = configin_5_pend_5_qs;
-        reg_rdata_next[31] = configin_5_rdy_5_qs;
-      end
+        23: begin
+          reg_rdata_next[4:0] = configin_6_buffer_6_qs;
+          reg_rdata_next[14:8] = configin_6_size_6_qs;
+          reg_rdata_next[29] = configin_6_sending_6_qs;
+          reg_rdata_next[30] = configin_6_pend_6_qs;
+          reg_rdata_next[31] = configin_6_rdy_6_qs;
+        end
 
-      addr_hit[23]: begin
-        reg_rdata_next[4:0] = configin_6_buffer_6_qs;
-        reg_rdata_next[14:8] = configin_6_size_6_qs;
-        reg_rdata_next[29] = configin_6_sending_6_qs;
-        reg_rdata_next[30] = configin_6_pend_6_qs;
-        reg_rdata_next[31] = configin_6_rdy_6_qs;
-      end
+        24: begin
+          reg_rdata_next[4:0] = configin_7_buffer_7_qs;
+          reg_rdata_next[14:8] = configin_7_size_7_qs;
+          reg_rdata_next[29] = configin_7_sending_7_qs;
+          reg_rdata_next[30] = configin_7_pend_7_qs;
+          reg_rdata_next[31] = configin_7_rdy_7_qs;
+        end
 
-      addr_hit[24]: begin
-        reg_rdata_next[4:0] = configin_7_buffer_7_qs;
-        reg_rdata_next[14:8] = configin_7_size_7_qs;
-        reg_rdata_next[29] = configin_7_sending_7_qs;
-        reg_rdata_next[30] = configin_7_pend_7_qs;
-        reg_rdata_next[31] = configin_7_rdy_7_qs;
-      end
+        25: begin
+          reg_rdata_next[4:0] = configin_8_buffer_8_qs;
+          reg_rdata_next[14:8] = configin_8_size_8_qs;
+          reg_rdata_next[29] = configin_8_sending_8_qs;
+          reg_rdata_next[30] = configin_8_pend_8_qs;
+          reg_rdata_next[31] = configin_8_rdy_8_qs;
+        end
 
-      addr_hit[25]: begin
-        reg_rdata_next[4:0] = configin_8_buffer_8_qs;
-        reg_rdata_next[14:8] = configin_8_size_8_qs;
-        reg_rdata_next[29] = configin_8_sending_8_qs;
-        reg_rdata_next[30] = configin_8_pend_8_qs;
-        reg_rdata_next[31] = configin_8_rdy_8_qs;
-      end
+        26: begin
+          reg_rdata_next[4:0] = configin_9_buffer_9_qs;
+          reg_rdata_next[14:8] = configin_9_size_9_qs;
+          reg_rdata_next[29] = configin_9_sending_9_qs;
+          reg_rdata_next[30] = configin_9_pend_9_qs;
+          reg_rdata_next[31] = configin_9_rdy_9_qs;
+        end
 
-      addr_hit[26]: begin
-        reg_rdata_next[4:0] = configin_9_buffer_9_qs;
-        reg_rdata_next[14:8] = configin_9_size_9_qs;
-        reg_rdata_next[29] = configin_9_sending_9_qs;
-        reg_rdata_next[30] = configin_9_pend_9_qs;
-        reg_rdata_next[31] = configin_9_rdy_9_qs;
-      end
+        27: begin
+          reg_rdata_next[4:0] = configin_10_buffer_10_qs;
+          reg_rdata_next[14:8] = configin_10_size_10_qs;
+          reg_rdata_next[29] = configin_10_sending_10_qs;
+          reg_rdata_next[30] = configin_10_pend_10_qs;
+          reg_rdata_next[31] = configin_10_rdy_10_qs;
+        end
 
-      addr_hit[27]: begin
-        reg_rdata_next[4:0] = configin_10_buffer_10_qs;
-        reg_rdata_next[14:8] = configin_10_size_10_qs;
-        reg_rdata_next[29] = configin_10_sending_10_qs;
-        reg_rdata_next[30] = configin_10_pend_10_qs;
-        reg_rdata_next[31] = configin_10_rdy_10_qs;
-      end
+        28: begin
+          reg_rdata_next[4:0] = configin_11_buffer_11_qs;
+          reg_rdata_next[14:8] = configin_11_size_11_qs;
+          reg_rdata_next[29] = configin_11_sending_11_qs;
+          reg_rdata_next[30] = configin_11_pend_11_qs;
+          reg_rdata_next[31] = configin_11_rdy_11_qs;
+        end
 
-      addr_hit[28]: begin
-        reg_rdata_next[4:0] = configin_11_buffer_11_qs;
-        reg_rdata_next[14:8] = configin_11_size_11_qs;
-        reg_rdata_next[29] = configin_11_sending_11_qs;
-        reg_rdata_next[30] = configin_11_pend_11_qs;
-        reg_rdata_next[31] = configin_11_rdy_11_qs;
-      end
+        29: begin
+          reg_rdata_next[0] = out_iso_iso_0_qs;
+          reg_rdata_next[1] = out_iso_iso_1_qs;
+          reg_rdata_next[2] = out_iso_iso_2_qs;
+          reg_rdata_next[3] = out_iso_iso_3_qs;
+          reg_rdata_next[4] = out_iso_iso_4_qs;
+          reg_rdata_next[5] = out_iso_iso_5_qs;
+          reg_rdata_next[6] = out_iso_iso_6_qs;
+          reg_rdata_next[7] = out_iso_iso_7_qs;
+          reg_rdata_next[8] = out_iso_iso_8_qs;
+          reg_rdata_next[9] = out_iso_iso_9_qs;
+          reg_rdata_next[10] = out_iso_iso_10_qs;
+          reg_rdata_next[11] = out_iso_iso_11_qs;
+        end
 
-      addr_hit[29]: begin
-        reg_rdata_next[0] = out_iso_iso_0_qs;
-        reg_rdata_next[1] = out_iso_iso_1_qs;
-        reg_rdata_next[2] = out_iso_iso_2_qs;
-        reg_rdata_next[3] = out_iso_iso_3_qs;
-        reg_rdata_next[4] = out_iso_iso_4_qs;
-        reg_rdata_next[5] = out_iso_iso_5_qs;
-        reg_rdata_next[6] = out_iso_iso_6_qs;
-        reg_rdata_next[7] = out_iso_iso_7_qs;
-        reg_rdata_next[8] = out_iso_iso_8_qs;
-        reg_rdata_next[9] = out_iso_iso_9_qs;
-        reg_rdata_next[10] = out_iso_iso_10_qs;
-        reg_rdata_next[11] = out_iso_iso_11_qs;
-      end
+        30: begin
+          reg_rdata_next[0] = in_iso_iso_0_qs;
+          reg_rdata_next[1] = in_iso_iso_1_qs;
+          reg_rdata_next[2] = in_iso_iso_2_qs;
+          reg_rdata_next[3] = in_iso_iso_3_qs;
+          reg_rdata_next[4] = in_iso_iso_4_qs;
+          reg_rdata_next[5] = in_iso_iso_5_qs;
+          reg_rdata_next[6] = in_iso_iso_6_qs;
+          reg_rdata_next[7] = in_iso_iso_7_qs;
+          reg_rdata_next[8] = in_iso_iso_8_qs;
+          reg_rdata_next[9] = in_iso_iso_9_qs;
+          reg_rdata_next[10] = in_iso_iso_10_qs;
+          reg_rdata_next[11] = in_iso_iso_11_qs;
+        end
 
-      addr_hit[30]: begin
-        reg_rdata_next[0] = in_iso_iso_0_qs;
-        reg_rdata_next[1] = in_iso_iso_1_qs;
-        reg_rdata_next[2] = in_iso_iso_2_qs;
-        reg_rdata_next[3] = in_iso_iso_3_qs;
-        reg_rdata_next[4] = in_iso_iso_4_qs;
-        reg_rdata_next[5] = in_iso_iso_5_qs;
-        reg_rdata_next[6] = in_iso_iso_6_qs;
-        reg_rdata_next[7] = in_iso_iso_7_qs;
-        reg_rdata_next[8] = in_iso_iso_8_qs;
-        reg_rdata_next[9] = in_iso_iso_9_qs;
-        reg_rdata_next[10] = in_iso_iso_10_qs;
-        reg_rdata_next[11] = in_iso_iso_11_qs;
-      end
+        31: begin
+          reg_rdata_next[11:0] = out_data_toggle_status_qs;
+          reg_rdata_next[27:16] = out_data_toggle_mask_qs;
+        end
 
-      addr_hit[31]: begin
-        reg_rdata_next[11:0] = out_data_toggle_status_qs;
-        reg_rdata_next[27:16] = out_data_toggle_mask_qs;
-      end
+        32: begin
+          reg_rdata_next[11:0] = in_data_toggle_status_qs;
+          reg_rdata_next[27:16] = in_data_toggle_mask_qs;
+        end
 
-      addr_hit[32]: begin
-        reg_rdata_next[11:0] = in_data_toggle_status_qs;
-        reg_rdata_next[27:16] = in_data_toggle_mask_qs;
-      end
+        33: begin
+          reg_rdata_next[0] = phy_pins_sense_rx_dp_i_qs;
+          reg_rdata_next[1] = phy_pins_sense_rx_dn_i_qs;
+          reg_rdata_next[2] = phy_pins_sense_rx_d_i_qs;
+          reg_rdata_next[8] = phy_pins_sense_tx_dp_o_qs;
+          reg_rdata_next[9] = phy_pins_sense_tx_dn_o_qs;
+          reg_rdata_next[10] = phy_pins_sense_tx_d_o_qs;
+          reg_rdata_next[11] = phy_pins_sense_tx_se0_o_qs;
+          reg_rdata_next[12] = phy_pins_sense_tx_oe_o_qs;
+          reg_rdata_next[16] = phy_pins_sense_pwr_sense_qs;
+        end
 
-      addr_hit[33]: begin
-        reg_rdata_next[0] = phy_pins_sense_rx_dp_i_qs;
-        reg_rdata_next[1] = phy_pins_sense_rx_dn_i_qs;
-        reg_rdata_next[2] = phy_pins_sense_rx_d_i_qs;
-        reg_rdata_next[8] = phy_pins_sense_tx_dp_o_qs;
-        reg_rdata_next[9] = phy_pins_sense_tx_dn_o_qs;
-        reg_rdata_next[10] = phy_pins_sense_tx_d_o_qs;
-        reg_rdata_next[11] = phy_pins_sense_tx_se0_o_qs;
-        reg_rdata_next[12] = phy_pins_sense_tx_oe_o_qs;
-        reg_rdata_next[16] = phy_pins_sense_pwr_sense_qs;
-      end
+        34: begin
+          reg_rdata_next[0] = phy_pins_drive_dp_o_qs;
+          reg_rdata_next[1] = phy_pins_drive_dn_o_qs;
+          reg_rdata_next[2] = phy_pins_drive_d_o_qs;
+          reg_rdata_next[3] = phy_pins_drive_se0_o_qs;
+          reg_rdata_next[4] = phy_pins_drive_oe_o_qs;
+          reg_rdata_next[5] = phy_pins_drive_rx_enable_o_qs;
+          reg_rdata_next[6] = phy_pins_drive_dp_pullup_en_o_qs;
+          reg_rdata_next[7] = phy_pins_drive_dn_pullup_en_o_qs;
+          reg_rdata_next[16] = phy_pins_drive_en_qs;
+        end
 
-      addr_hit[34]: begin
-        reg_rdata_next[0] = phy_pins_drive_dp_o_qs;
-        reg_rdata_next[1] = phy_pins_drive_dn_o_qs;
-        reg_rdata_next[2] = phy_pins_drive_d_o_qs;
-        reg_rdata_next[3] = phy_pins_drive_se0_o_qs;
-        reg_rdata_next[4] = phy_pins_drive_oe_o_qs;
-        reg_rdata_next[5] = phy_pins_drive_rx_enable_o_qs;
-        reg_rdata_next[6] = phy_pins_drive_dp_pullup_en_o_qs;
-        reg_rdata_next[7] = phy_pins_drive_dn_pullup_en_o_qs;
-        reg_rdata_next[16] = phy_pins_drive_en_qs;
-      end
+        35: begin
+          reg_rdata_next[0] = phy_config_use_diff_rcvr_qs;
+          reg_rdata_next[1] = phy_config_tx_use_d_se0_qs;
+          reg_rdata_next[2] = phy_config_eop_single_bit_qs;
+          reg_rdata_next[5] = phy_config_pinflip_qs;
+          reg_rdata_next[6] = phy_config_usb_ref_disable_qs;
+          reg_rdata_next[7] = phy_config_tx_osc_test_mode_qs;
+        end
 
-      addr_hit[35]: begin
-        reg_rdata_next[0] = phy_config_use_diff_rcvr_qs;
-        reg_rdata_next[1] = phy_config_tx_use_d_se0_qs;
-        reg_rdata_next[2] = phy_config_eop_single_bit_qs;
-        reg_rdata_next[5] = phy_config_pinflip_qs;
-        reg_rdata_next[6] = phy_config_usb_ref_disable_qs;
-        reg_rdata_next[7] = phy_config_tx_osc_test_mode_qs;
-      end
+        36: begin
+          reg_rdata_next = DW'(wake_control_qs);
+        end
 
-      addr_hit[36]: begin
-        reg_rdata_next = DW'(wake_control_qs);
-      end
-      addr_hit[37]: begin
-        reg_rdata_next = DW'(wake_events_qs);
-      end
-      addr_hit[38]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-      end
+        37: begin
+          reg_rdata_next = DW'(wake_events_qs);
+        end
 
-      addr_hit[39]: begin
-        reg_rdata_next[7:0] = count_out_count_qs;
-        reg_rdata_next[12] = count_out_datatog_out_qs;
-        reg_rdata_next[13] = count_out_drop_rx_qs;
-        reg_rdata_next[14] = count_out_drop_avout_qs;
-        reg_rdata_next[15] = count_out_ign_avsetup_qs;
-        reg_rdata_next[27:16] = count_out_endpoints_qs;
-        reg_rdata_next[31] = '0;
-      end
+        38: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+        end
 
-      addr_hit[40]: begin
-        reg_rdata_next[7:0] = count_in_count_qs;
-        reg_rdata_next[13] = count_in_nodata_qs;
-        reg_rdata_next[14] = count_in_nak_qs;
-        reg_rdata_next[15] = count_in_timeout_qs;
-        reg_rdata_next[27:16] = count_in_endpoints_qs;
-        reg_rdata_next[31] = '0;
-      end
+        39: begin
+          reg_rdata_next[7:0] = count_out_count_qs;
+          reg_rdata_next[12] = count_out_datatog_out_qs;
+          reg_rdata_next[13] = count_out_drop_rx_qs;
+          reg_rdata_next[14] = count_out_drop_avout_qs;
+          reg_rdata_next[15] = count_out_ign_avsetup_qs;
+          reg_rdata_next[27:16] = count_out_endpoints_qs;
+          reg_rdata_next[31] = '0;
+        end
 
-      addr_hit[41]: begin
-        reg_rdata_next[7:0] = count_nodata_in_count_qs;
-        reg_rdata_next[27:16] = count_nodata_in_endpoints_qs;
-        reg_rdata_next[31] = '0;
-      end
+        40: begin
+          reg_rdata_next[7:0] = count_in_count_qs;
+          reg_rdata_next[13] = count_in_nodata_qs;
+          reg_rdata_next[14] = count_in_nak_qs;
+          reg_rdata_next[15] = count_in_timeout_qs;
+          reg_rdata_next[27:16] = count_in_endpoints_qs;
+          reg_rdata_next[31] = '0;
+        end
 
-      addr_hit[42]: begin
-        reg_rdata_next[7:0] = count_errors_count_qs;
-        reg_rdata_next[27] = count_errors_pid_invalid_qs;
-        reg_rdata_next[28] = count_errors_bitstuff_qs;
-        reg_rdata_next[29] = count_errors_crc16_qs;
-        reg_rdata_next[30] = count_errors_crc5_qs;
-        reg_rdata_next[31] = '0;
-      end
+        41: begin
+          reg_rdata_next[7:0] = count_nodata_in_count_qs;
+          reg_rdata_next[27:16] = count_nodata_in_endpoints_qs;
+          reg_rdata_next[31] = '0;
+        end
+
+        42: begin
+          reg_rdata_next[7:0] = count_errors_count_qs;
+          reg_rdata_next[27] = count_errors_pid_invalid_qs;
+          reg_rdata_next[28] = count_errors_bitstuff_qs;
+          reg_rdata_next[29] = count_errors_crc16_qs;
+          reg_rdata_next[30] = count_errors_crc5_qs;
+          reg_rdata_next[31] = '0;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -9540,17 +9366,16 @@ module usbdev_reg_top (
   assign reg_busy = (reg_busy_sel | shadow_busy) & tl_i.a_valid;
   always_comb begin
     reg_busy_sel = '0;
-    unique case (1'b1)
-      addr_hit[36]: begin
-        reg_busy_sel = wake_control_busy;
-      end
-      addr_hit[37]: begin
-        reg_busy_sel = wake_events_busy;
-      end
-      default: begin
-        reg_busy_sel  = '0;
-      end
-    endcase
+    if (addr_valid) begin
+      unique case (addr_idx)
+        36: begin
+          reg_busy_sel = wake_control_busy;
+        end
+        37: begin
+          reg_busy_sel = wake_events_busy;
+        end
+      endcase
+    end
   end
 
 
@@ -9569,7 +9394,7 @@ module usbdev_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

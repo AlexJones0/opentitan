@@ -2017,252 +2017,311 @@ module otp_ctrl_core_reg_top (
 
 
 
-  logic [56:0] addr_hit;
+  logic [$clog2(NumRegsCore)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == OTP_CTRL_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == OTP_CTRL_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == OTP_CTRL_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == OTP_CTRL_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == OTP_CTRL_STATUS_OFFSET);
-    addr_hit[ 5] = (reg_addr == OTP_CTRL_PARTITION_STATUS_0_OFFSET);
-    addr_hit[ 6] = (reg_addr == OTP_CTRL_ERR_CODE_0_OFFSET);
-    addr_hit[ 7] = (reg_addr == OTP_CTRL_ERR_CODE_1_OFFSET);
-    addr_hit[ 8] = (reg_addr == OTP_CTRL_ERR_CODE_2_OFFSET);
-    addr_hit[ 9] = (reg_addr == OTP_CTRL_ERR_CODE_3_OFFSET);
-    addr_hit[10] = (reg_addr == OTP_CTRL_ERR_CODE_4_OFFSET);
-    addr_hit[11] = (reg_addr == OTP_CTRL_ERR_CODE_5_OFFSET);
-    addr_hit[12] = (reg_addr == OTP_CTRL_ERR_CODE_6_OFFSET);
-    addr_hit[13] = (reg_addr == OTP_CTRL_ERR_CODE_7_OFFSET);
-    addr_hit[14] = (reg_addr == OTP_CTRL_ERR_CODE_8_OFFSET);
-    addr_hit[15] = (reg_addr == OTP_CTRL_ERR_CODE_9_OFFSET);
-    addr_hit[16] = (reg_addr == OTP_CTRL_ERR_CODE_10_OFFSET);
-    addr_hit[17] = (reg_addr == OTP_CTRL_ERR_CODE_11_OFFSET);
-    addr_hit[18] = (reg_addr == OTP_CTRL_ERR_CODE_12_OFFSET);
-    addr_hit[19] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_REGWEN_OFFSET);
-    addr_hit[20] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_CMD_OFFSET);
-    addr_hit[21] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_ADDRESS_OFFSET);
-    addr_hit[22] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_WDATA_0_OFFSET);
-    addr_hit[23] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_WDATA_1_OFFSET);
-    addr_hit[24] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_RDATA_0_OFFSET);
-    addr_hit[25] = (reg_addr == OTP_CTRL_DIRECT_ACCESS_RDATA_1_OFFSET);
-    addr_hit[26] = (reg_addr == OTP_CTRL_CHECK_TRIGGER_REGWEN_OFFSET);
-    addr_hit[27] = (reg_addr == OTP_CTRL_CHECK_TRIGGER_OFFSET);
-    addr_hit[28] = (reg_addr == OTP_CTRL_CHECK_REGWEN_OFFSET);
-    addr_hit[29] = (reg_addr == OTP_CTRL_CHECK_TIMEOUT_OFFSET);
-    addr_hit[30] = (reg_addr == OTP_CTRL_INTEGRITY_CHECK_PERIOD_OFFSET);
-    addr_hit[31] = (reg_addr == OTP_CTRL_CONSISTENCY_CHECK_PERIOD_OFFSET);
-    addr_hit[32] = (reg_addr == OTP_CTRL_VENDOR_TEST_READ_LOCK_OFFSET);
-    addr_hit[33] = (reg_addr == OTP_CTRL_CREATOR_SW_CFG_READ_LOCK_OFFSET);
-    addr_hit[34] = (reg_addr == OTP_CTRL_OWNER_SW_CFG_READ_LOCK_OFFSET);
-    addr_hit[35] = (reg_addr == OTP_CTRL_ROT_CREATOR_AUTH_CODESIGN_READ_LOCK_OFFSET);
-    addr_hit[36] = (reg_addr == OTP_CTRL_ROT_CREATOR_AUTH_STATE_READ_LOCK_OFFSET);
-    addr_hit[37] = (reg_addr == OTP_CTRL_VENDOR_TEST_DIGEST_0_OFFSET);
-    addr_hit[38] = (reg_addr == OTP_CTRL_VENDOR_TEST_DIGEST_1_OFFSET);
-    addr_hit[39] = (reg_addr == OTP_CTRL_CREATOR_SW_CFG_DIGEST_0_OFFSET);
-    addr_hit[40] = (reg_addr == OTP_CTRL_CREATOR_SW_CFG_DIGEST_1_OFFSET);
-    addr_hit[41] = (reg_addr == OTP_CTRL_OWNER_SW_CFG_DIGEST_0_OFFSET);
-    addr_hit[42] = (reg_addr == OTP_CTRL_OWNER_SW_CFG_DIGEST_1_OFFSET);
-    addr_hit[43] = (reg_addr == OTP_CTRL_ROT_CREATOR_AUTH_CODESIGN_DIGEST_0_OFFSET);
-    addr_hit[44] = (reg_addr == OTP_CTRL_ROT_CREATOR_AUTH_CODESIGN_DIGEST_1_OFFSET);
-    addr_hit[45] = (reg_addr == OTP_CTRL_ROT_CREATOR_AUTH_STATE_DIGEST_0_OFFSET);
-    addr_hit[46] = (reg_addr == OTP_CTRL_ROT_CREATOR_AUTH_STATE_DIGEST_1_OFFSET);
-    addr_hit[47] = (reg_addr == OTP_CTRL_HW_CFG0_DIGEST_0_OFFSET);
-    addr_hit[48] = (reg_addr == OTP_CTRL_HW_CFG0_DIGEST_1_OFFSET);
-    addr_hit[49] = (reg_addr == OTP_CTRL_HW_CFG1_DIGEST_0_OFFSET);
-    addr_hit[50] = (reg_addr == OTP_CTRL_HW_CFG1_DIGEST_1_OFFSET);
-    addr_hit[51] = (reg_addr == OTP_CTRL_SECRET0_DIGEST_0_OFFSET);
-    addr_hit[52] = (reg_addr == OTP_CTRL_SECRET0_DIGEST_1_OFFSET);
-    addr_hit[53] = (reg_addr == OTP_CTRL_SECRET1_DIGEST_0_OFFSET);
-    addr_hit[54] = (reg_addr == OTP_CTRL_SECRET1_DIGEST_1_OFFSET);
-    addr_hit[55] = (reg_addr == OTP_CTRL_SECRET2_DIGEST_0_OFFSET);
-    addr_hit[56] = (reg_addr == OTP_CTRL_SECRET2_DIGEST_1_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      OTP_CTRL_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      OTP_CTRL_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      OTP_CTRL_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      OTP_CTRL_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      OTP_CTRL_STATUS_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      OTP_CTRL_PARTITION_STATUS_0_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      OTP_CTRL_ERR_CODE_0_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      OTP_CTRL_ERR_CODE_1_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      OTP_CTRL_ERR_CODE_2_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      OTP_CTRL_ERR_CODE_3_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      OTP_CTRL_ERR_CODE_4_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      OTP_CTRL_ERR_CODE_5_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      OTP_CTRL_ERR_CODE_6_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      OTP_CTRL_ERR_CODE_7_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      OTP_CTRL_ERR_CODE_8_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      OTP_CTRL_ERR_CODE_9_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      OTP_CTRL_ERR_CODE_10_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      OTP_CTRL_ERR_CODE_11_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      OTP_CTRL_ERR_CODE_12_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      OTP_CTRL_DIRECT_ACCESS_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      OTP_CTRL_DIRECT_ACCESS_CMD_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      OTP_CTRL_DIRECT_ACCESS_ADDRESS_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      OTP_CTRL_DIRECT_ACCESS_WDATA_0_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      OTP_CTRL_DIRECT_ACCESS_WDATA_1_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      OTP_CTRL_DIRECT_ACCESS_RDATA_0_OFFSET: begin addr_valid = 1; addr_idx = 24; end
+      OTP_CTRL_DIRECT_ACCESS_RDATA_1_OFFSET: begin addr_valid = 1; addr_idx = 25; end
+      OTP_CTRL_CHECK_TRIGGER_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 26; end
+      OTP_CTRL_CHECK_TRIGGER_OFFSET: begin addr_valid = 1; addr_idx = 27; end
+      OTP_CTRL_CHECK_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 28; end
+      OTP_CTRL_CHECK_TIMEOUT_OFFSET: begin addr_valid = 1; addr_idx = 29; end
+      OTP_CTRL_INTEGRITY_CHECK_PERIOD_OFFSET: begin addr_valid = 1; addr_idx = 30; end
+      OTP_CTRL_CONSISTENCY_CHECK_PERIOD_OFFSET: begin addr_valid = 1; addr_idx = 31; end
+      OTP_CTRL_VENDOR_TEST_READ_LOCK_OFFSET: begin addr_valid = 1; addr_idx = 32; end
+      OTP_CTRL_CREATOR_SW_CFG_READ_LOCK_OFFSET: begin addr_valid = 1; addr_idx = 33; end
+      OTP_CTRL_OWNER_SW_CFG_READ_LOCK_OFFSET: begin addr_valid = 1; addr_idx = 34; end
+      OTP_CTRL_ROT_CREATOR_AUTH_CODESIGN_READ_LOCK_OFFSET: begin addr_valid = 1; addr_idx = 35; end
+      OTP_CTRL_ROT_CREATOR_AUTH_STATE_READ_LOCK_OFFSET: begin addr_valid = 1; addr_idx = 36; end
+      OTP_CTRL_VENDOR_TEST_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 37; end
+      OTP_CTRL_VENDOR_TEST_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 38; end
+      OTP_CTRL_CREATOR_SW_CFG_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 39; end
+      OTP_CTRL_CREATOR_SW_CFG_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 40; end
+      OTP_CTRL_OWNER_SW_CFG_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 41; end
+      OTP_CTRL_OWNER_SW_CFG_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 42; end
+      OTP_CTRL_ROT_CREATOR_AUTH_CODESIGN_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 43; end
+      OTP_CTRL_ROT_CREATOR_AUTH_CODESIGN_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 44; end
+      OTP_CTRL_ROT_CREATOR_AUTH_STATE_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 45; end
+      OTP_CTRL_ROT_CREATOR_AUTH_STATE_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 46; end
+      OTP_CTRL_HW_CFG0_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 47; end
+      OTP_CTRL_HW_CFG0_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 48; end
+      OTP_CTRL_HW_CFG1_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 49; end
+      OTP_CTRL_HW_CFG1_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 50; end
+      OTP_CTRL_SECRET0_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 51; end
+      OTP_CTRL_SECRET0_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 52; end
+      OTP_CTRL_SECRET1_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 53; end
+      OTP_CTRL_SECRET1_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 54; end
+      OTP_CTRL_SECRET2_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 55; end
+      OTP_CTRL_SECRET2_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 56; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(OTP_CTRL_CORE_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(OTP_CTRL_CORE_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(OTP_CTRL_CORE_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(OTP_CTRL_CORE_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(OTP_CTRL_CORE_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(OTP_CTRL_CORE_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(OTP_CTRL_CORE_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(OTP_CTRL_CORE_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(OTP_CTRL_CORE_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(OTP_CTRL_CORE_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(OTP_CTRL_CORE_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(OTP_CTRL_CORE_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(OTP_CTRL_CORE_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(OTP_CTRL_CORE_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(OTP_CTRL_CORE_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(OTP_CTRL_CORE_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(OTP_CTRL_CORE_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(OTP_CTRL_CORE_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(OTP_CTRL_CORE_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(OTP_CTRL_CORE_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(OTP_CTRL_CORE_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(OTP_CTRL_CORE_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(OTP_CTRL_CORE_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(OTP_CTRL_CORE_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(OTP_CTRL_CORE_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(OTP_CTRL_CORE_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(OTP_CTRL_CORE_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(OTP_CTRL_CORE_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(OTP_CTRL_CORE_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(OTP_CTRL_CORE_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(OTP_CTRL_CORE_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(OTP_CTRL_CORE_PERMIT[31] & ~reg_be))) |
-               (addr_hit[32] & (|(OTP_CTRL_CORE_PERMIT[32] & ~reg_be))) |
-               (addr_hit[33] & (|(OTP_CTRL_CORE_PERMIT[33] & ~reg_be))) |
-               (addr_hit[34] & (|(OTP_CTRL_CORE_PERMIT[34] & ~reg_be))) |
-               (addr_hit[35] & (|(OTP_CTRL_CORE_PERMIT[35] & ~reg_be))) |
-               (addr_hit[36] & (|(OTP_CTRL_CORE_PERMIT[36] & ~reg_be))) |
-               (addr_hit[37] & (|(OTP_CTRL_CORE_PERMIT[37] & ~reg_be))) |
-               (addr_hit[38] & (|(OTP_CTRL_CORE_PERMIT[38] & ~reg_be))) |
-               (addr_hit[39] & (|(OTP_CTRL_CORE_PERMIT[39] & ~reg_be))) |
-               (addr_hit[40] & (|(OTP_CTRL_CORE_PERMIT[40] & ~reg_be))) |
-               (addr_hit[41] & (|(OTP_CTRL_CORE_PERMIT[41] & ~reg_be))) |
-               (addr_hit[42] & (|(OTP_CTRL_CORE_PERMIT[42] & ~reg_be))) |
-               (addr_hit[43] & (|(OTP_CTRL_CORE_PERMIT[43] & ~reg_be))) |
-               (addr_hit[44] & (|(OTP_CTRL_CORE_PERMIT[44] & ~reg_be))) |
-               (addr_hit[45] & (|(OTP_CTRL_CORE_PERMIT[45] & ~reg_be))) |
-               (addr_hit[46] & (|(OTP_CTRL_CORE_PERMIT[46] & ~reg_be))) |
-               (addr_hit[47] & (|(OTP_CTRL_CORE_PERMIT[47] & ~reg_be))) |
-               (addr_hit[48] & (|(OTP_CTRL_CORE_PERMIT[48] & ~reg_be))) |
-               (addr_hit[49] & (|(OTP_CTRL_CORE_PERMIT[49] & ~reg_be))) |
-               (addr_hit[50] & (|(OTP_CTRL_CORE_PERMIT[50] & ~reg_be))) |
-               (addr_hit[51] & (|(OTP_CTRL_CORE_PERMIT[51] & ~reg_be))) |
-               (addr_hit[52] & (|(OTP_CTRL_CORE_PERMIT[52] & ~reg_be))) |
-               (addr_hit[53] & (|(OTP_CTRL_CORE_PERMIT[53] & ~reg_be))) |
-               (addr_hit[54] & (|(OTP_CTRL_CORE_PERMIT[54] & ~reg_be))) |
-               (addr_hit[55] & (|(OTP_CTRL_CORE_PERMIT[55] & ~reg_be))) |
-               (addr_hit[56] & (|(OTP_CTRL_CORE_PERMIT[56] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(OTP_CTRL_CORE_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(OTP_CTRL_CORE_PERMIT[10] & ~reg_be);
+        11: wr_err = |(OTP_CTRL_CORE_PERMIT[11] & ~reg_be);
+        12: wr_err = |(OTP_CTRL_CORE_PERMIT[12] & ~reg_be);
+        13: wr_err = |(OTP_CTRL_CORE_PERMIT[13] & ~reg_be);
+        14: wr_err = |(OTP_CTRL_CORE_PERMIT[14] & ~reg_be);
+        15: wr_err = |(OTP_CTRL_CORE_PERMIT[15] & ~reg_be);
+        16: wr_err = |(OTP_CTRL_CORE_PERMIT[16] & ~reg_be);
+        17: wr_err = |(OTP_CTRL_CORE_PERMIT[17] & ~reg_be);
+        18: wr_err = |(OTP_CTRL_CORE_PERMIT[18] & ~reg_be);
+        19: wr_err = |(OTP_CTRL_CORE_PERMIT[19] & ~reg_be);
+        20: wr_err = |(OTP_CTRL_CORE_PERMIT[20] & ~reg_be);
+        21: wr_err = |(OTP_CTRL_CORE_PERMIT[21] & ~reg_be);
+        22: wr_err = |(OTP_CTRL_CORE_PERMIT[22] & ~reg_be);
+        23: wr_err = |(OTP_CTRL_CORE_PERMIT[23] & ~reg_be);
+        24: wr_err = |(OTP_CTRL_CORE_PERMIT[24] & ~reg_be);
+        25: wr_err = |(OTP_CTRL_CORE_PERMIT[25] & ~reg_be);
+        26: wr_err = |(OTP_CTRL_CORE_PERMIT[26] & ~reg_be);
+        27: wr_err = |(OTP_CTRL_CORE_PERMIT[27] & ~reg_be);
+        28: wr_err = |(OTP_CTRL_CORE_PERMIT[28] & ~reg_be);
+        29: wr_err = |(OTP_CTRL_CORE_PERMIT[29] & ~reg_be);
+        30: wr_err = |(OTP_CTRL_CORE_PERMIT[30] & ~reg_be);
+        31: wr_err = |(OTP_CTRL_CORE_PERMIT[31] & ~reg_be);
+        32: wr_err = |(OTP_CTRL_CORE_PERMIT[32] & ~reg_be);
+        33: wr_err = |(OTP_CTRL_CORE_PERMIT[33] & ~reg_be);
+        34: wr_err = |(OTP_CTRL_CORE_PERMIT[34] & ~reg_be);
+        35: wr_err = |(OTP_CTRL_CORE_PERMIT[35] & ~reg_be);
+        36: wr_err = |(OTP_CTRL_CORE_PERMIT[36] & ~reg_be);
+        37: wr_err = |(OTP_CTRL_CORE_PERMIT[37] & ~reg_be);
+        38: wr_err = |(OTP_CTRL_CORE_PERMIT[38] & ~reg_be);
+        39: wr_err = |(OTP_CTRL_CORE_PERMIT[39] & ~reg_be);
+        40: wr_err = |(OTP_CTRL_CORE_PERMIT[40] & ~reg_be);
+        41: wr_err = |(OTP_CTRL_CORE_PERMIT[41] & ~reg_be);
+        42: wr_err = |(OTP_CTRL_CORE_PERMIT[42] & ~reg_be);
+        43: wr_err = |(OTP_CTRL_CORE_PERMIT[43] & ~reg_be);
+        44: wr_err = |(OTP_CTRL_CORE_PERMIT[44] & ~reg_be);
+        45: wr_err = |(OTP_CTRL_CORE_PERMIT[45] & ~reg_be);
+        46: wr_err = |(OTP_CTRL_CORE_PERMIT[46] & ~reg_be);
+        47: wr_err = |(OTP_CTRL_CORE_PERMIT[47] & ~reg_be);
+        48: wr_err = |(OTP_CTRL_CORE_PERMIT[48] & ~reg_be);
+        49: wr_err = |(OTP_CTRL_CORE_PERMIT[49] & ~reg_be);
+        50: wr_err = |(OTP_CTRL_CORE_PERMIT[50] & ~reg_be);
+        51: wr_err = |(OTP_CTRL_CORE_PERMIT[51] & ~reg_be);
+        52: wr_err = |(OTP_CTRL_CORE_PERMIT[52] & ~reg_be);
+        53: wr_err = |(OTP_CTRL_CORE_PERMIT[53] & ~reg_be);
+        54: wr_err = |(OTP_CTRL_CORE_PERMIT[54] & ~reg_be);
+        55: wr_err = |(OTP_CTRL_CORE_PERMIT[55] & ~reg_be);
+        56: wr_err = |(OTP_CTRL_CORE_PERMIT[56] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_otp_operation_done_wd = reg_wdata[0];
-
   assign intr_state_otp_error_wd = reg_wdata[1];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_otp_operation_done_wd = reg_wdata[0];
-
   assign intr_enable_otp_error_wd = reg_wdata[1];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_otp_operation_done_wd = reg_wdata[0];
-
   assign intr_test_otp_error_wd = reg_wdata[1];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_fatal_macro_error_wd = reg_wdata[0];
-
   assign alert_test_fatal_check_error_wd = reg_wdata[1];
-
   assign alert_test_fatal_bus_integ_error_wd = reg_wdata[2];
-
   assign alert_test_fatal_prim_otp_alert_wd = reg_wdata[3];
-
   assign alert_test_recov_prim_otp_alert_wd = reg_wdata[4];
-  assign status_re = addr_hit[4] & reg_re & !reg_error;
-  assign partition_status_0_re = addr_hit[5] & reg_re & !reg_error;
-  assign err_code_0_re = addr_hit[6] & reg_re & !reg_error;
-  assign err_code_1_re = addr_hit[7] & reg_re & !reg_error;
-  assign err_code_2_re = addr_hit[8] & reg_re & !reg_error;
-  assign err_code_3_re = addr_hit[9] & reg_re & !reg_error;
-  assign err_code_4_re = addr_hit[10] & reg_re & !reg_error;
-  assign err_code_5_re = addr_hit[11] & reg_re & !reg_error;
-  assign err_code_6_re = addr_hit[12] & reg_re & !reg_error;
-  assign err_code_7_re = addr_hit[13] & reg_re & !reg_error;
-  assign err_code_8_re = addr_hit[14] & reg_re & !reg_error;
-  assign err_code_9_re = addr_hit[15] & reg_re & !reg_error;
-  assign err_code_10_re = addr_hit[16] & reg_re & !reg_error;
-  assign err_code_11_re = addr_hit[17] & reg_re & !reg_error;
-  assign err_code_12_re = addr_hit[18] & reg_re & !reg_error;
-  assign direct_access_regwen_re = addr_hit[19] & reg_re & !reg_error;
-  assign direct_access_regwen_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign status_re = addr_valid & (addr_idx == 4) & reg_re & !reg_error;
+
+  assign partition_status_0_re = addr_valid & (addr_idx == 5) & reg_re & !reg_error;
+
+  assign err_code_0_re = addr_valid & (addr_idx == 6) & reg_re & !reg_error;
+
+  assign err_code_1_re = addr_valid & (addr_idx == 7) & reg_re & !reg_error;
+
+  assign err_code_2_re = addr_valid & (addr_idx == 8) & reg_re & !reg_error;
+
+  assign err_code_3_re = addr_valid & (addr_idx == 9) & reg_re & !reg_error;
+
+  assign err_code_4_re = addr_valid & (addr_idx == 10) & reg_re & !reg_error;
+
+  assign err_code_5_re = addr_valid & (addr_idx == 11) & reg_re & !reg_error;
+
+  assign err_code_6_re = addr_valid & (addr_idx == 12) & reg_re & !reg_error;
+
+  assign err_code_7_re = addr_valid & (addr_idx == 13) & reg_re & !reg_error;
+
+  assign err_code_8_re = addr_valid & (addr_idx == 14) & reg_re & !reg_error;
+
+  assign err_code_9_re = addr_valid & (addr_idx == 15) & reg_re & !reg_error;
+
+  assign err_code_10_re = addr_valid & (addr_idx == 16) & reg_re & !reg_error;
+
+  assign err_code_11_re = addr_valid & (addr_idx == 17) & reg_re & !reg_error;
+
+  assign err_code_12_re = addr_valid & (addr_idx == 18) & reg_re & !reg_error;
+
+  assign direct_access_regwen_re = addr_valid & (addr_idx == 19) & reg_re & !reg_error;
+  assign direct_access_regwen_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign direct_access_regwen_wd = reg_wdata[0];
-  assign direct_access_cmd_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign direct_access_cmd_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign direct_access_cmd_rd_wd = reg_wdata[0];
-
   assign direct_access_cmd_wr_wd = reg_wdata[1];
-
   assign direct_access_cmd_digest_wd = reg_wdata[2];
-
   assign direct_access_cmd_zeroize_wd = reg_wdata[3];
-  assign direct_access_address_we = addr_hit[21] & reg_we & !reg_error;
+
+  assign direct_access_address_we = addr_valid & (addr_idx == 21) & reg_we & !reg_error;
 
   assign direct_access_address_wd = reg_wdata[10:0];
-  assign direct_access_wdata_0_we = addr_hit[22] & reg_we & !reg_error;
+
+  assign direct_access_wdata_0_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign direct_access_wdata_0_wd = reg_wdata[31:0];
-  assign direct_access_wdata_1_we = addr_hit[23] & reg_we & !reg_error;
+
+  assign direct_access_wdata_1_we = addr_valid & (addr_idx == 23) & reg_we & !reg_error;
 
   assign direct_access_wdata_1_wd = reg_wdata[31:0];
-  assign direct_access_rdata_0_re = addr_hit[24] & reg_re & !reg_error;
-  assign direct_access_rdata_1_re = addr_hit[25] & reg_re & !reg_error;
-  assign check_trigger_regwen_we = addr_hit[26] & reg_we & !reg_error;
+
+  assign direct_access_rdata_0_re = addr_valid & (addr_idx == 24) & reg_re & !reg_error;
+
+  assign direct_access_rdata_1_re = addr_valid & (addr_idx == 25) & reg_re & !reg_error;
+
+  assign check_trigger_regwen_we = addr_valid & (addr_idx == 26) & reg_we & !reg_error;
 
   assign check_trigger_regwen_wd = reg_wdata[0];
-  assign check_trigger_we = addr_hit[27] & reg_we & !reg_error;
+
+  assign check_trigger_we = addr_valid & (addr_idx == 27) & reg_we & !reg_error;
 
   assign check_trigger_integrity_wd = reg_wdata[0];
-
   assign check_trigger_consistency_wd = reg_wdata[1];
-  assign check_regwen_we = addr_hit[28] & reg_we & !reg_error;
+
+  assign check_regwen_we = addr_valid & (addr_idx == 28) & reg_we & !reg_error;
 
   assign check_regwen_wd = reg_wdata[0];
-  assign check_timeout_we = addr_hit[29] & reg_we & !reg_error;
+
+  assign check_timeout_we = addr_valid & (addr_idx == 29) & reg_we & !reg_error;
 
   assign check_timeout_wd = reg_wdata[31:0];
-  assign integrity_check_period_we = addr_hit[30] & reg_we & !reg_error;
+
+  assign integrity_check_period_we = addr_valid & (addr_idx == 30) & reg_we & !reg_error;
 
   assign integrity_check_period_wd = reg_wdata[31:0];
-  assign consistency_check_period_we = addr_hit[31] & reg_we & !reg_error;
+
+  assign consistency_check_period_we = addr_valid & (addr_idx == 31) & reg_we & !reg_error;
 
   assign consistency_check_period_wd = reg_wdata[31:0];
-  assign vendor_test_read_lock_we = addr_hit[32] & reg_we & !reg_error;
+
+  assign vendor_test_read_lock_we = addr_valid & (addr_idx == 32) & reg_we & !reg_error;
 
   assign vendor_test_read_lock_wd = reg_wdata[0];
-  assign creator_sw_cfg_read_lock_we = addr_hit[33] & reg_we & !reg_error;
+
+  assign creator_sw_cfg_read_lock_we = addr_valid & (addr_idx == 33) & reg_we & !reg_error;
 
   assign creator_sw_cfg_read_lock_wd = reg_wdata[0];
-  assign owner_sw_cfg_read_lock_we = addr_hit[34] & reg_we & !reg_error;
+
+  assign owner_sw_cfg_read_lock_we = addr_valid & (addr_idx == 34) & reg_we & !reg_error;
 
   assign owner_sw_cfg_read_lock_wd = reg_wdata[0];
-  assign rot_creator_auth_codesign_read_lock_we = addr_hit[35] & reg_we & !reg_error;
+
+  assign rot_creator_auth_codesign_read_lock_we = addr_valid & (addr_idx == 35) & reg_we & !reg_error;
 
   assign rot_creator_auth_codesign_read_lock_wd = reg_wdata[0];
-  assign rot_creator_auth_state_read_lock_we = addr_hit[36] & reg_we & !reg_error;
+
+  assign rot_creator_auth_state_read_lock_we = addr_valid & (addr_idx == 36) & reg_we & !reg_error;
 
   assign rot_creator_auth_state_read_lock_wd = reg_wdata[0];
-  assign vendor_test_digest_0_re = addr_hit[37] & reg_re & !reg_error;
-  assign vendor_test_digest_1_re = addr_hit[38] & reg_re & !reg_error;
-  assign creator_sw_cfg_digest_0_re = addr_hit[39] & reg_re & !reg_error;
-  assign creator_sw_cfg_digest_1_re = addr_hit[40] & reg_re & !reg_error;
-  assign owner_sw_cfg_digest_0_re = addr_hit[41] & reg_re & !reg_error;
-  assign owner_sw_cfg_digest_1_re = addr_hit[42] & reg_re & !reg_error;
-  assign rot_creator_auth_codesign_digest_0_re = addr_hit[43] & reg_re & !reg_error;
-  assign rot_creator_auth_codesign_digest_1_re = addr_hit[44] & reg_re & !reg_error;
-  assign rot_creator_auth_state_digest_0_re = addr_hit[45] & reg_re & !reg_error;
-  assign rot_creator_auth_state_digest_1_re = addr_hit[46] & reg_re & !reg_error;
-  assign hw_cfg0_digest_0_re = addr_hit[47] & reg_re & !reg_error;
-  assign hw_cfg0_digest_1_re = addr_hit[48] & reg_re & !reg_error;
-  assign hw_cfg1_digest_0_re = addr_hit[49] & reg_re & !reg_error;
-  assign hw_cfg1_digest_1_re = addr_hit[50] & reg_re & !reg_error;
-  assign secret0_digest_0_re = addr_hit[51] & reg_re & !reg_error;
-  assign secret0_digest_1_re = addr_hit[52] & reg_re & !reg_error;
-  assign secret1_digest_0_re = addr_hit[53] & reg_re & !reg_error;
-  assign secret1_digest_1_re = addr_hit[54] & reg_re & !reg_error;
-  assign secret2_digest_0_re = addr_hit[55] & reg_re & !reg_error;
-  assign secret2_digest_1_re = addr_hit[56] & reg_re & !reg_error;
+
+  assign vendor_test_digest_0_re = addr_valid & (addr_idx == 37) & reg_re & !reg_error;
+
+  assign vendor_test_digest_1_re = addr_valid & (addr_idx == 38) & reg_re & !reg_error;
+
+  assign creator_sw_cfg_digest_0_re = addr_valid & (addr_idx == 39) & reg_re & !reg_error;
+
+  assign creator_sw_cfg_digest_1_re = addr_valid & (addr_idx == 40) & reg_re & !reg_error;
+
+  assign owner_sw_cfg_digest_0_re = addr_valid & (addr_idx == 41) & reg_re & !reg_error;
+
+  assign owner_sw_cfg_digest_1_re = addr_valid & (addr_idx == 42) & reg_re & !reg_error;
+
+  assign rot_creator_auth_codesign_digest_0_re = addr_valid & (addr_idx == 43) & reg_re & !reg_error;
+
+  assign rot_creator_auth_codesign_digest_1_re = addr_valid & (addr_idx == 44) & reg_re & !reg_error;
+
+  assign rot_creator_auth_state_digest_0_re = addr_valid & (addr_idx == 45) & reg_re & !reg_error;
+
+  assign rot_creator_auth_state_digest_1_re = addr_valid & (addr_idx == 46) & reg_re & !reg_error;
+
+  assign hw_cfg0_digest_0_re = addr_valid & (addr_idx == 47) & reg_re & !reg_error;
+
+  assign hw_cfg0_digest_1_re = addr_valid & (addr_idx == 48) & reg_re & !reg_error;
+
+  assign hw_cfg1_digest_0_re = addr_valid & (addr_idx == 49) & reg_re & !reg_error;
+
+  assign hw_cfg1_digest_1_re = addr_valid & (addr_idx == 50) & reg_re & !reg_error;
+
+  assign secret0_digest_0_re = addr_valid & (addr_idx == 51) & reg_re & !reg_error;
+
+  assign secret0_digest_1_re = addr_valid & (addr_idx == 52) & reg_re & !reg_error;
+
+  assign secret1_digest_0_re = addr_valid & (addr_idx == 53) & reg_re & !reg_error;
+
+  assign secret1_digest_1_re = addr_valid & (addr_idx == 54) & reg_re & !reg_error;
+
+  assign secret2_digest_0_re = addr_valid & (addr_idx == 55) & reg_re & !reg_error;
+
+  assign secret2_digest_1_re = addr_valid & (addr_idx == 56) & reg_re & !reg_error;
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -2327,270 +2386,275 @@ module otp_ctrl_core_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_otp_operation_done_qs;
-        reg_rdata_next[1] = intr_state_otp_error_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_otp_operation_done_qs;
+          reg_rdata_next[1] = intr_state_otp_error_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_otp_operation_done_qs;
-        reg_rdata_next[1] = intr_enable_otp_error_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_otp_operation_done_qs;
+          reg_rdata_next[1] = intr_enable_otp_error_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
-        reg_rdata_next[4] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+          reg_rdata_next[3] = '0;
+          reg_rdata_next[4] = '0;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = status_partition_error_qs;
-        reg_rdata_next[1] = status_dai_error_qs;
-        reg_rdata_next[2] = status_lci_error_qs;
-        reg_rdata_next[3] = status_timeout_error_qs;
-        reg_rdata_next[4] = status_lfsr_fsm_error_qs;
-        reg_rdata_next[5] = status_scrambling_fsm_error_qs;
-        reg_rdata_next[6] = status_key_deriv_fsm_error_qs;
-        reg_rdata_next[7] = status_bus_integ_error_qs;
-        reg_rdata_next[8] = status_dai_idle_qs;
-        reg_rdata_next[9] = status_check_pending_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = status_partition_error_qs;
+          reg_rdata_next[1] = status_dai_error_qs;
+          reg_rdata_next[2] = status_lci_error_qs;
+          reg_rdata_next[3] = status_timeout_error_qs;
+          reg_rdata_next[4] = status_lfsr_fsm_error_qs;
+          reg_rdata_next[5] = status_scrambling_fsm_error_qs;
+          reg_rdata_next[6] = status_key_deriv_fsm_error_qs;
+          reg_rdata_next[7] = status_bus_integ_error_qs;
+          reg_rdata_next[8] = status_dai_idle_qs;
+          reg_rdata_next[9] = status_check_pending_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[0] = partition_status_0_vendor_test_error_qs;
-        reg_rdata_next[1] = partition_status_0_creator_sw_cfg_error_qs;
-        reg_rdata_next[2] = partition_status_0_owner_sw_cfg_error_qs;
-        reg_rdata_next[3] = partition_status_0_rot_creator_auth_codesign_error_qs;
-        reg_rdata_next[4] = partition_status_0_rot_creator_auth_state_error_qs;
-        reg_rdata_next[5] = partition_status_0_hw_cfg0_error_qs;
-        reg_rdata_next[6] = partition_status_0_hw_cfg1_error_qs;
-        reg_rdata_next[7] = partition_status_0_secret0_error_qs;
-        reg_rdata_next[8] = partition_status_0_secret1_error_qs;
-        reg_rdata_next[9] = partition_status_0_secret2_error_qs;
-        reg_rdata_next[10] = partition_status_0_life_cycle_error_qs;
-      end
+        5: begin
+          reg_rdata_next[0] = partition_status_0_vendor_test_error_qs;
+          reg_rdata_next[1] = partition_status_0_creator_sw_cfg_error_qs;
+          reg_rdata_next[2] = partition_status_0_owner_sw_cfg_error_qs;
+          reg_rdata_next[3] = partition_status_0_rot_creator_auth_codesign_error_qs;
+          reg_rdata_next[4] = partition_status_0_rot_creator_auth_state_error_qs;
+          reg_rdata_next[5] = partition_status_0_hw_cfg0_error_qs;
+          reg_rdata_next[6] = partition_status_0_hw_cfg1_error_qs;
+          reg_rdata_next[7] = partition_status_0_secret0_error_qs;
+          reg_rdata_next[8] = partition_status_0_secret1_error_qs;
+          reg_rdata_next[9] = partition_status_0_secret2_error_qs;
+          reg_rdata_next[10] = partition_status_0_life_cycle_error_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[2:0] = err_code_0_qs;
-      end
+        6: begin
+          reg_rdata_next[2:0] = err_code_0_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[2:0] = err_code_1_qs;
-      end
+        7: begin
+          reg_rdata_next[2:0] = err_code_1_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[2:0] = err_code_2_qs;
-      end
+        8: begin
+          reg_rdata_next[2:0] = err_code_2_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[2:0] = err_code_3_qs;
-      end
+        9: begin
+          reg_rdata_next[2:0] = err_code_3_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[2:0] = err_code_4_qs;
-      end
+        10: begin
+          reg_rdata_next[2:0] = err_code_4_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[2:0] = err_code_5_qs;
-      end
+        11: begin
+          reg_rdata_next[2:0] = err_code_5_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[2:0] = err_code_6_qs;
-      end
+        12: begin
+          reg_rdata_next[2:0] = err_code_6_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[2:0] = err_code_7_qs;
-      end
+        13: begin
+          reg_rdata_next[2:0] = err_code_7_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[2:0] = err_code_8_qs;
-      end
+        14: begin
+          reg_rdata_next[2:0] = err_code_8_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[2:0] = err_code_9_qs;
-      end
+        15: begin
+          reg_rdata_next[2:0] = err_code_9_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[2:0] = err_code_10_qs;
-      end
+        16: begin
+          reg_rdata_next[2:0] = err_code_10_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[2:0] = err_code_11_qs;
-      end
+        17: begin
+          reg_rdata_next[2:0] = err_code_11_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[2:0] = err_code_12_qs;
-      end
+        18: begin
+          reg_rdata_next[2:0] = err_code_12_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[0] = direct_access_regwen_qs;
-      end
+        19: begin
+          reg_rdata_next[0] = direct_access_regwen_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
-      end
+        20: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+          reg_rdata_next[3] = '0;
+        end
 
-      addr_hit[21]: begin
-        reg_rdata_next[10:0] = direct_access_address_qs;
-      end
+        21: begin
+          reg_rdata_next[10:0] = direct_access_address_qs;
+        end
 
-      addr_hit[22]: begin
-        reg_rdata_next[31:0] = direct_access_wdata_0_qs;
-      end
+        22: begin
+          reg_rdata_next[31:0] = direct_access_wdata_0_qs;
+        end
 
-      addr_hit[23]: begin
-        reg_rdata_next[31:0] = direct_access_wdata_1_qs;
-      end
+        23: begin
+          reg_rdata_next[31:0] = direct_access_wdata_1_qs;
+        end
 
-      addr_hit[24]: begin
-        reg_rdata_next[31:0] = direct_access_rdata_0_qs;
-      end
+        24: begin
+          reg_rdata_next[31:0] = direct_access_rdata_0_qs;
+        end
 
-      addr_hit[25]: begin
-        reg_rdata_next[31:0] = direct_access_rdata_1_qs;
-      end
+        25: begin
+          reg_rdata_next[31:0] = direct_access_rdata_1_qs;
+        end
 
-      addr_hit[26]: begin
-        reg_rdata_next[0] = check_trigger_regwen_qs;
-      end
+        26: begin
+          reg_rdata_next[0] = check_trigger_regwen_qs;
+        end
 
-      addr_hit[27]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        27: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[28]: begin
-        reg_rdata_next[0] = check_regwen_qs;
-      end
+        28: begin
+          reg_rdata_next[0] = check_regwen_qs;
+        end
 
-      addr_hit[29]: begin
-        reg_rdata_next[31:0] = check_timeout_qs;
-      end
+        29: begin
+          reg_rdata_next[31:0] = check_timeout_qs;
+        end
 
-      addr_hit[30]: begin
-        reg_rdata_next[31:0] = integrity_check_period_qs;
-      end
+        30: begin
+          reg_rdata_next[31:0] = integrity_check_period_qs;
+        end
 
-      addr_hit[31]: begin
-        reg_rdata_next[31:0] = consistency_check_period_qs;
-      end
+        31: begin
+          reg_rdata_next[31:0] = consistency_check_period_qs;
+        end
 
-      addr_hit[32]: begin
-        reg_rdata_next[0] = vendor_test_read_lock_qs;
-      end
+        32: begin
+          reg_rdata_next[0] = vendor_test_read_lock_qs;
+        end
 
-      addr_hit[33]: begin
-        reg_rdata_next[0] = creator_sw_cfg_read_lock_qs;
-      end
+        33: begin
+          reg_rdata_next[0] = creator_sw_cfg_read_lock_qs;
+        end
 
-      addr_hit[34]: begin
-        reg_rdata_next[0] = owner_sw_cfg_read_lock_qs;
-      end
+        34: begin
+          reg_rdata_next[0] = owner_sw_cfg_read_lock_qs;
+        end
 
-      addr_hit[35]: begin
-        reg_rdata_next[0] = rot_creator_auth_codesign_read_lock_qs;
-      end
+        35: begin
+          reg_rdata_next[0] = rot_creator_auth_codesign_read_lock_qs;
+        end
 
-      addr_hit[36]: begin
-        reg_rdata_next[0] = rot_creator_auth_state_read_lock_qs;
-      end
+        36: begin
+          reg_rdata_next[0] = rot_creator_auth_state_read_lock_qs;
+        end
 
-      addr_hit[37]: begin
-        reg_rdata_next[31:0] = vendor_test_digest_0_qs;
-      end
+        37: begin
+          reg_rdata_next[31:0] = vendor_test_digest_0_qs;
+        end
 
-      addr_hit[38]: begin
-        reg_rdata_next[31:0] = vendor_test_digest_1_qs;
-      end
+        38: begin
+          reg_rdata_next[31:0] = vendor_test_digest_1_qs;
+        end
 
-      addr_hit[39]: begin
-        reg_rdata_next[31:0] = creator_sw_cfg_digest_0_qs;
-      end
+        39: begin
+          reg_rdata_next[31:0] = creator_sw_cfg_digest_0_qs;
+        end
 
-      addr_hit[40]: begin
-        reg_rdata_next[31:0] = creator_sw_cfg_digest_1_qs;
-      end
+        40: begin
+          reg_rdata_next[31:0] = creator_sw_cfg_digest_1_qs;
+        end
 
-      addr_hit[41]: begin
-        reg_rdata_next[31:0] = owner_sw_cfg_digest_0_qs;
-      end
+        41: begin
+          reg_rdata_next[31:0] = owner_sw_cfg_digest_0_qs;
+        end
 
-      addr_hit[42]: begin
-        reg_rdata_next[31:0] = owner_sw_cfg_digest_1_qs;
-      end
+        42: begin
+          reg_rdata_next[31:0] = owner_sw_cfg_digest_1_qs;
+        end
 
-      addr_hit[43]: begin
-        reg_rdata_next[31:0] = rot_creator_auth_codesign_digest_0_qs;
-      end
+        43: begin
+          reg_rdata_next[31:0] = rot_creator_auth_codesign_digest_0_qs;
+        end
 
-      addr_hit[44]: begin
-        reg_rdata_next[31:0] = rot_creator_auth_codesign_digest_1_qs;
-      end
+        44: begin
+          reg_rdata_next[31:0] = rot_creator_auth_codesign_digest_1_qs;
+        end
 
-      addr_hit[45]: begin
-        reg_rdata_next[31:0] = rot_creator_auth_state_digest_0_qs;
-      end
+        45: begin
+          reg_rdata_next[31:0] = rot_creator_auth_state_digest_0_qs;
+        end
 
-      addr_hit[46]: begin
-        reg_rdata_next[31:0] = rot_creator_auth_state_digest_1_qs;
-      end
+        46: begin
+          reg_rdata_next[31:0] = rot_creator_auth_state_digest_1_qs;
+        end
 
-      addr_hit[47]: begin
-        reg_rdata_next[31:0] = hw_cfg0_digest_0_qs;
-      end
+        47: begin
+          reg_rdata_next[31:0] = hw_cfg0_digest_0_qs;
+        end
 
-      addr_hit[48]: begin
-        reg_rdata_next[31:0] = hw_cfg0_digest_1_qs;
-      end
+        48: begin
+          reg_rdata_next[31:0] = hw_cfg0_digest_1_qs;
+        end
 
-      addr_hit[49]: begin
-        reg_rdata_next[31:0] = hw_cfg1_digest_0_qs;
-      end
+        49: begin
+          reg_rdata_next[31:0] = hw_cfg1_digest_0_qs;
+        end
 
-      addr_hit[50]: begin
-        reg_rdata_next[31:0] = hw_cfg1_digest_1_qs;
-      end
+        50: begin
+          reg_rdata_next[31:0] = hw_cfg1_digest_1_qs;
+        end
 
-      addr_hit[51]: begin
-        reg_rdata_next[31:0] = secret0_digest_0_qs;
-      end
+        51: begin
+          reg_rdata_next[31:0] = secret0_digest_0_qs;
+        end
 
-      addr_hit[52]: begin
-        reg_rdata_next[31:0] = secret0_digest_1_qs;
-      end
+        52: begin
+          reg_rdata_next[31:0] = secret0_digest_1_qs;
+        end
 
-      addr_hit[53]: begin
-        reg_rdata_next[31:0] = secret1_digest_0_qs;
-      end
+        53: begin
+          reg_rdata_next[31:0] = secret1_digest_0_qs;
+        end
 
-      addr_hit[54]: begin
-        reg_rdata_next[31:0] = secret1_digest_1_qs;
-      end
+        54: begin
+          reg_rdata_next[31:0] = secret1_digest_1_qs;
+        end
 
-      addr_hit[55]: begin
-        reg_rdata_next[31:0] = secret2_digest_0_qs;
-      end
+        55: begin
+          reg_rdata_next[31:0] = secret2_digest_0_qs;
+        end
 
-      addr_hit[56]: begin
-        reg_rdata_next[31:0] = secret2_digest_1_qs;
-      end
+        56: begin
+          reg_rdata_next[31:0] = secret2_digest_1_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -2615,7 +2679,7 @@ module otp_ctrl_core_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

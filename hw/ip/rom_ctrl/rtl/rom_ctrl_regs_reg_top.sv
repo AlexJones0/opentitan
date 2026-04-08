@@ -684,57 +684,88 @@ module rom_ctrl_regs_reg_top (
 
 
 
-  logic [17:0] addr_hit;
+  logic [$clog2(NumRegsRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == ROM_CTRL_ALERT_TEST_OFFSET);
-    addr_hit[ 1] = (reg_addr == ROM_CTRL_FATAL_ALERT_CAUSE_OFFSET);
-    addr_hit[ 2] = (reg_addr == ROM_CTRL_DIGEST_0_OFFSET);
-    addr_hit[ 3] = (reg_addr == ROM_CTRL_DIGEST_1_OFFSET);
-    addr_hit[ 4] = (reg_addr == ROM_CTRL_DIGEST_2_OFFSET);
-    addr_hit[ 5] = (reg_addr == ROM_CTRL_DIGEST_3_OFFSET);
-    addr_hit[ 6] = (reg_addr == ROM_CTRL_DIGEST_4_OFFSET);
-    addr_hit[ 7] = (reg_addr == ROM_CTRL_DIGEST_5_OFFSET);
-    addr_hit[ 8] = (reg_addr == ROM_CTRL_DIGEST_6_OFFSET);
-    addr_hit[ 9] = (reg_addr == ROM_CTRL_DIGEST_7_OFFSET);
-    addr_hit[10] = (reg_addr == ROM_CTRL_EXP_DIGEST_0_OFFSET);
-    addr_hit[11] = (reg_addr == ROM_CTRL_EXP_DIGEST_1_OFFSET);
-    addr_hit[12] = (reg_addr == ROM_CTRL_EXP_DIGEST_2_OFFSET);
-    addr_hit[13] = (reg_addr == ROM_CTRL_EXP_DIGEST_3_OFFSET);
-    addr_hit[14] = (reg_addr == ROM_CTRL_EXP_DIGEST_4_OFFSET);
-    addr_hit[15] = (reg_addr == ROM_CTRL_EXP_DIGEST_5_OFFSET);
-    addr_hit[16] = (reg_addr == ROM_CTRL_EXP_DIGEST_6_OFFSET);
-    addr_hit[17] = (reg_addr == ROM_CTRL_EXP_DIGEST_7_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      ROM_CTRL_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      ROM_CTRL_FATAL_ALERT_CAUSE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      ROM_CTRL_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      ROM_CTRL_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      ROM_CTRL_DIGEST_2_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      ROM_CTRL_DIGEST_3_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      ROM_CTRL_DIGEST_4_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      ROM_CTRL_DIGEST_5_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      ROM_CTRL_DIGEST_6_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      ROM_CTRL_DIGEST_7_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      ROM_CTRL_EXP_DIGEST_0_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      ROM_CTRL_EXP_DIGEST_1_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      ROM_CTRL_EXP_DIGEST_2_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      ROM_CTRL_EXP_DIGEST_3_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      ROM_CTRL_EXP_DIGEST_4_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      ROM_CTRL_EXP_DIGEST_5_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      ROM_CTRL_EXP_DIGEST_6_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      ROM_CTRL_EXP_DIGEST_7_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(ROM_CTRL_REGS_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(ROM_CTRL_REGS_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(ROM_CTRL_REGS_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(ROM_CTRL_REGS_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(ROM_CTRL_REGS_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(ROM_CTRL_REGS_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(ROM_CTRL_REGS_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(ROM_CTRL_REGS_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(ROM_CTRL_REGS_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(ROM_CTRL_REGS_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(ROM_CTRL_REGS_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(ROM_CTRL_REGS_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(ROM_CTRL_REGS_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(ROM_CTRL_REGS_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(ROM_CTRL_REGS_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(ROM_CTRL_REGS_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(ROM_CTRL_REGS_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(ROM_CTRL_REGS_PERMIT[17] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(ROM_CTRL_REGS_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(ROM_CTRL_REGS_PERMIT[10] & ~reg_be);
+        11: wr_err = |(ROM_CTRL_REGS_PERMIT[11] & ~reg_be);
+        12: wr_err = |(ROM_CTRL_REGS_PERMIT[12] & ~reg_be);
+        13: wr_err = |(ROM_CTRL_REGS_PERMIT[13] & ~reg_be);
+        14: wr_err = |(ROM_CTRL_REGS_PERMIT[14] & ~reg_be);
+        15: wr_err = |(ROM_CTRL_REGS_PERMIT[15] & ~reg_be);
+        16: wr_err = |(ROM_CTRL_REGS_PERMIT[16] & ~reg_be);
+        17: wr_err = |(ROM_CTRL_REGS_PERMIT[17] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign alert_test_we = addr_hit[0] & reg_we & !reg_error;
+  assign alert_test_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -760,85 +791,90 @@ module rom_ctrl_regs_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = '0;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = fatal_alert_cause_checker_error_qs;
-        reg_rdata_next[1] = fatal_alert_cause_integrity_error_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = fatal_alert_cause_checker_error_qs;
+          reg_rdata_next[1] = fatal_alert_cause_integrity_error_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[31:0] = digest_0_qs;
-      end
+        2: begin
+          reg_rdata_next[31:0] = digest_0_qs;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[31:0] = digest_1_qs;
-      end
+        3: begin
+          reg_rdata_next[31:0] = digest_1_qs;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[31:0] = digest_2_qs;
-      end
+        4: begin
+          reg_rdata_next[31:0] = digest_2_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[31:0] = digest_3_qs;
-      end
+        5: begin
+          reg_rdata_next[31:0] = digest_3_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[31:0] = digest_4_qs;
-      end
+        6: begin
+          reg_rdata_next[31:0] = digest_4_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[31:0] = digest_5_qs;
-      end
+        7: begin
+          reg_rdata_next[31:0] = digest_5_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[31:0] = digest_6_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = digest_6_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[31:0] = digest_7_qs;
-      end
+        9: begin
+          reg_rdata_next[31:0] = digest_7_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[31:0] = exp_digest_0_qs;
-      end
+        10: begin
+          reg_rdata_next[31:0] = exp_digest_0_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[31:0] = exp_digest_1_qs;
-      end
+        11: begin
+          reg_rdata_next[31:0] = exp_digest_1_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[31:0] = exp_digest_2_qs;
-      end
+        12: begin
+          reg_rdata_next[31:0] = exp_digest_2_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[31:0] = exp_digest_3_qs;
-      end
+        13: begin
+          reg_rdata_next[31:0] = exp_digest_3_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[31:0] = exp_digest_4_qs;
-      end
+        14: begin
+          reg_rdata_next[31:0] = exp_digest_4_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[31:0] = exp_digest_5_qs;
-      end
+        15: begin
+          reg_rdata_next[31:0] = exp_digest_5_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[31:0] = exp_digest_6_qs;
-      end
+        16: begin
+          reg_rdata_next[31:0] = exp_digest_6_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[31:0] = exp_digest_7_qs;
-      end
+        17: begin
+          reg_rdata_next[31:0] = exp_digest_7_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -863,7 +899,7 @@ module rom_ctrl_regs_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

@@ -1723,159 +1723,175 @@ module csrng_reg_top (
 
 
 
-  logic [23:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == CSRNG_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == CSRNG_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == CSRNG_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == CSRNG_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == CSRNG_REGWEN_OFFSET);
-    addr_hit[ 5] = (reg_addr == CSRNG_CTRL_OFFSET);
-    addr_hit[ 6] = (reg_addr == CSRNG_CMD_REQ_OFFSET);
-    addr_hit[ 7] = (reg_addr == CSRNG_RESEED_INTERVAL_OFFSET);
-    addr_hit[ 8] = (reg_addr == CSRNG_RESEED_COUNTER_0_OFFSET);
-    addr_hit[ 9] = (reg_addr == CSRNG_RESEED_COUNTER_1_OFFSET);
-    addr_hit[10] = (reg_addr == CSRNG_RESEED_COUNTER_2_OFFSET);
-    addr_hit[11] = (reg_addr == CSRNG_SW_CMD_STS_OFFSET);
-    addr_hit[12] = (reg_addr == CSRNG_GENBITS_VLD_OFFSET);
-    addr_hit[13] = (reg_addr == CSRNG_GENBITS_OFFSET);
-    addr_hit[14] = (reg_addr == CSRNG_INT_STATE_READ_ENABLE_OFFSET);
-    addr_hit[15] = (reg_addr == CSRNG_INT_STATE_READ_ENABLE_REGWEN_OFFSET);
-    addr_hit[16] = (reg_addr == CSRNG_INT_STATE_NUM_OFFSET);
-    addr_hit[17] = (reg_addr == CSRNG_INT_STATE_VAL_OFFSET);
-    addr_hit[18] = (reg_addr == CSRNG_FIPS_FORCE_OFFSET);
-    addr_hit[19] = (reg_addr == CSRNG_HW_EXC_STS_OFFSET);
-    addr_hit[20] = (reg_addr == CSRNG_RECOV_ALERT_STS_OFFSET);
-    addr_hit[21] = (reg_addr == CSRNG_ERR_CODE_OFFSET);
-    addr_hit[22] = (reg_addr == CSRNG_ERR_CODE_TEST_OFFSET);
-    addr_hit[23] = (reg_addr == CSRNG_MAIN_SM_STATE_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      CSRNG_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      CSRNG_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      CSRNG_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      CSRNG_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      CSRNG_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      CSRNG_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      CSRNG_CMD_REQ_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      CSRNG_RESEED_INTERVAL_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      CSRNG_RESEED_COUNTER_0_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      CSRNG_RESEED_COUNTER_1_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      CSRNG_RESEED_COUNTER_2_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      CSRNG_SW_CMD_STS_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      CSRNG_GENBITS_VLD_OFFSET: begin addr_valid = 1; addr_idx = 12; end
+      CSRNG_GENBITS_OFFSET: begin addr_valid = 1; addr_idx = 13; end
+      CSRNG_INT_STATE_READ_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 14; end
+      CSRNG_INT_STATE_READ_ENABLE_REGWEN_OFFSET: begin addr_valid = 1; addr_idx = 15; end
+      CSRNG_INT_STATE_NUM_OFFSET: begin addr_valid = 1; addr_idx = 16; end
+      CSRNG_INT_STATE_VAL_OFFSET: begin addr_valid = 1; addr_idx = 17; end
+      CSRNG_FIPS_FORCE_OFFSET: begin addr_valid = 1; addr_idx = 18; end
+      CSRNG_HW_EXC_STS_OFFSET: begin addr_valid = 1; addr_idx = 19; end
+      CSRNG_RECOV_ALERT_STS_OFFSET: begin addr_valid = 1; addr_idx = 20; end
+      CSRNG_ERR_CODE_OFFSET: begin addr_valid = 1; addr_idx = 21; end
+      CSRNG_ERR_CODE_TEST_OFFSET: begin addr_valid = 1; addr_idx = 22; end
+      CSRNG_MAIN_SM_STATE_OFFSET: begin addr_valid = 1; addr_idx = 23; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(CSRNG_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(CSRNG_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(CSRNG_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(CSRNG_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(CSRNG_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(CSRNG_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(CSRNG_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(CSRNG_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(CSRNG_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(CSRNG_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(CSRNG_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(CSRNG_PERMIT[11] & ~reg_be))) |
-               (addr_hit[12] & (|(CSRNG_PERMIT[12] & ~reg_be))) |
-               (addr_hit[13] & (|(CSRNG_PERMIT[13] & ~reg_be))) |
-               (addr_hit[14] & (|(CSRNG_PERMIT[14] & ~reg_be))) |
-               (addr_hit[15] & (|(CSRNG_PERMIT[15] & ~reg_be))) |
-               (addr_hit[16] & (|(CSRNG_PERMIT[16] & ~reg_be))) |
-               (addr_hit[17] & (|(CSRNG_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(CSRNG_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(CSRNG_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(CSRNG_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(CSRNG_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(CSRNG_PERMIT[22] & ~reg_be))) |
-               (addr_hit[23] & (|(CSRNG_PERMIT[23] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(CSRNG_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(CSRNG_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(CSRNG_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(CSRNG_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(CSRNG_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(CSRNG_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(CSRNG_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(CSRNG_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(CSRNG_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(CSRNG_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(CSRNG_PERMIT[10] & ~reg_be);
+        11: wr_err = |(CSRNG_PERMIT[11] & ~reg_be);
+        12: wr_err = |(CSRNG_PERMIT[12] & ~reg_be);
+        13: wr_err = |(CSRNG_PERMIT[13] & ~reg_be);
+        14: wr_err = |(CSRNG_PERMIT[14] & ~reg_be);
+        15: wr_err = |(CSRNG_PERMIT[15] & ~reg_be);
+        16: wr_err = |(CSRNG_PERMIT[16] & ~reg_be);
+        17: wr_err = |(CSRNG_PERMIT[17] & ~reg_be);
+        18: wr_err = |(CSRNG_PERMIT[18] & ~reg_be);
+        19: wr_err = |(CSRNG_PERMIT[19] & ~reg_be);
+        20: wr_err = |(CSRNG_PERMIT[20] & ~reg_be);
+        21: wr_err = |(CSRNG_PERMIT[21] & ~reg_be);
+        22: wr_err = |(CSRNG_PERMIT[22] & ~reg_be);
+        23: wr_err = |(CSRNG_PERMIT[23] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_cs_cmd_req_done_wd = reg_wdata[0];
-
   assign intr_state_cs_entropy_req_wd = reg_wdata[1];
-
   assign intr_state_cs_hw_inst_exc_wd = reg_wdata[2];
-
   assign intr_state_cs_fatal_err_wd = reg_wdata[3];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_cs_cmd_req_done_wd = reg_wdata[0];
-
   assign intr_enable_cs_entropy_req_wd = reg_wdata[1];
-
   assign intr_enable_cs_hw_inst_exc_wd = reg_wdata[2];
-
   assign intr_enable_cs_fatal_err_wd = reg_wdata[3];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_cs_cmd_req_done_wd = reg_wdata[0];
-
   assign intr_test_cs_entropy_req_wd = reg_wdata[1];
-
   assign intr_test_cs_hw_inst_exc_wd = reg_wdata[2];
-
   assign intr_test_cs_fatal_err_wd = reg_wdata[3];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_recov_alert_wd = reg_wdata[0];
-
   assign alert_test_fatal_alert_wd = reg_wdata[1];
-  assign regwen_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign regwen_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign regwen_wd = reg_wdata[0];
-  assign ctrl_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign ctrl_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign ctrl_enable_wd = reg_wdata[3:0];
-
   assign ctrl_sw_app_enable_wd = reg_wdata[7:4];
-
   assign ctrl_read_int_state_wd = reg_wdata[11:8];
-
   assign ctrl_fips_force_enable_wd = reg_wdata[15:12];
-  assign cmd_req_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign cmd_req_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign cmd_req_wd = reg_wdata[31:0];
-  assign reseed_interval_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign reseed_interval_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign reseed_interval_wd = reg_wdata[31:0];
-  assign reseed_counter_0_re = addr_hit[8] & reg_re & !reg_error;
-  assign reseed_counter_1_re = addr_hit[9] & reg_re & !reg_error;
-  assign reseed_counter_2_re = addr_hit[10] & reg_re & !reg_error;
-  assign genbits_vld_re = addr_hit[12] & reg_re & !reg_error;
-  assign genbits_re = addr_hit[13] & reg_re & !reg_error;
-  assign int_state_read_enable_we = addr_hit[14] & reg_we & !reg_error;
+
+  assign reseed_counter_0_re = addr_valid & (addr_idx == 8) & reg_re & !reg_error;
+
+  assign reseed_counter_1_re = addr_valid & (addr_idx == 9) & reg_re & !reg_error;
+
+  assign reseed_counter_2_re = addr_valid & (addr_idx == 10) & reg_re & !reg_error;
+
+
+  assign genbits_vld_re = addr_valid & (addr_idx == 12) & reg_re & !reg_error;
+
+  assign genbits_re = addr_valid & (addr_idx == 13) & reg_re & !reg_error;
+
+  assign int_state_read_enable_we = addr_valid & (addr_idx == 14) & reg_we & !reg_error;
 
   assign int_state_read_enable_wd = reg_wdata[2:0];
-  assign int_state_read_enable_regwen_we = addr_hit[15] & reg_we & !reg_error;
+
+  assign int_state_read_enable_regwen_we = addr_valid & (addr_idx == 15) & reg_we & !reg_error;
 
   assign int_state_read_enable_regwen_wd = reg_wdata[0];
-  assign int_state_num_we = addr_hit[16] & reg_we & !reg_error;
+
+  assign int_state_num_we = addr_valid & (addr_idx == 16) & reg_we & !reg_error;
 
   assign int_state_num_wd = reg_wdata[3:0];
-  assign int_state_val_re = addr_hit[17] & reg_re & !reg_error;
-  assign fips_force_we = addr_hit[18] & reg_we & !reg_error;
+
+  assign int_state_val_re = addr_valid & (addr_idx == 17) & reg_re & !reg_error;
+
+  assign fips_force_we = addr_valid & (addr_idx == 18) & reg_we & !reg_error;
 
   assign fips_force_wd = reg_wdata[2:0];
-  assign hw_exc_sts_we = addr_hit[19] & reg_we & !reg_error;
+
+  assign hw_exc_sts_we = addr_valid & (addr_idx == 19) & reg_we & !reg_error;
 
   assign hw_exc_sts_wd = reg_wdata[15:0];
-  assign recov_alert_sts_we = addr_hit[20] & reg_we & !reg_error;
+
+  assign recov_alert_sts_we = addr_valid & (addr_idx == 20) & reg_we & !reg_error;
 
   assign recov_alert_sts_enable_field_alert_wd = reg_wdata[0];
-
   assign recov_alert_sts_sw_app_enable_field_alert_wd = reg_wdata[1];
-
   assign recov_alert_sts_read_int_state_field_alert_wd = reg_wdata[2];
-
   assign recov_alert_sts_fips_force_enable_field_alert_wd = reg_wdata[3];
-
   assign recov_alert_sts_acmd_flag0_field_alert_wd = reg_wdata[4];
-
   assign recov_alert_sts_cs_bus_cmp_alert_wd = reg_wdata[12];
-
   assign recov_alert_sts_cmd_stage_invalid_acmd_alert_wd = reg_wdata[13];
-
   assign recov_alert_sts_cmd_stage_invalid_cmd_seq_alert_wd = reg_wdata[14];
-
   assign recov_alert_sts_cmd_stage_reseed_cnt_alert_wd = reg_wdata[15];
-  assign err_code_test_we = addr_hit[22] & reg_we & !reg_error;
+
+
+  assign err_code_test_we = addr_valid & (addr_idx == 22) & reg_we & !reg_error;
 
   assign err_code_test_wd = reg_wdata[4:0];
+
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -1907,141 +1923,146 @@ module csrng_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_cs_cmd_req_done_qs;
-        reg_rdata_next[1] = intr_state_cs_entropy_req_qs;
-        reg_rdata_next[2] = intr_state_cs_hw_inst_exc_qs;
-        reg_rdata_next[3] = intr_state_cs_fatal_err_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_cs_cmd_req_done_qs;
+          reg_rdata_next[1] = intr_state_cs_entropy_req_qs;
+          reg_rdata_next[2] = intr_state_cs_hw_inst_exc_qs;
+          reg_rdata_next[3] = intr_state_cs_fatal_err_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_cs_cmd_req_done_qs;
-        reg_rdata_next[1] = intr_enable_cs_entropy_req_qs;
-        reg_rdata_next[2] = intr_enable_cs_hw_inst_exc_qs;
-        reg_rdata_next[3] = intr_enable_cs_fatal_err_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_cs_cmd_req_done_qs;
+          reg_rdata_next[1] = intr_enable_cs_entropy_req_qs;
+          reg_rdata_next[2] = intr_enable_cs_hw_inst_exc_qs;
+          reg_rdata_next[3] = intr_enable_cs_fatal_err_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-        reg_rdata_next[2] = '0;
-        reg_rdata_next[3] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+          reg_rdata_next[2] = '0;
+          reg_rdata_next[3] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = regwen_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = regwen_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[3:0] = ctrl_enable_qs;
-        reg_rdata_next[7:4] = ctrl_sw_app_enable_qs;
-        reg_rdata_next[11:8] = ctrl_read_int_state_qs;
-        reg_rdata_next[15:12] = ctrl_fips_force_enable_qs;
-      end
+        5: begin
+          reg_rdata_next[3:0] = ctrl_enable_qs;
+          reg_rdata_next[7:4] = ctrl_sw_app_enable_qs;
+          reg_rdata_next[11:8] = ctrl_read_int_state_qs;
+          reg_rdata_next[15:12] = ctrl_fips_force_enable_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[31:0] = '0;
-      end
+        6: begin
+          reg_rdata_next[31:0] = '0;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[31:0] = reseed_interval_qs;
-      end
+        7: begin
+          reg_rdata_next[31:0] = reseed_interval_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[31:0] = reseed_counter_0_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = reseed_counter_0_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[31:0] = reseed_counter_1_qs;
-      end
+        9: begin
+          reg_rdata_next[31:0] = reseed_counter_1_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[31:0] = reseed_counter_2_qs;
-      end
+        10: begin
+          reg_rdata_next[31:0] = reseed_counter_2_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[1] = sw_cmd_sts_cmd_rdy_qs;
-        reg_rdata_next[2] = sw_cmd_sts_cmd_ack_qs;
-        reg_rdata_next[5:3] = sw_cmd_sts_cmd_sts_qs;
-      end
+        11: begin
+          reg_rdata_next[1] = sw_cmd_sts_cmd_rdy_qs;
+          reg_rdata_next[2] = sw_cmd_sts_cmd_ack_qs;
+          reg_rdata_next[5:3] = sw_cmd_sts_cmd_sts_qs;
+        end
 
-      addr_hit[12]: begin
-        reg_rdata_next[0] = genbits_vld_genbits_vld_qs;
-        reg_rdata_next[1] = genbits_vld_genbits_fips_qs;
-      end
+        12: begin
+          reg_rdata_next[0] = genbits_vld_genbits_vld_qs;
+          reg_rdata_next[1] = genbits_vld_genbits_fips_qs;
+        end
 
-      addr_hit[13]: begin
-        reg_rdata_next[31:0] = genbits_qs;
-      end
+        13: begin
+          reg_rdata_next[31:0] = genbits_qs;
+        end
 
-      addr_hit[14]: begin
-        reg_rdata_next[2:0] = int_state_read_enable_qs;
-      end
+        14: begin
+          reg_rdata_next[2:0] = int_state_read_enable_qs;
+        end
 
-      addr_hit[15]: begin
-        reg_rdata_next[0] = int_state_read_enable_regwen_qs;
-      end
+        15: begin
+          reg_rdata_next[0] = int_state_read_enable_regwen_qs;
+        end
 
-      addr_hit[16]: begin
-        reg_rdata_next[3:0] = int_state_num_qs;
-      end
+        16: begin
+          reg_rdata_next[3:0] = int_state_num_qs;
+        end
 
-      addr_hit[17]: begin
-        reg_rdata_next[31:0] = int_state_val_qs;
-      end
+        17: begin
+          reg_rdata_next[31:0] = int_state_val_qs;
+        end
 
-      addr_hit[18]: begin
-        reg_rdata_next[2:0] = fips_force_qs;
-      end
+        18: begin
+          reg_rdata_next[2:0] = fips_force_qs;
+        end
 
-      addr_hit[19]: begin
-        reg_rdata_next[15:0] = hw_exc_sts_qs;
-      end
+        19: begin
+          reg_rdata_next[15:0] = hw_exc_sts_qs;
+        end
 
-      addr_hit[20]: begin
-        reg_rdata_next[0] = recov_alert_sts_enable_field_alert_qs;
-        reg_rdata_next[1] = recov_alert_sts_sw_app_enable_field_alert_qs;
-        reg_rdata_next[2] = recov_alert_sts_read_int_state_field_alert_qs;
-        reg_rdata_next[3] = recov_alert_sts_fips_force_enable_field_alert_qs;
-        reg_rdata_next[4] = recov_alert_sts_acmd_flag0_field_alert_qs;
-        reg_rdata_next[12] = recov_alert_sts_cs_bus_cmp_alert_qs;
-        reg_rdata_next[13] = recov_alert_sts_cmd_stage_invalid_acmd_alert_qs;
-        reg_rdata_next[14] = recov_alert_sts_cmd_stage_invalid_cmd_seq_alert_qs;
-        reg_rdata_next[15] = recov_alert_sts_cmd_stage_reseed_cnt_alert_qs;
-      end
+        20: begin
+          reg_rdata_next[0] = recov_alert_sts_enable_field_alert_qs;
+          reg_rdata_next[1] = recov_alert_sts_sw_app_enable_field_alert_qs;
+          reg_rdata_next[2] = recov_alert_sts_read_int_state_field_alert_qs;
+          reg_rdata_next[3] = recov_alert_sts_fips_force_enable_field_alert_qs;
+          reg_rdata_next[4] = recov_alert_sts_acmd_flag0_field_alert_qs;
+          reg_rdata_next[12] = recov_alert_sts_cs_bus_cmp_alert_qs;
+          reg_rdata_next[13] = recov_alert_sts_cmd_stage_invalid_acmd_alert_qs;
+          reg_rdata_next[14] = recov_alert_sts_cmd_stage_invalid_cmd_seq_alert_qs;
+          reg_rdata_next[15] = recov_alert_sts_cmd_stage_reseed_cnt_alert_qs;
+        end
 
-      addr_hit[21]: begin
-        reg_rdata_next[0] = err_code_sfifo_cmd_err_qs;
-        reg_rdata_next[1] = err_code_sfifo_genbits_err_qs;
-        reg_rdata_next[20] = err_code_cmd_stage_sm_err_qs;
-        reg_rdata_next[21] = err_code_main_sm_err_qs;
-        reg_rdata_next[22] = err_code_ctr_drbg_sm_err_qs;
-        reg_rdata_next[25] = err_code_aes_cipher_sm_err_qs;
-        reg_rdata_next[26] = err_code_ctr_err_qs;
-        reg_rdata_next[28] = err_code_fifo_write_err_qs;
-        reg_rdata_next[29] = err_code_fifo_read_err_qs;
-        reg_rdata_next[30] = err_code_fifo_state_err_qs;
-      end
+        21: begin
+          reg_rdata_next[0] = err_code_sfifo_cmd_err_qs;
+          reg_rdata_next[1] = err_code_sfifo_genbits_err_qs;
+          reg_rdata_next[20] = err_code_cmd_stage_sm_err_qs;
+          reg_rdata_next[21] = err_code_main_sm_err_qs;
+          reg_rdata_next[22] = err_code_ctr_drbg_sm_err_qs;
+          reg_rdata_next[25] = err_code_aes_cipher_sm_err_qs;
+          reg_rdata_next[26] = err_code_ctr_err_qs;
+          reg_rdata_next[28] = err_code_fifo_write_err_qs;
+          reg_rdata_next[29] = err_code_fifo_read_err_qs;
+          reg_rdata_next[30] = err_code_fifo_state_err_qs;
+        end
 
-      addr_hit[22]: begin
-        reg_rdata_next[4:0] = err_code_test_qs;
-      end
+        22: begin
+          reg_rdata_next[4:0] = err_code_test_qs;
+        end
 
-      addr_hit[23]: begin
-        reg_rdata_next[5:0] = main_sm_state_qs;
-      end
+        23: begin
+          reg_rdata_next[5:0] = main_sm_state_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -2066,7 +2087,7 @@ module csrng_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake

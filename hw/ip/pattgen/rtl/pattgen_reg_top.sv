@@ -852,104 +852,116 @@ module pattgen_reg_top (
 
 
 
-  logic [11:0] addr_hit;
+  logic [$clog2(NumRegs)-1:0] addr_idx;
+  logic addr_valid;
   always_comb begin
-    addr_hit[ 0] = (reg_addr == PATTGEN_INTR_STATE_OFFSET);
-    addr_hit[ 1] = (reg_addr == PATTGEN_INTR_ENABLE_OFFSET);
-    addr_hit[ 2] = (reg_addr == PATTGEN_INTR_TEST_OFFSET);
-    addr_hit[ 3] = (reg_addr == PATTGEN_ALERT_TEST_OFFSET);
-    addr_hit[ 4] = (reg_addr == PATTGEN_CTRL_OFFSET);
-    addr_hit[ 5] = (reg_addr == PATTGEN_PREDIV_CH0_OFFSET);
-    addr_hit[ 6] = (reg_addr == PATTGEN_PREDIV_CH1_OFFSET);
-    addr_hit[ 7] = (reg_addr == PATTGEN_DATA_CH0_0_OFFSET);
-    addr_hit[ 8] = (reg_addr == PATTGEN_DATA_CH0_1_OFFSET);
-    addr_hit[ 9] = (reg_addr == PATTGEN_DATA_CH1_0_OFFSET);
-    addr_hit[10] = (reg_addr == PATTGEN_DATA_CH1_1_OFFSET);
-    addr_hit[11] = (reg_addr == PATTGEN_SIZE_OFFSET);
+    addr_idx = '0;
+    addr_valid = 0;
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+      PATTGEN_INTR_STATE_OFFSET: begin addr_valid = 1; addr_idx = 0; end
+      PATTGEN_INTR_ENABLE_OFFSET: begin addr_valid = 1; addr_idx = 1; end
+      PATTGEN_INTR_TEST_OFFSET: begin addr_valid = 1; addr_idx = 2; end
+      PATTGEN_ALERT_TEST_OFFSET: begin addr_valid = 1; addr_idx = 3; end
+      PATTGEN_CTRL_OFFSET: begin addr_valid = 1; addr_idx = 4; end
+      PATTGEN_PREDIV_CH0_OFFSET: begin addr_valid = 1; addr_idx = 5; end
+      PATTGEN_PREDIV_CH1_OFFSET: begin addr_valid = 1; addr_idx = 6; end
+      PATTGEN_DATA_CH0_0_OFFSET: begin addr_valid = 1; addr_idx = 7; end
+      PATTGEN_DATA_CH0_1_OFFSET: begin addr_valid = 1; addr_idx = 8; end
+      PATTGEN_DATA_CH1_0_OFFSET: begin addr_valid = 1; addr_idx = 9; end
+      PATTGEN_DATA_CH1_1_OFFSET: begin addr_valid = 1; addr_idx = 10; end
+      PATTGEN_SIZE_OFFSET: begin addr_valid = 1; addr_idx = 11; end
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              ((addr_hit[ 0] & (|(PATTGEN_PERMIT[ 0] & ~reg_be))) |
-               (addr_hit[ 1] & (|(PATTGEN_PERMIT[ 1] & ~reg_be))) |
-               (addr_hit[ 2] & (|(PATTGEN_PERMIT[ 2] & ~reg_be))) |
-               (addr_hit[ 3] & (|(PATTGEN_PERMIT[ 3] & ~reg_be))) |
-               (addr_hit[ 4] & (|(PATTGEN_PERMIT[ 4] & ~reg_be))) |
-               (addr_hit[ 5] & (|(PATTGEN_PERMIT[ 5] & ~reg_be))) |
-               (addr_hit[ 6] & (|(PATTGEN_PERMIT[ 6] & ~reg_be))) |
-               (addr_hit[ 7] & (|(PATTGEN_PERMIT[ 7] & ~reg_be))) |
-               (addr_hit[ 8] & (|(PATTGEN_PERMIT[ 8] & ~reg_be))) |
-               (addr_hit[ 9] & (|(PATTGEN_PERMIT[ 9] & ~reg_be))) |
-               (addr_hit[10] & (|(PATTGEN_PERMIT[10] & ~reg_be))) |
-               (addr_hit[11] & (|(PATTGEN_PERMIT[11] & ~reg_be)))));
+    wr_err = 0;
+
+    if (reg_we && addr_valid) begin
+      case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0:  wr_err = |(PATTGEN_PERMIT[ 0] & ~reg_be);
+        1:  wr_err = |(PATTGEN_PERMIT[ 1] & ~reg_be);
+        2:  wr_err = |(PATTGEN_PERMIT[ 2] & ~reg_be);
+        3:  wr_err = |(PATTGEN_PERMIT[ 3] & ~reg_be);
+        4:  wr_err = |(PATTGEN_PERMIT[ 4] & ~reg_be);
+        5:  wr_err = |(PATTGEN_PERMIT[ 5] & ~reg_be);
+        6:  wr_err = |(PATTGEN_PERMIT[ 6] & ~reg_be);
+        7:  wr_err = |(PATTGEN_PERMIT[ 7] & ~reg_be);
+        8:  wr_err = |(PATTGEN_PERMIT[ 8] & ~reg_be);
+        9:  wr_err = |(PATTGEN_PERMIT[ 9] & ~reg_be);
+        10: wr_err = |(PATTGEN_PERMIT[10] & ~reg_be);
+        11: wr_err = |(PATTGEN_PERMIT[11] & ~reg_be);
+      endcase
+    end
   end
 
   // Generate write-enables
-  assign intr_state_we = addr_hit[0] & reg_we & !reg_error;
+  assign intr_state_we = addr_valid & (addr_idx == 0) & reg_we & !reg_error;
 
   assign intr_state_done_ch0_wd = reg_wdata[0];
-
   assign intr_state_done_ch1_wd = reg_wdata[1];
-  assign intr_enable_we = addr_hit[1] & reg_we & !reg_error;
+
+  assign intr_enable_we = addr_valid & (addr_idx == 1) & reg_we & !reg_error;
 
   assign intr_enable_done_ch0_wd = reg_wdata[0];
-
   assign intr_enable_done_ch1_wd = reg_wdata[1];
-  assign intr_test_we = addr_hit[2] & reg_we & !reg_error;
+
+  assign intr_test_we = addr_valid & (addr_idx == 2) & reg_we & !reg_error;
 
   assign intr_test_done_ch0_wd = reg_wdata[0];
-
   assign intr_test_done_ch1_wd = reg_wdata[1];
-  assign alert_test_we = addr_hit[3] & reg_we & !reg_error;
+
+  assign alert_test_we = addr_valid & (addr_idx == 3) & reg_we & !reg_error;
 
   assign alert_test_wd = reg_wdata[0];
-  assign ctrl_we = addr_hit[4] & reg_we & !reg_error;
+
+  assign ctrl_we = addr_valid & (addr_idx == 4) & reg_we & !reg_error;
 
   assign ctrl_enable_ch0_wd = reg_wdata[0];
-
   assign ctrl_enable_ch1_wd = reg_wdata[1];
-
   assign ctrl_polarity_ch0_wd = reg_wdata[2];
-
   assign ctrl_polarity_ch1_wd = reg_wdata[3];
-
   assign ctrl_inactive_level_pcl_ch0_wd = reg_wdata[4];
-
   assign ctrl_inactive_level_pda_ch0_wd = reg_wdata[5];
-
   assign ctrl_inactive_level_pcl_ch1_wd = reg_wdata[6];
-
   assign ctrl_inactive_level_pda_ch1_wd = reg_wdata[7];
-  assign prediv_ch0_we = addr_hit[5] & reg_we & !reg_error;
+
+  assign prediv_ch0_we = addr_valid & (addr_idx == 5) & reg_we & !reg_error;
 
   assign prediv_ch0_wd = reg_wdata[31:0];
-  assign prediv_ch1_we = addr_hit[6] & reg_we & !reg_error;
+
+  assign prediv_ch1_we = addr_valid & (addr_idx == 6) & reg_we & !reg_error;
 
   assign prediv_ch1_wd = reg_wdata[31:0];
-  assign data_ch0_0_we = addr_hit[7] & reg_we & !reg_error;
+
+  assign data_ch0_0_we = addr_valid & (addr_idx == 7) & reg_we & !reg_error;
 
   assign data_ch0_0_wd = reg_wdata[31:0];
-  assign data_ch0_1_we = addr_hit[8] & reg_we & !reg_error;
+
+  assign data_ch0_1_we = addr_valid & (addr_idx == 8) & reg_we & !reg_error;
 
   assign data_ch0_1_wd = reg_wdata[31:0];
-  assign data_ch1_0_we = addr_hit[9] & reg_we & !reg_error;
+
+  assign data_ch1_0_we = addr_valid & (addr_idx == 9) & reg_we & !reg_error;
 
   assign data_ch1_0_wd = reg_wdata[31:0];
-  assign data_ch1_1_we = addr_hit[10] & reg_we & !reg_error;
+
+  assign data_ch1_1_we = addr_valid & (addr_idx == 10) & reg_we & !reg_error;
 
   assign data_ch1_1_wd = reg_wdata[31:0];
-  assign size_we = addr_hit[11] & reg_we & !reg_error;
+
+  assign size_we = addr_valid & (addr_idx == 11) & reg_we & !reg_error;
 
   assign size_len_ch0_wd = reg_wdata[5:0];
-
   assign size_reps_ch0_wd = reg_wdata[15:6];
-
   assign size_len_ch1_wd = reg_wdata[21:16];
-
   assign size_reps_ch1_wd = reg_wdata[31:22];
+
 
   // Assign write-enables to checker logic vector.
   always_comb begin
@@ -969,73 +981,78 @@ module pattgen_reg_top (
 
   // Read data return
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-      addr_hit[0]: begin
-        reg_rdata_next[0] = intr_state_done_ch0_qs;
-        reg_rdata_next[1] = intr_state_done_ch1_qs;
-      end
+    if (!addr_valid) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (addr_idx)
+        // TODO: use the register index enum entries instead?
+        0: begin
+          reg_rdata_next[0] = intr_state_done_ch0_qs;
+          reg_rdata_next[1] = intr_state_done_ch1_qs;
+        end
 
-      addr_hit[1]: begin
-        reg_rdata_next[0] = intr_enable_done_ch0_qs;
-        reg_rdata_next[1] = intr_enable_done_ch1_qs;
-      end
+        1: begin
+          reg_rdata_next[0] = intr_enable_done_ch0_qs;
+          reg_rdata_next[1] = intr_enable_done_ch1_qs;
+        end
 
-      addr_hit[2]: begin
-        reg_rdata_next[0] = '0;
-        reg_rdata_next[1] = '0;
-      end
+        2: begin
+          reg_rdata_next[0] = '0;
+          reg_rdata_next[1] = '0;
+        end
 
-      addr_hit[3]: begin
-        reg_rdata_next[0] = '0;
-      end
+        3: begin
+          reg_rdata_next[0] = '0;
+        end
 
-      addr_hit[4]: begin
-        reg_rdata_next[0] = ctrl_enable_ch0_qs;
-        reg_rdata_next[1] = ctrl_enable_ch1_qs;
-        reg_rdata_next[2] = ctrl_polarity_ch0_qs;
-        reg_rdata_next[3] = ctrl_polarity_ch1_qs;
-        reg_rdata_next[4] = ctrl_inactive_level_pcl_ch0_qs;
-        reg_rdata_next[5] = ctrl_inactive_level_pda_ch0_qs;
-        reg_rdata_next[6] = ctrl_inactive_level_pcl_ch1_qs;
-        reg_rdata_next[7] = ctrl_inactive_level_pda_ch1_qs;
-      end
+        4: begin
+          reg_rdata_next[0] = ctrl_enable_ch0_qs;
+          reg_rdata_next[1] = ctrl_enable_ch1_qs;
+          reg_rdata_next[2] = ctrl_polarity_ch0_qs;
+          reg_rdata_next[3] = ctrl_polarity_ch1_qs;
+          reg_rdata_next[4] = ctrl_inactive_level_pcl_ch0_qs;
+          reg_rdata_next[5] = ctrl_inactive_level_pda_ch0_qs;
+          reg_rdata_next[6] = ctrl_inactive_level_pcl_ch1_qs;
+          reg_rdata_next[7] = ctrl_inactive_level_pda_ch1_qs;
+        end
 
-      addr_hit[5]: begin
-        reg_rdata_next[31:0] = prediv_ch0_qs;
-      end
+        5: begin
+          reg_rdata_next[31:0] = prediv_ch0_qs;
+        end
 
-      addr_hit[6]: begin
-        reg_rdata_next[31:0] = prediv_ch1_qs;
-      end
+        6: begin
+          reg_rdata_next[31:0] = prediv_ch1_qs;
+        end
 
-      addr_hit[7]: begin
-        reg_rdata_next[31:0] = data_ch0_0_qs;
-      end
+        7: begin
+          reg_rdata_next[31:0] = data_ch0_0_qs;
+        end
 
-      addr_hit[8]: begin
-        reg_rdata_next[31:0] = data_ch0_1_qs;
-      end
+        8: begin
+          reg_rdata_next[31:0] = data_ch0_1_qs;
+        end
 
-      addr_hit[9]: begin
-        reg_rdata_next[31:0] = data_ch1_0_qs;
-      end
+        9: begin
+          reg_rdata_next[31:0] = data_ch1_0_qs;
+        end
 
-      addr_hit[10]: begin
-        reg_rdata_next[31:0] = data_ch1_1_qs;
-      end
+        10: begin
+          reg_rdata_next[31:0] = data_ch1_1_qs;
+        end
 
-      addr_hit[11]: begin
-        reg_rdata_next[5:0] = size_len_ch0_qs;
-        reg_rdata_next[15:6] = size_reps_ch0_qs;
-        reg_rdata_next[21:16] = size_len_ch1_qs;
-        reg_rdata_next[31:22] = size_reps_ch1_qs;
-      end
+        11: begin
+          reg_rdata_next[5:0] = size_len_ch0_qs;
+          reg_rdata_next[15:6] = size_reps_ch0_qs;
+          reg_rdata_next[21:16] = size_len_ch1_qs;
+          reg_rdata_next[31:22] = size_reps_ch1_qs;
+        end
 
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -1060,7 +1077,7 @@ module pattgen_reg_top (
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, clk_i, !rst_ni)
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), clk_i, !rst_ni)
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, clk_i, !rst_ni)
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake
