@@ -670,13 +670,16 @@ ${finst_gen(sr, field, finst_name, fsig_name, fidx)}
     % endfor
   % endfor
 
-  logic [${len(regs_flat)-1}:0] addr_hit;
+  logic [${"$"}clog2(${num_regs})-1:0] addr_idx;
+  logic addr_valid;
 % if racl_support:
   top_racl_pkg::racl_role_vec_t racl_role_vec;
   top_racl_pkg::racl_role_t racl_role;
 
-  logic [${len(regs_flat)-1}:0] racl_addr_hit_read;
-  logic [${len(regs_flat)-1}:0] racl_addr_hit_write;
+  logic [${"$"}clog2(${num_regs})-1:0] racl_addr_read_idx;
+  logic [${"$"}clog2(${num_regs})-1:0] racl_addr_write_idx;
+  logic racl_addr_read_valid;
+  logic racl_addr_write_valid;
 
   if (EnableRacl) begin : gen_racl_role_logic
     // Retrieve RACL role from user bits and one-hot encode that for the comparison bitmap
@@ -702,45 +705,58 @@ ${finst_gen(sr, field, finst_name, fsig_name, fidx)}
 
 % endif
   always_comb begin
+    addr_idx = '0;
+    addr_valid = 0;
   % if racl_support:
-    racl_addr_hit_read  = '0;
-    racl_addr_hit_write = '0;
+    racl_addr_read_idx = '0;
+    racl_addr_write_idx = '0;
+    racl_addr_read_valid = 0;
+    racl_addr_write_valid = 0;
   % endif
-    % for i,r in enumerate(regs_flat):
-<% slice = '{}'.format(i).rjust(max_regs_char) %>\
-    addr_hit[${slice}] = (reg_addr == ${ublock}_${r.name.upper()}_OFFSET);
-    % endfor
+    unique case (reg_addr)
+      // TODO: use the register index enum entries instead?
+  % for i, reg in enumerate(regs_flat):
+      ${ublock}_${reg.name.upper()}_OFFSET: begin addr_valid = 1; addr_idx = ${i}; end
+  % endfor
+      default: begin addr_valid = 0; addr_idx = '0; end
+    endcase
   % if racl_support:
 
     if (EnableRacl) begin : gen_racl_hit
-      for (int unsigned slice_idx = 0; slice_idx < ${len(regs_flat)}; slice_idx++) begin
       % if dynamic_racl_support:
-        racl_addr_hit_read[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].read_perm
-                                      & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-            addr_hit[slice_idx] & (|(racl_policies_i[RaclPolicySelVec[slice_idx]].write_perm
-                                      & racl_role_vec));
-      % else:
-        // Static RACL protection with ROT_PRIVATE policy
-        racl_addr_hit_read[slice_idx] =
-          addr_hit[slice_idx] & (|(top_racl_pkg::RACL_POLICY_ROT_PRIVATE_RD & racl_role_vec));
-        racl_addr_hit_write[slice_idx] =
-          addr_hit[slice_idx] & (|(top_racl_pkg::RACL_POLICY_ROT_PRIVATE_WR & racl_role_vec));
-      % endif
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].read_perm & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
       end
+      if (|(racl_policies_i[RaclPolicySelVec[addr_idx]].write_perm & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
+      end
+      % else:
+      // Static RACL protection with ROT_PRIVATE policy
+      if (|(top_racl_pkg::RACL_POLICY_ROT_PRIVATE_RD & racl_role_vec)) begin
+        racl_addr_read_idx = addr_idx;
+        racl_addr_read_valid = addr_valid;
+      end
+      if (|(top_racl_pkg::RACL_POLICY_ROT_PRIVATE_WR & racl_role_vec)) begin
+        racl_addr_write_idx = addr_idx;
+        racl_addr_write_valid = addr_valid;
+      end
+      % endif
     end else begin : gen_no_racl
-      racl_addr_hit_read  = addr_hit;
-      racl_addr_hit_write = addr_hit;
+      racl_addr_read_idx = addr_idx;
+      racl_addr_write_idx = addr_idx;
+      racl_addr_read_valid = addr_valid;
+      racl_addr_write_valid = addr_valid;
     end
   % endif
   end
 
-  assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
+  assign addrmiss = (reg_re || reg_we) ? ~addr_valid : 1'b0 ;
 % if racl_support:
   // A valid address hit, access, but failed the RACL check
-  assign racl_error_o.valid = |addr_hit & ((reg_re & ~|racl_addr_hit_read) |
-                                           (reg_we & ~|racl_addr_hit_write));
+  assign racl_error_o.valid = addr_valid & ((reg_re & ~racl_addr_read_valid) |
+                                            (reg_we & ~racl_addr_write_valid));
   assign racl_error_o.request_address = top_pkg::TL_AW'(reg_addr);
   assign racl_error_o.racl_role       = racl_role;
   assign racl_error_o.overflow        = 1'b0;
@@ -758,20 +774,23 @@ ${finst_gen(sr, field, finst_name, fsig_name, fidx)}
 <%
     # We want to signal wr_err if reg_be (the byte enable signal) is true for
     # any bytes that aren't supported by a register. That's true if a
-    # addr_hit[i] and a bit is set in reg_be but not in *_PERMIT[i].
+    # addr_valid and addr_idx == i and a bit is set in reg_be but not in *_PERMIT[i].
 
-    wr_addr_hit = 'racl_addr_hit_write' if racl_support else 'addr_hit'
-    wr_err_terms = ['({wr_addr_hit}[{idx}] & (|({mod}_PERMIT[{idx}] & ~reg_be)))'
-                    .format(idx=str(i).rjust(max_regs_char),
-                            mod=u_mod_base,
-                            wr_addr_hit=wr_addr_hit)
-                    for i in range(len(regs_flat))]
-    wr_err_expr = (' |\n' + (' ' * 15)).join(wr_err_terms)
+    wr_addr_idx = 'racl_addr_write_idx' if racl_support else 'addr_idx'
+    wr_addr_valid = 'racl_addr_write_valid' if racl_support else 'addr_valid'
 %>\
   // Check sub-word write is permitted
   always_comb begin
-    wr_err = (reg_we &
-              (${wr_err_expr}));
+    wr_err = 0;
+
+    if (reg_we && ${wr_addr_valid}) begin
+      case (${wr_addr_idx})
+        // TODO: use the register index enum entries instead?
+      % for i in range(len(regs_flat)):
+        ${'{}:'.format(i).ljust(max_regs_char + 1)} wr_err = |(${u_mod_base}_PERMIT[${str(i).rjust(max_regs_char)}] & ~reg_be);
+      % endfor
+      endcase
+    end
   end
   % else:
   assign wr_error = 1'b0;
@@ -782,12 +801,13 @@ ${finst_gen(sr, field, finst_name, fsig_name, fidx)}
   % for i, r in enumerate(regs_flat):
 ${reg_enable_gen(r, i)}\
     % if len(r.fields) == 1:
-${field_wd_gen(r.fields[0], r.name.lower(), r.hwext, r.shadowed, r.async_clk, r.name, i)}\
+${field_wd_gen(r.fields[0], r.name.lower(), r.hwext, r.shadowed, r.async_clk, r.name, 0)}\
     % else:
-      % for f in r.fields:
-${field_wd_gen(f, r.name.lower() + "_" + f.name.lower(), r.hwext, r.shadowed, r.async_clk, r.name, i)}\
+      % for j, f in enumerate(r.fields):
+${field_wd_gen(f, r.name.lower() + "_" + f.name.lower(), r.hwext, r.shadowed, r.async_clk, r.name, j)}\
       % endfor
     % endif
+
   % endfor
 
   // Assign write-enables to checker logic vector.
@@ -817,33 +837,73 @@ ${field_wd_gen(f, r.name.lower() + "_" + f.name.lower(), r.hwext, r.shadowed, r.
   end
 
   // Read data return
+<%
+read_addr_idx = 'racl_addr_read_idx' if racl_support else 'addr_idx'
+read_addr_valid = 'racl_addr_read_valid' if racl_support else 'addr_valid'
+
+def _str_bits_sv(bits):
+  if bits.msb != bits.lsb:
+    return f"{bits.msb}:{bits.lsb}"
+  return str(bits.msb)
+
+def _rdata_gen(field, sig_name, rd_name='reg_rdata_next'):
+  if field.swaccess.allows_read():
+    return f"{rd_name}[{_str_bits_sv(field.bits)}] = {sig_name}_qs;"
+  return f"{rd_name}[{_str_bits_sv(field.bits)}] = '0;"
+
+# Group keys by their value
+result = []
+current_values = []
+current_regs = []
+for (i, reg) in enumerate(regs_flat):
+  reg_name_lower = reg.name.lower()
+  if reg.async_clk:
+    values = [f"reg_rdata_next = DW'({reg_name_lower}_qs);"]
+  elif len(reg.fields) == 1:
+    values = [_rdata_gen(reg.fields[0], reg_name_lower)]
+  else:
+    values = []
+    for field in reg.fields:
+      values.append(_rdata_gen(field, reg_name_lower + '_' + field.name.lower()))
+
+  if values != current_values:
+    if current_regs:
+      result.append((current_regs, current_values))
+    current_regs = [i]
+    current_values = values
+  else:
+    current_regs.append(i)
+if current_regs:
+    result.append((current_regs, current_values))
+%>\
   always_comb begin
-    reg_rdata_next = '0;
-    unique case (1'b1)
-<% read_addr_hit = 'racl_addr_hit_read' if racl_support else 'addr_hit' %>\
-  % for i, r in enumerate(regs_flat):
-    % if r.async_clk:
-      ${read_addr_hit}[${i}]: begin
-        reg_rdata_next = DW'(${r.name.lower()}_qs);
-      end
-    % elif len(r.fields) == 1:
-      ${read_addr_hit}[${i}]: begin
-${rdata_gen(r.fields[0], r.name.lower())}\
-      end
-
-    % else:
-      ${read_addr_hit}[${i}]: begin
-      % for f in r.fields:
-${rdata_gen(f, r.name.lower() + "_" + f.name.lower())}\
+    if (!${read_addr_valid}) begin
+      reg_rdata_next = '1;
+    end else begin
+      reg_rdata_next = '0;
+      unique case (${read_addr_idx})
+        // TODO: use the register index enum entries instead?
+  % for regs, values in result:
+    % if len(regs) > 1:
+        ${",".join(str(reg) for reg in regs)}: begin
+      % for value in values:
+          ${value}
       % endfor
-      end
-
+        end
+    % else:
+        ${regs[0]}: begin
+      % for value in values:
+          ${value}
+      % endfor
+        end
     % endif
+
   % endfor
       default: begin
         reg_rdata_next = '1;
       end
-    endcase
+      endcase
+    end
   end
 
   // shadow busy
@@ -914,16 +974,15 @@ ${rdata_gen(f, r.name.lower() + "_" + f.name.lower())}\
   assign reg_busy = (reg_busy_sel | shadow_busy) & tl_i.a_valid;
   always_comb begin
     reg_busy_sel = '0;
-    unique case (1'b1)
+    if (addr_valid) begin
+      unique case (addr_idx)
     % for i, busy_signal in async_busy_signals.items():
-      addr_hit[${i}]: begin
-        reg_busy_sel = ${busy_signal};
-      end
+        ${i}: begin
+          reg_busy_sel = ${busy_signal};
+        end
     % endfor
-      default: begin
-        reg_busy_sel  = '0;
-      end
-    endcase
+      endcase
+    end
   end
 
   % endif
@@ -951,7 +1010,7 @@ ${rdata_gen(f, r.name.lower() + "_" + f.name.lower())}\
 
   `ASSERT(reAfterRv, $rose(reg_re || reg_we) |=> tl_o_pre.d_valid, ${reg_clk_expr}, !${reg_rst_expr})
 
-  `ASSERT(en2addrHit, (reg_we || reg_re) |-> $onehot0(addr_hit), ${reg_clk_expr}, !${reg_rst_expr})
+  `ASSERT(en2addrHit, (reg_we || reg_re) |-> addr_valid, ${reg_clk_expr}, !${reg_rst_expr})
 
   // this is formulated as an assumption such that the FPV testbenches do disprove this
   // property by mistake
@@ -1178,19 +1237,23 @@ ${bits.msb}\
   % endif
 </%def>\
 <%def name="reg_enable_gen(reg, idx)">\
-<% wr_addr_hit = 'racl_addr_hit_write' if racl_support else 'addr_hit'%>\
-<% re_addr_hit = 'racl_addr_hit_read'  if racl_support else 'addr_hit'%>\
+<%
+    wr_addr_idx = 'racl_addr_write_idx' if racl_support else 'addr_idx'
+    wr_addr_valid = 'racl_addr_write_valid' if racl_support else 'addr_valid'
+    read_addr_idx = 'racl_addr_read_idx' if racl_support else 'addr_idx'
+    read_addr_valid = 'racl_addr_read_valid' if racl_support else 'addr_valid'
+%>\
   % if reg.needs_re():
-  assign ${reg.name.lower()}_re = ${re_addr_hit}[${idx}] & reg_re & !reg_error;
+  assign ${reg.name.lower()}_re = ${read_addr_valid} & (${read_addr_idx} == ${idx}) & reg_re & !reg_error;
   % endif
   % if reg.needs_we():
-  assign ${reg.name.lower()}_we = ${wr_addr_hit}[${idx}] & reg_we & !reg_error;
+  assign ${reg.name.lower()}_we = ${wr_addr_valid} & (${wr_addr_idx} == ${idx}) & reg_we & !reg_error;
   % endif
 </%def>\
 <%def name="field_wd_gen(field, sig_name, hwext, shadowed, async_clk, reg_name, idx)">\
 <%
     needs_wd = field.swaccess.allows_write()
-    space = '\n' if needs_wd or needs_re else ''
+    space = '\n' if (needs_wd or needs_re) and idx == 0 else ''
 %>\
 ${space}\
 % if needs_wd and not async_clk:
@@ -1199,13 +1262,6 @@ ${space}\
   % else:
   assign ${sig_name}_wd = reg_wdata[${str_bits_sv(field.bits)}];
   % endif
-% endif
-</%def>\
-<%def name="rdata_gen(field, sig_name, rd_name='reg_rdata_next')">\
-% if field.swaccess.allows_read():
-        ${rd_name}[${str_bits_sv(field.bits)}] = ${sig_name}_qs;
-% else:
-        ${rd_name}[${str_bits_sv(field.bits)}] = '0;
 % endif
 </%def>\
 <%def name="reg_cdc_gen(field, sig_name, hwext, shadowed, idx)">\
