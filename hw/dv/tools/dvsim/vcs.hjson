@@ -14,7 +14,7 @@
   vcs_build_opt_debug_access: "-debug_access+f"
   vcs_build_opt_debug_region: "-debug_region=cell+lib"
   post_flist_opts: ""
-  build_opts: ["-sverilog -full64 -licqueue -ntb_opts uvm-1.2",
+  build_opts: ["-sverilog -full64 -O3 -march=native -licqueue -ntb_opts uvm-1.2",
                "-timescale={timescale}",
                "-Mdir={build_ex}.csrc",
                "-o {build_ex}",
