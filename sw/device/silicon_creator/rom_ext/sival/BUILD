@@ -36,6 +36,7 @@ ROM_EXT_FEATURES = [
 # with the sival keys pre-programmed into OTP.
 # You can manually create such a bitstream with:
 #
+# FIXME
 # bazel build //hw/bitstream/universal:splice \
 #   --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_hyper310_rom_ext \
 #   --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp/sival_skus:otp_img_prod_manuf_personalized

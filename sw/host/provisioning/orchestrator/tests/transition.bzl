@@ -2,6 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
+# FIXME none of this works
 def _orchestrator_cw310_settings_impl(settings, attr):
     return {
         "//hw/bitstream/universal:otp": "//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty",

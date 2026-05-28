@@ -91,6 +91,7 @@ rust_library(
         "src/image/manifest_def.rs",
         "src/image/manifest_ext.rs",
         "src/image/mod.rs",
+        "src/io/bkdr.rs",
         "src/io/console.rs",
         "src/io/console/broadcast.rs",
         "src/io/console/buf.rs",
@@ -216,6 +217,7 @@ rust_library(
         ":ottf",
         "//util/openocd/target:lowrisc-earlgrey.cfg",
         "//util/openocd/target:lowrisc-earlgrey-lc.cfg",
+        "//util/openocd/target:lowrisc-earlgrey-bkdr.cfg",
         "//sw/host/opentitanlib/bindgen:rom_error_enum",
     ],
     crate_features = select({
@@ -237,6 +239,7 @@ rust_library(
         "ottf": "$(location :ottf)",
         "openocd_riscv_target_cfg": "$(location //util/openocd/target:lowrisc-earlgrey.cfg)",
         "openocd_lc_target_cfg": "$(location //util/openocd/target:lowrisc-earlgrey-lc.cfg)",
+        "openocd_bkdr_target_cfg": "$(location //util/openocd/target:lowrisc-earlgrey-bkdr.cfg)",
     },
     deps = [
         "//sw/host/opentitanlib/bindgen",

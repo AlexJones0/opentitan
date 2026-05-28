@@ -58,6 +58,7 @@ cp util/git/hooks/post-checkout .git/hooks/
 ### Build an FPGA bitstream
 
 
+# FIXME
 #### Splicing a different ROM or OTP into a Cached Bitstream
 
 As mentioned above, the default bitstreams cached in our public GCS bucket are built with a test version of the boot ROM and a minimally configured OTP image.

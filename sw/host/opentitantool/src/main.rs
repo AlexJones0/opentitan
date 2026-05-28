@@ -36,6 +36,7 @@ enum RootCommandHierarchy {
     #[command(subcommand)]
     Emulator(command::emulator::EmuCommand),
 
+    Bkdr(command::bkdr::BkdrCommand),
     #[command(subcommand)]
     Fpga(command::fpga::FpgaCommand),
     I2c(command::i2c::I2cCommand),

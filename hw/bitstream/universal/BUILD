@@ -10,29 +10,3 @@ filegroup(
     name = "none",
     srcs = ["skip.bit"],
 )
-
-label_flag(
-    name = "rom",
-    build_setting_default = ":none",
-)
-
-label_flag(
-    name = "otp",
-    build_setting_default = ":none",
-)
-
-label_flag(
-    name = "env",
-    build_setting_default = ":none",
-)
-
-universal_splice(
-    name = "splice",
-    testonly = True,
-    # When the src bitstream and mmi fields are empty, the rule will use values
-    # from the exec_env.
-    exec_env = ":env",
-    otp = ":otp",
-    rom = ":rom",
-    tags = ["manual"],
-)

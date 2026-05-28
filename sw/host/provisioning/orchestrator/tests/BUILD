@@ -58,6 +58,7 @@ py_test(
     ],
 )
 
+# FIXME
 # These transitions have the same effect as supplying the following flags to bazel test:
 #  --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_<fpga>_rom_with_fake_keys
 #  --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty

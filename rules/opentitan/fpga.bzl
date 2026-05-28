@@ -167,8 +167,10 @@ def _get_test_commands(ctx, param, exec_env):
     test_setup_cmd = ['--exec="transport init"']
     if _get_bool(param, "testopt_clear_before_test"):
         test_setup_cmd.append('--exec="fpga clear-bitstream"')
-    if "bitstream" in param:
-        test_setup_cmd.append('--exec="fpga load-bitstream {bitstream}"')
+    test_setup_cmd.append('--exec="fpga load-bitstream {bitstream}"')
+    # TODO reset with DFT strap
+    # FIXME just an example, CLI needs to be defined
+    test_setup_cmd.append('--exec="bkdr rom={rom} otp={otp}"')
     if _get_bool(param, "testopt_bootstrap") and "firmware" in param:
         test_setup_cmd.append('--exec="bootstrap --leave-in-reset --clear-uart=true {firmware}"')
     test_setup_cmd = "\n".join(test_setup_cmd)
@@ -201,6 +203,13 @@ def _test_dispatch(ctx, exec_env, firmware):
         fail("CW310 is not capable of executing ROM tests")
 
     test_harness, data_labels, data_files, param, action_param = common_test_setup(ctx, exec_env, firmware)
+    print("dispatch({}, ev={})".format(ctx.label, ctx.attr.exec_env))
+    print("exec env:")
+    for k in dir(exec_env):
+        print("- {}: {}".format(k, getattr(exec_env, k)))
+    print("actions params:")
+    for (k,v) in action_param.items():
+        print("- {}: {}".format(k, v))
 
     # If the test requested an assembled image, then use opentitantool to
     # assemble the image.  Replace the firmware param with the newly assembled
@@ -219,8 +228,6 @@ def _test_dispatch(ctx, exec_env, firmware):
         param["firmware"] = image.short_path
         action_param["firmware"] = image.path
         data_files.append(image)
-
-    # FIXME: maybe splice a bitstream here
 
     # Get the pre-test_cmd args.
     args = get_fallback(ctx, "attr.args", exec_env)
@@ -338,10 +345,6 @@ def fpga_params(
     Returns:
       struct of test parameters.
     """
-    if bitstream and (rom or otp):
-        fail("Cannot use rom or otp with bitstream.")
-    if not bitstream:
-        bitstream = "@//hw/bitstream/universal:splice"
 
     # Clear bitstream after the test if it changes the OTP.
     if changes_otp:

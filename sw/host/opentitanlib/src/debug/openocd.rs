@@ -214,8 +214,11 @@ impl OpenOcd {
 
     /// Send a TCL command to OpenOCD and wait for its response.
     pub fn execute(&mut self, cmd: &str) -> Result<String> {
+        log::debug!("execute: {cmd}");
         self.send(cmd)?;
-        self.recv()
+        let res = self.recv()?;
+        log::debug!("receive: {res}");
+        Ok(res)
     }
 
     /// Load instruction register of a given tap.
@@ -277,6 +280,7 @@ impl JtagChain for OpenOcdJtagChain {
         let target = match tap {
             JtagTap::RiscvTap => include_str!(env!("openocd_riscv_target_cfg")),
             JtagTap::LcTap => include_str!(env!("openocd_lc_target_cfg")),
+            JtagTap::BkdrTap => include_str!(env!("openocd_bkdr_target_cfg")),
         };
         self.openocd.execute(target)?;
 

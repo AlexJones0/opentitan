@@ -18,6 +18,7 @@ from sku_config import SkuConfig
 from util import confirm, format_hex, resolve_runfile, run
 
 # FPGA bitstream.
+# FIXME
 _FPGA_UNIVERSAL_SPLICE_BITSTREAM = "hw/bitstream/universal/splice.bit"
 
 # Opentitantool interface
