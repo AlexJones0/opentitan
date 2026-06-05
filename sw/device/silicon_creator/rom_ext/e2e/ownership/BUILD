@@ -15,11 +15,6 @@ load(
 
 package(default_visibility = ["//visibility:public"])
 
-# TODO(#24462): The tests in this file are marked `changes_otp = True`,
-# but they don't change OTP.  They modify the ownership INFO pages,
-# so we need to clear the bitstream after the test, which is what the
-# `changes_otp` parameter actually does.
-
 opentitan_binary(
     name = "boot_test",
     testonly = True,
@@ -84,9 +79,7 @@ ownership_transfer_test(
     name = "transfer_any_test",
     ecdsa_key = {"//sw/device/silicon_creator/lib/ownership/keys/dummy:ecdsa_keyset": "app_prod_0"},
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -111,9 +104,7 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/dummy:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -132,10 +123,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/dummy:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_default_ownership_state_unlock_any",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Abort
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -155,10 +144,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/dummy:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_default_ownership_state_unlock_any",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Abort
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -178,10 +165,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/dummy:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_invalid_key_alg",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --skip-unlock=true
@@ -204,9 +189,7 @@ ownership_transfer_test(
         "binaries": {
             ":boot_test": "boot_test",
         },
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -224,9 +207,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_unlock_signature_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -249,10 +230,8 @@ ownership_transfer_test(
         "binaries": {
             ":boot_test": "boot_test",
         },
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_corrupted_owner_key_alg",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -274,10 +253,8 @@ ownership_transfer_test(
         "binaries": {
             ":boot_test": "boot_test",
         },
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_corrupted_owner_key_alg",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --key-alg=HybridSpxPure
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
@@ -296,9 +273,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_appkey_constraint_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -315,9 +290,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "good_appkey_constraint_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -335,9 +308,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_unlock_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             # NOTE: We use the wrong unlock key to test that the unlock operation fails.
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -354,10 +325,8 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "unlock_when_recovery_state_test",
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_default_ownership_state_recovery",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             # NOTE: We use the owner recovery key to test that the unlock operation succeeds.
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:no_owner_recovery_key)
@@ -373,9 +342,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "unlock_with_owner_recovery_key_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             # NOTE: We use the owner recovery key to test that the unlock operation succeeds.
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:no_owner_recovery_key)
@@ -392,9 +359,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_activate_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             # NOTE: We use the wrong activate key to test that the activate operation fails.
@@ -413,9 +378,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_owner_block_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -434,9 +397,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_app_key_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -455,9 +416,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "transfer_endorsed_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Endorsed
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -474,9 +433,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_endorsee_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Endorsed
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -496,9 +453,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "locked_update_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Update
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
@@ -521,9 +476,7 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Update
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             # NOTE: We use the wrong owner key to test that the activate operation fails.
@@ -543,9 +496,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "bad_locked_update_no_exec_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Update
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
@@ -570,10 +521,8 @@ ownership_transfer_test(
         "timeout": "long",
         # We boot on Side B since rescue will rewrite side A.
         "assemble": "{rom_ext}@{rom_ext_slot_a} {firmware}@{owner_slot_b}",
-        "changes_otp": True,
         "tags": ["slow_test"],
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -598,9 +547,7 @@ ownership_transfer_test(
 ownership_transfer_test(
     name = "rescue_permission_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -647,13 +594,11 @@ _FLASH_PERMISSION_TESTS = {
             "binaries": {
                 ":flash_regions": "flash_regions",
             },
-            "changes_otp": True,
             "owner_slot": param["owner_slot"],
             "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_dice_x509_slot_virtual",
             "rom_ext_offset": param["rom_ext_offset"],
             "rom_ext_slot": param["rom_ext_slot"],
             "test_cmd": """
-                --bootstrap={firmware}
                 --unlock-mode=Any
                 --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
                 --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -685,9 +630,7 @@ _FLASH_PERMISSION_TESTS = {
 ownership_transfer_test(
     name = "flash_error_test",
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/dummy:owner_key)
@@ -710,9 +653,7 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Update
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
@@ -735,10 +676,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -758,10 +697,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -782,10 +719,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -805,10 +740,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -829,10 +762,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -889,9 +820,7 @@ ownership_transfer_test(
         "binaries": {
             ":keymgr_test": "keymgr_test",
         },
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --pre-transfer-boot-check=true
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
@@ -923,9 +852,7 @@ ownership_transfer_test(
         "binaries": {
             ":boot_test": "boot_test",
         },
-        "changes_otp": True,
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-key-alg=HybridSpxPure
@@ -957,10 +884,8 @@ ownership_transfer_test(
         "binaries": {
             ":boot_test": "boot_test",
         },
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_hybrid_owner_keys",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --key-alg=HybridSpxPure
             --unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
@@ -993,10 +918,8 @@ ownership_transfer_test(
         "binaries": {
             ":boot_test": "boot_test",
         },
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_spx_pure_owner_keys",
         "test_cmd": """
-            --bootstrap={firmware}
             --unlock-mode=Any
             --key-alg=SpxPure
             --unlock-key-spx=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key_spx)
@@ -1018,10 +941,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_hybrid_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)
@@ -1045,10 +966,8 @@ ownership_transfer_test(
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset": "app_prod_0",
     },
     fpga = {
-        "changes_otp": True,
         "rom_ext": "//sw/device/silicon_creator/rom_ext:rom_ext_hybrid_owner_update_newversion",
         "test_cmd": """
-            --bootstrap={firmware}
             --next-owner-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:owner_key)
             --next-unlock-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:unlock_key)
             --next-activate-key=$(location //sw/device/silicon_creator/lib/ownership/keys/fake:activate_key)

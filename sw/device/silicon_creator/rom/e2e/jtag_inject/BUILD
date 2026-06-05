@@ -55,6 +55,7 @@ package(default_visibility = ["//visibility:public"])
                 --elf={sram_program}
             """,
             test_harness = "//sw/host/tests/chip/jtag:sram_load",
+            testopt_bootstrap = "False",
         ),
         deps = [
             "//sw/device/lib/runtime:log",
@@ -97,6 +98,7 @@ test_suite(
             otp = ":img_{}_exec_disabled".format(lc_state),
             test_cmd = " --elf={rom:elf}",
             test_harness = "//sw/host/tests/rom/e2e_openocd_debug_test:asm_interrupt_handler",
+            testopt_bootstrap = "False",
         ),
         deps = [
             "//sw/device/lib/runtime:log",
@@ -139,6 +141,7 @@ test_suite(
             otp = ":img_{}_exec_disabled".format(lc_state),
             test_cmd = " --elf={rom:elf}",
             test_harness = "//sw/host/tests/rom/e2e_openocd_debug_test:shutdown_execution_asm",
+            testopt_bootstrap = "False",
         ),
         deps = [
             "//sw/device/lib/runtime:log",
@@ -182,6 +185,7 @@ test_suite(
             tags = ["broken"],
             test_cmd = " --elf={rom:elf}",
             test_harness = "//sw/host/tests/rom/e2e_openocd_debug_test:asm_watchdog_bark",
+            testopt_bootstrap = "False",
         ),
         deps = [
             "//sw/device/lib/runtime:log",
@@ -225,6 +229,7 @@ test_suite(
             tags = ["broken"],
             test_cmd = " --elf={rom:elf}",
             test_harness = "//sw/host/tests/rom/e2e_openocd_debug_test:asm_watchdog_bite",
+            testopt_bootstrap = "False",
         ),
         deps = [
             "//sw/device/lib/runtime:log",
@@ -275,6 +280,7 @@ LC_STATES_DEBUG_DISALLOWED = [
             otp = ":img_{}_exec_disabled".format(lc_state),
             test_cmd = " --elf={rom:elf}" + (" --expect-fail" if lc_state_val in LC_STATES_DEBUG_DISALLOWED else " "),
             test_harness = "//sw/host/tests/rom/e2e_openocd_debug_test:debug_test",
+            testopt_bootstrap = "False",
         ),
         deps = [
             "//sw/device/lib/runtime:log",
