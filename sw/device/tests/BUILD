@@ -4643,12 +4643,9 @@ opentitan_test(
         # is not run in CI which causes a CI error ("Verify FPGA Jobs" check
         # will fail).
         tags = ["manuf"],
-        test_cmd = """
-            --clear-bitstream
-            --bootstrap="{firmware}"
-            "{firmware:elf}"
-        """,
+        test_cmd = "{firmware:elf}",
         test_harness = "//sw/host/tests/chip/ottf_console_with_gpio_tx_indicator",
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//hw/top_earlgrey/sw/autogen:top_earlgrey",
@@ -6402,6 +6399,7 @@ test_suite(
             ],
             test_cmd = " --expect-fail" if lc_state_val in _LC_STATES_DEBUG_DISALLOWED else "",
             test_harness = "//sw/host/tests/chip/rv_dm:lc_disabled",
+            testopt_bootstrap = "False",
         ),
         silicon = silicon_params(
             needs_jtag = True,
@@ -7232,6 +7230,7 @@ opentitan_test(
         otp = "//sw/device/silicon_creator/manuf/tests:otp_img_rom_exec_disabled_test_unlocked0",
         test_cmd = "--elf={sram_program}",
         test_harness = "//sw/host/tests/chip/rv_core_ibex_isa",
+        testopt_bootstrap = "False",
     ),
     silicon = silicon_params(
         needs_jtag = True,
@@ -7323,6 +7322,7 @@ opentitan_test(
         tags = ["manual"],
         test_cmd = "--elf={sram_program}",
         test_harness = "//sw/host/tests/chip/rv_core_ibex_epmp",
+        testopt_bootstrap = "False",
     ),
     silicon = silicon_params(
         needs_jtag = True,
@@ -7451,6 +7451,7 @@ opentitan_test(
         otp = "//sw/device/silicon_creator/manuf/tests:otp_img_rom_exec_disabled_test_unlocked0",
         test_cmd = "--elf={sram_program}",
         test_harness = "//sw/host/tests/chip/rv_core_ibex_epmp",
+        testopt_bootstrap = "False",
     ),
     silicon = silicon_params(
         binaries = {

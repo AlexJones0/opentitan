@@ -120,16 +120,12 @@ _CONFIGS = {
             binaries = {
                 ":boot_test_{}".format(name): "payload",
             },
-            changes_otp = True,  # See important note at the top
             params = config["params"],
             rom_ext = config["rom_ext"],
             setup = config["setup"],
             slot = position["slot"],
             tags = config["tags"],
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga clear-bitstream"
-                --exec="fpga load-bitstream {bitstream}"
                 {setup}
                 --exec="bootstrap --clear-uart=true {rom_ext}"
                 # First make sure the ROM_EXT is faulting because there is no firmware
@@ -140,6 +136,9 @@ _CONFIGS = {
                 --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
                 no-op
             """,
+            testopt_bootstrap = "False",
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for name, position in _POSITIONS.items()
@@ -180,7 +179,6 @@ genrule(
                 ":boot_test_{}".format(name): "payload",
                 ":bad_rom_ext": "bad_rom_ext",
             },
-            changes_otp = True,  # See important note at the top
             exit_failure = _RESCUE_ROMEXT_RESULTS[name == rxslot]["failure"],
             exit_success = _RESCUE_ROMEXT_RESULTS[name == rxslot]["success"].format(slot = name),
             image_name = "/tmp/rescue_rom_ext_{}.img".format(name),
@@ -188,9 +186,6 @@ genrule(
             rom_ext_offset = _POSITIONS[rxslot]["rom_ext_offset"],
             slot = position["slot"],
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga load-bitstream {bitstream}"
-                --exec="bootstrap --clear-uart=true {firmware}"
                 # First make sure the ROM_EXT is faulting because there is no firmware
                 --exec="console --non-interactive --exit-success='BFV:' --exit-failure='PASS|FAIL'"
                 # Construct a firmware image with the bad ROM_EXT
@@ -201,6 +196,7 @@ genrule(
                 --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
                 no-op
             """,
+            testopt_clear_after_test = "True",  # See important note at the top
         ),
     )
     for name, position in _POSITIONS.items()
@@ -220,16 +216,11 @@ genrule(
                 ":boot_test_slot_a": "slot_a",
                 ":boot_test_slot_b": "slot_b",
             },
-            changes_otp = True,  # See important note at the top
             params = config["params"],
             rom_ext = config["rom_ext"],
             setup = config["setup"],
             tags = config["tags"],
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga clear-bitstream"
-                --exec="fpga load-bitstream {bitstream}"
-                --exec="bootstrap --clear-uart=true {firmware}"
                 --exec="console --non-interactive --timeout=100ms"
                 {setup}
                 --exec="no-op --info='##### Set next slot via the rescue protocol'"
@@ -242,6 +233,8 @@ genrule(
                 --exec="console --non-interactive --exit-success='bl0_slot = AA__\r\n' --exit-failure='{exit_failure}'"
                 no-op
             """,
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for protocol, config in _CONFIGS.items()
@@ -260,16 +253,12 @@ genrule(
                 ":boot_test_slot_a": "slot_a",
                 ":boot_test_slot_b": "slot_b",
             },
-            changes_otp = True,  # See important note at the top
             params = config["params"],
             rom_ext = config["rom_ext"],
             setup = config["setup"],
             tags = config["tags"],
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga clear-bitstream"
-                --exec="fpga load-bitstream {bitstream}"
-                --exec="bootstrap --clear-uart=true {firmware}"
+                --exec="console --non-interactive --timeout=100ms"
                 {setup}
                 --exec="no-op --info='##### Set primary slot via the rescue protocol'"
                 --exec="rescue {params} boot-svc set-next-bl0-slot --primary=SlotB"
@@ -285,6 +274,8 @@ genrule(
                 --exec="console --non-interactive --exit-success='bl0_slot = AA__\r\n' --exit-failure='{exit_failure}'"
                 no-op
             """,
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for protocol, config in _CONFIGS.items()
@@ -302,11 +293,8 @@ genrule(
             binaries = {
                 ":boot_test_slot_a": "payload",
             },
-            changes_otp = True,  # See important note at the top
             rate = rate,
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga load-bitstream {bitstream}"
                 --exec="bootstrap --clear-uart=true {rom_ext}"
                 # First make sure the ROM_EXT is faulting because there is no firmware
                 --exec="console --non-interactive --exit-success='BFV:' --exit-failure='PASS|FAIL'"
@@ -316,6 +304,8 @@ genrule(
                 --exec="console --baudrate=115200 --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
                 no-op
             """,
+            testopt_bootstrap = "False",
+            testopt_clear_after_test = "True",  # See important note at the top
         ),
     )
     # FPGA CW310 and CW340 only support the baudrate up to 230K.
@@ -337,11 +327,8 @@ genrule(
             binaries = {
                 ":boot_test_slot_a": "payload",
             },
-            changes_otp = True,  # See important note at the top
             rate = rate,
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga load-bitstream {bitstream}"
                 --exec="bootstrap --clear-uart=true {rom_ext}"
                 # Trigger rescue.
                 --exec="rescue no-op"
@@ -350,6 +337,8 @@ genrule(
                 --exec="console --non-interactive --send='REBO\r' --exit-success='ROM:' --exit-failure='BFV:.*\r\n'"
                 no-op
             """,
+            testopt_bootstrap = "False",
+            testopt_clear_after_test = "True",  # See important note at the top
         ),
     )
     # FPGA CW310 and CW340 only support the baudrate up to 230K.
@@ -372,13 +361,8 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw340_rom_ext": None,
     },
     fpga = fpga_params(
-        changes_otp = True,  # See important note at the top
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_xmodem_timeout",
         test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
-            --exec="bootstrap --clear-uart=true {firmware}"
             # Trigger rescue and do nothing.  We expect the inactivity timer to
             # cause rescue to exit and then boot the firmware.
             --exec="rescue no-op"
@@ -386,6 +370,8 @@ opentitan_test(
             --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
             no-op
         """,
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//sw/device/lib/base:status",
@@ -414,7 +400,6 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw340_rom_ext": None,
     },
     fpga = fpga_params(
-        changes_otp = True,  # See important note at the top
         # We configure OTP to preserve the reset reason and set the watchdog timeout
         # to one second.
         otp = "//sw/device/silicon_creator/rom_ext/e2e:otp_img_secret2_locked_preserve_reset_prod",
@@ -422,10 +407,6 @@ opentitan_test(
         # want to simulate the trigger being jammed.
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_spidfu",
         test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
-            --exec="bootstrap --clear-uart=true {firmware}"
             # Set the trigger with gpio command to simulate the trigger being jammed.
             --exec="gpio set --mode PushPull --value true Ioa2"
             # Check for firmware execution.  We'll enter rescue, timeout,
@@ -433,6 +414,8 @@ opentitan_test(
             --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
             no-op
         """,
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//sw/device/lib/base:status",
@@ -453,15 +436,10 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw340_rom_ext": None,
     },
     fpga = fpga_params(
-        changes_otp = True,  # See important note at the top
         exit_failure = "ok: ",
         exit_success = "error: mode not allowed",
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_xmodem_restricted_commands",
         test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
-            --exec="bootstrap --clear-uart=true {firmware}"
             # Trigger rescue and make sure we can get the device ID.
             --exec="rescue get-device-id --reboot=false"
             # Try the `RESQ` mode and make sure we get an error message.
@@ -470,6 +448,8 @@ opentitan_test(
             --exec="console --non-interactive --send='REBO\r' --exit-success='ROM:' --exit-failure='BFV:.*\r\n'"
             no-op
         """,
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//sw/device/lib/base:status",
@@ -491,20 +471,17 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw340_rom_ext": None,
     },
     fpga = fpga_params(
-        changes_otp = True,  # See important note at the top
         params = "-p spi-dfu -t gpio -v +Ioa2",
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_spidfu_restricted_commands",
         setup = "--exec=\"gpio set --mode OpenDrain Ioa2\"",
         test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
             {setup}
-            --exec="bootstrap --clear-uart=true {firmware}"
             # Trigger rescue and make sure we can get the device ID.
             --exec="rescue {params} get-device-id --reboot=false"
             no-op
         """,
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//sw/device/lib/base:status",
@@ -523,7 +500,6 @@ opentitan_test(
         },
         fpga = fpga_params(
             assemble = "",
-            changes_otp = True,  # See important note at the top
             exit_success = "BFV:05524304\r\n",
             # Wait for at least the rescue timeout + 5 seconds
             rescue_tmo = "{}s".format(config.get("rescue_timeout", 5) + 5),
@@ -534,9 +510,6 @@ opentitan_test(
             setup = config["setup"],
             tags = config["tags"],
             test_cmd = """
-                --exec="transport init"
-                --exec="fpga clear-bitstream"
-                --exec="fpga load-bitstream {bitstream}"
                 {setup}
                 # Load only the ROM_EXT so the boot will fail because of no firmware.
                 --exec="bootstrap --clear-uart=true {rom_ext}"
@@ -544,6 +517,9 @@ opentitan_test(
                 --exec="console --non-interactive --exit-success='{exit_success}' --timeout={rescue_tmo}"
                 no-op
             """,
+            testopt_bootstrap = "False",
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for name, config in _CONFIGS.items()
@@ -558,15 +534,15 @@ opentitan_test(
         },
         fpga = fpga_params(
             assemble = "",
-            changes_otp = True,  # See important note at the top
             params = config["params"],
             rom_ext = config["rom_ext"],
             test_cmd = """
-            --clear-bitstream
             --bootstrap={rom_ext}
             rescue {params} --action=get-boot-log
             """,
             test_harness = "//sw/host/tests/rescue:rescue_test",
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for protocol, config in _CONFIGS.items()
@@ -581,17 +557,17 @@ opentitan_test(
         },
         fpga = fpga_params(
             assemble = "",
-            changes_otp = True,  # See important note at the top
             device_id = DEVICE_ID,
             params = config["params"],
             rom_ext = config["rom_ext"],
             test_cmd = """
-            --clear-bitstream
             --bootstrap={rom_ext}
             --device-id={device_id}
             rescue {params} --action=get-device-id
             """,
             test_harness = "//sw/host/tests/rescue:rescue_test",
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for protocol, config in _CONFIGS.items()
@@ -610,16 +586,15 @@ opentitan_test(
                 config["rom_ext"]: "romext",
                 "//sw/device/silicon_creator/rom_ext/e2e/attestation:print_certs": "firmware",
             },
-            changes_otp = True,  # See important note at the top
             owner_offset = "0x10000",
             params = config["params"],
             romext_offset = "0",
             test_cmd = """
-            --clear-bitstream
-            --bootstrap={firmware}
             rescue {params} --action=get-owner-page
             """,
             test_harness = "//sw/host/tests/rescue:rescue_test",
+            testopt_clear_after_test = "True",  # See important note at the top
+            testopt_clear_before_test = "True",
         ),
     )
     for protocol, config in _CONFIGS.items()
@@ -640,11 +615,11 @@ opentitan_test(
         owner_offset = "0x10000",
         romext_offset = "0",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue --action=disability
         """,
         test_harness = "//sw/host/tests/rescue:rescue_test",
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -660,16 +635,15 @@ opentitan_test(
             "//sw/device/silicon_creator/rom_ext:rom_ext_spidfu_rescue_disability": "romext",
             "//sw/device/silicon_creator/rom_ext/e2e/attestation:print_certs": "firmware",
         },
-        changes_otp = True,  # See important note at the top
         owner_offset = "0x10000",
         params = "-p spi-dfu -t gpio -v +Ioa2",
         romext_offset = "0",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue {params} --action=disability
         """,
         test_harness = "//sw/host/tests/rescue:rescue_test",
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -683,9 +657,6 @@ opentitan_test(
         assemble = "",
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_dice_x509_slot_a",
         test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
             --exec="bootstrap --clear-uart=true {rom_ext}"
             # Trigger rescue and make sure we can get the device ID.
             --exec="rescue get-device-id --reboot=false"
@@ -695,6 +666,8 @@ opentitan_test(
             --exec="console --non-interactive --send='REBO\r' --exit-success='ROM:' --exit-failure='BFV:.*\r\n'"
             no-op
         """,
+        testopt_bootstrap = "False",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -711,10 +684,6 @@ opentitan_test(
             ":boot_test_slot_a": "firmware",
         },
         test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
-            --exec="bootstrap --clear-uart=true {firmware}"
             --exec="console --non-interactive --exit-success='warning: rescue' --exit-failure='{exit_failure}'"
             # Trigger rescue and make sure we can get the device ID even if the protocol specified in the rescue
             # config doesn't match the ROM_EXT implementation.
@@ -723,6 +692,7 @@ opentitan_test(
             --exec="console --non-interactive --send='REBO\r' --exit-success='Finished' --exit-failure='BFV:.*\r\n'"
             no-op
         """,
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -740,11 +710,10 @@ opentitan_test(
         },
         params = "-p spi-dfu -t gpio -v +Ioa2",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue {params} --action=disability
         """,
         test_harness = "//sw/host/tests/rescue:rescue_test",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -761,11 +730,8 @@ opentitan_test(
             "//sw/device/silicon_creator/rom_ext:rom_ext_dice_x509_slot_a": "romext",
             ":boot_test_slot_a": "firmware",
         },
-        test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
-        """,
         test_harness = "//sw/host/tests/rescue:xmodem_rescue_error_handling",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -783,11 +749,10 @@ opentitan_test(
         },
         params = "-p spi-dfu -t gpio -v +Ioa2",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue {params} --action=spi-dfu-state-transitions
         """,
         test_harness = "//sw/host/tests/rescue:dfu_rescue_error_handling",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -805,11 +770,10 @@ opentitan_test(
         },
         params = "-p spi-dfu -t gpio -v +Ioa2",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue {params} --action=invalid-spi-dfu-requests
         """,
         test_harness = "//sw/host/tests/rescue:dfu_rescue_error_handling",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -827,11 +791,10 @@ opentitan_test(
         },
         params = "-p spi-dfu -t gpio -v +Ioa2",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue {params} --action=invalid-spi-flash-transaction
         """,
         test_harness = "//sw/host/tests/rescue:dfu_rescue_error_handling",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -849,11 +812,10 @@ opentitan_test(
         },
         params = "-p usb-dfu -t strap -v 3",
         test_cmd = """
-        --clear-bitstream
-        --bootstrap={firmware}
         rescue {params} --action=usb-dfu-out-chunk-too-big
         """,
         test_harness = "//sw/host/tests/rescue:dfu_rescue_error_handling",
+        testopt_clear_before_test = "True",
     ),
 )
 
@@ -869,17 +831,10 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw340_rom_ext": None,
     },
     fpga = fpga_params(
-        changes_otp = True,  # See important note at the top
         exit_failure = "(FAIL|BFV:|mode: RESQ).*",
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_dice_x509_slot_a",
-        test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
-            --exec="bootstrap --clear-uart=true {firmware}"
-            --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
-            no-op
-        """,
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//sw/device/lib/base:status",
@@ -902,17 +857,10 @@ opentitan_test(
         "//hw/top_earlgrey:fpga_cw340_rom_ext": None,
     },
     fpga = fpga_params(
-        changes_otp = True,  # See important note at the top
         exit_success = "mode: RESQ",
         rom_ext = "//sw/device/silicon_creator/rom_ext:rom_ext_xmodem_enter_on_watchdog",
-        test_cmd = """
-            --exec="transport init"
-            --exec="fpga clear-bitstream"
-            --exec="fpga load-bitstream {bitstream}"
-            --exec="bootstrap --clear-uart=true {firmware}"
-            --exec="console --non-interactive --exit-success='{exit_success}' --exit-failure='{exit_failure}'"
-            no-op
-        """,
+        testopt_clear_after_test = "True",  # See important note at the top
+        testopt_clear_before_test = "True",
     ),
     deps = [
         "//sw/device/lib/base:status",
