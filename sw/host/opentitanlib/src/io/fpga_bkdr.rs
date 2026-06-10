@@ -10,15 +10,20 @@ use crate::app::TransportWrapper;
 use crate::io::jtag::{JtagChain, JtagParams, JtagTap};
 use crate::debug::dmi::{Dmi, OpenOcdDmi};
 
-/// Constants defined by RISC-V Debug Specification 0.13.
-pub mod consts {
-    // Backdoor registers.
-    // Note: register addresses must be divided by 4.
-    // TODO ^ reword above comment slightly to explain in more detail
-    pub const NUM_BKDR_TARGETS: u32 = 0x2;
-    pub const TARGET_INFO_0: u32 = 0x40;
-    pub const WIDTH_INFO_0: u32 = 0x80;
-    pub const DEPTH_INFO_0: u32 = 0xc0;
+/// FPGA Backdoor loader register offsets (byte-addressed).
+/// See hw/ip/bkdr_loader/doc/registers.md
+/// TODO: can we figure out Bazel to use auto-generated IP rust header instead?
+pub mod reg_offsets {
+    pub const STATUS: u32 = 0x0;
+    pub const CONTROL: u32 = 0x4;
+    pub const NUM_BKDR_TARGETS: u32 = 0x8;
+    pub const USR_ACCESS_TIMESTAMP: u32 = 0xc;
+    pub const TARGET_INFO_0: u32 = 0x100;
+    pub const WIDTH_INFO_0: u32 = 0x200;
+    pub const DEPTH_INFO_0: u32 = 0x300;
+    pub const READ_DATA_0: u32 = 0x400;
+    pub const WRITE_DATA_0: u32 = 0x500;
+    pub const INDEX: u32 = 0x600;
 }
 
 /// A struct which represents a backdoor loader interface.
@@ -98,24 +103,36 @@ impl std::fmt::Display for BackdoorTargetInfo {
     }
 }
 
-use consts::*;
-
 /// A struct which represents a backdoor loader connection
 pub struct Backdoor {
     dmi: OpenOcdDmi,
 }
 
 impl Backdoor {
+
+    /// Read from a DMI register with the given byte address offset.
+    /// DMI is a register interface; we must map the byte offsets to register (word) index.
+    fn dmi_read(&mut self, byte_addr: u32) -> Result<u32> {
+        self.dmi.dmi_read(byte_addr >> 2)
+    }
+
+    /// Write a value to a DMI register with the given byte address offset.
+    /// DMI is a register interface; we must map the byte offsets to register (word) index.
+    fn dmi_write(&mut self, byte_addr: u32, data: u32) -> Result<()> {
+        self.dmi.dmi_write(byte_addr >> 2, data)
+    }
+
     /// Retrieve information about the targets available via the backdoor interface.
     pub fn targets(&mut self) -> Result<Vec<BackdoorTargetInfo>> {
         let mut targets = vec![];
-        let num_targets = self.dmi.dmi_read(NUM_BKDR_TARGETS).context("cannot read number of targets")?;
+        let num_targets = self.dmi_read(reg_offsets::NUM_BKDR_TARGETS).context("cannot read number of targets")?;
         log::info!("num targets: {num_targets:?}");
         for idx in 0..num_targets {
+            let addr_offset = idx * 4;
             targets.push(BackdoorTargetInfo {
-                id: self.dmi.dmi_read(TARGET_INFO_0 + idx).context("cannot read target info")?,
-                width: self.dmi.dmi_read(WIDTH_INFO_0 + idx).context("cannot read width info")?,
-                depth: self.dmi.dmi_read(DEPTH_INFO_0 + idx).context("cannot read depth info")?,
+                id: self.dmi_read(reg_offsets::TARGET_INFO_0 + addr_offset).context("cannot read target info")?.into(),
+                width: self.dmi_read(reg_offsets::WIDTH_INFO_0 + addr_offset).context("cannot read width info")?,
+                depth: self.dmi_read(reg_offsets::DEPTH_INFO_0 + addr_offset).context("cannot read depth info")?,
             })
         }
 
