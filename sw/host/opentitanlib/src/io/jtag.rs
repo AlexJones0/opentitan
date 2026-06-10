@@ -134,7 +134,7 @@ pub enum JtagTap {
     /// Lifecycle Controller's TAP.
     LcTap,
     /// Backdoor loader's TAP.
-    BkdrTap,
+    BackdoorTap,
 }
 
 /// List of RISC-V general purpose registers

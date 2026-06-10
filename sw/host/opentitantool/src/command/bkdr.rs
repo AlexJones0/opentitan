@@ -9,14 +9,14 @@ use std::convert::From;
 
 use opentitanlib::app::TransportWrapper;
 use opentitanlib::app::command::CommandDispatch;
-use opentitanlib::io::bkdr::BkdrParams;
+use opentitanlib::io::fpga_bkdr::BackdoorParams;
 
-/// Commands for interacting with the backdoor loader.
+/// Commands for interacting with the backdoor FPGA loader.
 #[derive(Debug, Subcommand, CommandDispatch)]
 pub enum InternalBkdrCommand {
-    /// Enter the backdoor loader, this requires resetting the device.
+    /// Enter the backdoor loader - this *requires* resetting the device.
     Enter(EnterInfo),
-    /// Display information about the backdoor targets.
+    /// Display information about the available backdoor targets
     Info(BkdrInfo),
 }
 
@@ -32,6 +32,7 @@ impl CommandDispatch for EnterInfo {
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
         let _bkdr = context.params.create(transport)?;
+        // TODO: make a common library as well.
         unimplemented!();
     }
 }
@@ -57,7 +58,7 @@ impl CommandDispatch for BkdrInfo {
 #[derive(Debug, Args)]
 pub struct BkdrCommand {
     #[command(flatten)]
-    params: BkdrParams,
+    params: BackdoorParams,
 
     #[command(subcommand)]
     command: InternalBkdrCommand,

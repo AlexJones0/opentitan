@@ -11,6 +11,7 @@ rust_binary(
     name = "opentitantool",
     srcs = [
         "src/command/bfv.rs",
+        # TODO: should this `bkdr` be changed up into an fpga sub-command?
         "src/command/bkdr.rs",
         "src/command/bootstrap.rs",
         "src/command/certificate.rs",

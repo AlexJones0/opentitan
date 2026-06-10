@@ -2,8 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod bkdr;
 pub mod console;
+pub mod fpga_bkdr;
 pub mod eeprom;
 pub mod emu;
 pub mod gpio;
