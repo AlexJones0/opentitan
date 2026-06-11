@@ -168,6 +168,7 @@ def _get_test_commands(ctx, param, exec_env):
     if _get_bool(param, "testopt_clear_before_test"):
         test_setup_cmd.append('--exec="fpga clear-bitstream"')
     test_setup_cmd.append('--exec="fpga load-bitstream {bitstream}"')
+
     # TODO reset with DFT strap
     # FIXME just an example, CLI needs to be defined
     test_setup_cmd.append('--exec="bkdr rom={rom} otp={otp}"')
@@ -208,7 +209,7 @@ def _test_dispatch(ctx, exec_env, firmware):
     for k in dir(exec_env):
         print("- {}: {}".format(k, getattr(exec_env, k)))
     print("actions params:")
-    for (k,v) in action_param.items():
+    for (k, v) in action_param.items():
         print("- {}: {}".format(k, v))
 
     # If the test requested an assembled image, then use opentitantool to

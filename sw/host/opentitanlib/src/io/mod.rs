@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod console;
-pub mod fpga_bkdr;
 pub mod eeprom;
 pub mod emu;
+pub mod fpga_bkdr;
 pub mod gpio;
 pub mod i2c;
 pub mod ioexpander;
