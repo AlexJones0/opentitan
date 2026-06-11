@@ -67,13 +67,13 @@ pub struct BackdoorTap<'a> {
 
 impl BackdoorTap<'_> {
     /// Connect to backdoor TAP.
-    pub fn connect(self) -> Result<Backdoor> {
+    pub fn connect(self, enumerate: bool) -> Result<Backdoor> {
         // TODO: do we need to depend on openocd specifically, or can we use the JTAG
         // abstraction? I think that we probbly to to be able to instantiate an `OpenOcdDmi`,
         // but this seems like a failure of the DMI interface - is it not possible to create
         // a `dyn Dmi` from the `dyn Jtag` abstraction?
         let openocd = self.jtag.connect(JtagTap::BackdoorTap)?.into_raw()?;
-        Backdoor::new(OpenOcdDmi::new(openocd, "bkdr.tap")?)
+        Backdoor::new(OpenOcdDmi::new(openocd, "bkdr.tap")?, enumerate)
     }
 }
 
@@ -251,12 +251,15 @@ pub struct Backdoor {
 
 impl Backdoor {
     /// TODO
-    pub fn new(dmi: OpenOcdDmi) -> Result<Self> {
+    pub fn new(dmi: OpenOcdDmi, enumerate: bool) -> Result<Self> {
         let mut fpga_bkdr = Self {
             dmi,
             targets: Vec::new(),
         };
-        fpga_bkdr.enumerate()?;
+
+        if enumerate {
+            fpga_bkdr.enumerate()?;
+        }
 
         Ok(fpga_bkdr)
     }
@@ -302,8 +305,15 @@ impl Backdoor {
 
     /// TODO
     pub fn set_done(&mut self) -> Result<()> {
-        self.dmi_write(regs::CONTROL_REG_OFFSET, 0b1 << regs::CONTROL_DONE_BIT)
-            .context("cannot write to control register")
+        // We typically expect to see an error here due to a DMI operation fail. This is
+        // because, when our write to `CTRL.DONE` goes through and the bkdr_loader enters
+        // mission mode, it immediately switches the routing of the upstream JTAG port
+        // back to the downstream JTAG (rather than the internal backdoor debug module).
+        // This means that we won't see the expected response - we're now talking to a
+        // completely different debug module.
+        let _ = self.dmi_write(regs::CONTROL_REG_OFFSET, 0b1 << regs::CONTROL_DONE_BIT);
+
+        Ok(())
     }
 
     /// Retrieve information about all of the targets available via the backdoor interface.

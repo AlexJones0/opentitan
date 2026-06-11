@@ -60,7 +60,7 @@ impl CommandDispatch for StartInfo {
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
         let bkdr = context.params.create(transport)?;
-        let mut bkdr = bkdr.connect()?;
+        let mut bkdr = bkdr.connect(false)?;
         bkdr.set_done()?;
 
         Ok(None)
@@ -81,7 +81,7 @@ impl CommandDispatch for BkdrInfo {
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
         let bkdr = context.params.create(transport)?;
-        let mut bkdr = bkdr.connect()?;
+        let mut bkdr = bkdr.connect(true)?;
 
         let info: Box<dyn erased_serde::Serialize> = match &self.target {
             Some(id_str) => {
@@ -271,7 +271,7 @@ impl CommandDispatch for TestInfo {
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
         let bkdr = context.params.create(transport)?;
-        let mut bkdr = bkdr.connect()?;
+        let mut bkdr = bkdr.connect(true)?;
         let mut rom_bkdr = bkdr
             .target_by_id_str("ROM")?
             .context("Could not find ROM target for testing")?;
