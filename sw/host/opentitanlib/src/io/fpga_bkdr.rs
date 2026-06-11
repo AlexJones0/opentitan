@@ -9,6 +9,7 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 use crate::app::TransportWrapper;
 use crate::debug::dmi::{Dmi, OpenOcdDmi};
 use crate::io::jtag::{JtagChain, JtagParams, JtagTap};
+use crate::transport::Capability;
 
 /// FPGA Backdoor loader register offsets (byte-addressed) and field definitions.
 /// See hw/ip/bkdr_loader/doc/registers.md
@@ -40,6 +41,20 @@ pub mod regs {
     // See hw/ip/bkdr_loader/doc/interfaces.md
     pub const MAX_NUM_TARGETS: usize = 12; // NumBkdrTargets
     pub const DATA_REGS_PER_WORD: usize = 8; // MaxWordWidthDiv32
+}
+
+/// Reset with the bkdr_loader TAP strapping applied and enter the loader.
+pub fn enter_backdoor_loader(transport: &TransportWrapper) -> Result<()> {
+    transport.capabilities()?.request(Capability::GPIO).ok()?;
+    let pinmux_tap_bkdr = transport.pin_strapping("PINMUX_TAP_BKDR")?;
+    let reset = transport.pin_strapping("RESET")?;
+
+    pinmux_tap_bkdr.apply()?;
+    reset.apply()?;
+    reset.remove()?;
+    pinmux_tap_bkdr.remove()?;
+
+    Ok(())
 }
 
 /// A struct which represents a backdoor loader interface.
@@ -283,6 +298,12 @@ impl Backdoor {
         }
 
         Ok(())
+    }
+
+    /// TODO
+    pub fn set_done(&mut self) -> Result<()> {
+        self.dmi_write(regs::CONTROL_REG_OFFSET, 0b1 << regs::CONTROL_DONE_BIT)
+            .context("cannot write to control register")
     }
 
     /// Retrieve information about all of the targets available via the backdoor interface.

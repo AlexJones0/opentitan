@@ -27,7 +27,7 @@ pub struct LoadBitstream {
 
     /// Load the bitstream, regardless of a matching USR_ACCESS.
     #[arg(long)]
-    pub force: bool
+    pub force: bool,
 }
 
 impl CommandDispatch for LoadBitstream {
