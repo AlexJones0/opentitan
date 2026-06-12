@@ -70,8 +70,16 @@ struct Span {
 pub struct VmemParser;
 
 impl VmemParser {
-    /// Parse a complete vmem file from a string.
-    pub fn parse(mut s: &str) -> ParseResult<Vmem> {
+    /// Parse a complete VMEM file from a string.
+    ///
+    /// If word_bytes = Some(n) is given, then the VMEM is interpreted such that each
+    /// word is `n` bytes, and the stride is 1 byte per address. The SREC Verilog VMEM format
+    /// operates on units of bytes, so word sizes that are not byte-divisible will be zero-
+    /// extended (in the MSBs).
+    ///
+    /// If word_bytes = None is given, then the VMEM is interpreted such that the stride
+    /// is 1 word per address.
+    pub fn parse(mut s: &str, word_bytes: Option<usize>) -> ParseResult<Vmem> {
         // Build up the vmem file as sections.
         let mut vmem = Vmem::default();
         vmem.sections.push(Section::default());
@@ -87,7 +95,7 @@ impl VmemParser {
                     // Add a new section to the `Vmem` at this address.
                     // Here we translate between a "word index" to a byte address.
                     vmem.sections.push(Section {
-                        addr: addr * 4,
+                        addr: addr * word_bytes.unwrap_or(1) as u32,
                         data: Vec::new(),
                     });
                 }
@@ -243,7 +251,7 @@ mod test {
             ],
         };
 
-        assert_eq!(VmemParser::parse(input).unwrap(), expected);
+        assert_eq!(VmemParser::parse(input, Some(4)).unwrap(), expected);
     }
 
     #[test]
@@ -372,4 +380,6 @@ mod test {
         // Entirely whitespace:
         assert_eq!(VmemParser::parse_whitespace(" 	").unwrap(), expected);
     }
+
+    // TODO: add new tests for word_bytes functionality. Completely untested for now.
 }

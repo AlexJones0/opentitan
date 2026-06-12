@@ -10,6 +10,7 @@ use crate::app::TransportWrapper;
 use crate::debug::dmi::{Dmi, OpenOcdDmi};
 use crate::io::jtag::{JtagChain, JtagParams, JtagTap};
 use crate::transport::Capability;
+use crate::util::vmem::Word;
 
 /// FPGA Backdoor loader register offsets (byte-addressed) and field definitions.
 /// See hw/ip/bkdr_loader/doc/registers.md
@@ -140,10 +141,6 @@ impl std::fmt::Display for BackdoorTargetInfo {
     }
 }
 
-// TODO: one word of arbitrary width; note invariant
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Word(pub Box<[u8]>);
-
 impl Word {
     //fn from_bytes_unchecked(bytes: &[u8]) -> Self {
     //    Self(bytes.to_vec().into_boxed_slice())
@@ -185,7 +182,7 @@ impl Word {
         //     *msb &= 0xFFu8 >> spare_bits;
         // }
 
-        Self(bytes.into_boxed_slice())
+        Self(bytes)
     }
 }
 
@@ -212,7 +209,13 @@ pub struct BackdoorTarget<'a> {
 
 impl<'a> BackdoorTarget<'a> {
     /// TODO
-    pub fn write(&mut self, start: u32, words: &[Word], write_all: bool) -> Result<()> {
+    pub fn write(
+        &mut self,
+        start: u32,
+        words: &[Word],
+        write_all: bool,
+        check_status: bool,
+    ) -> Result<()> {
         if start + words.len() as u32 > self.info.depth {
             bail!(
                 "fpga bkdr_loader write of len {:#x} to word {:#x} of {} is out of bounds (depth: {:#x})",
@@ -222,12 +225,18 @@ impl<'a> BackdoorTarget<'a> {
                 self.info.depth
             );
         }
-        self.backdoor
-            .write_target(self.index, &self.info, start, words, write_all)
+        self.backdoor.write_target(
+            self.index,
+            &self.info,
+            start,
+            words,
+            write_all,
+            check_status,
+        )
     }
 
     /// TODO
-    pub fn read(&mut self, start: u32, count: u32) -> Result<Vec<Word>> {
+    pub fn read(&mut self, start: u32, count: u32, check_status: bool) -> Result<Vec<Word>> {
         // TODO: checks here, or in the backdoor?
         if start + count > self.info.depth {
             bail!(
@@ -239,7 +248,7 @@ impl<'a> BackdoorTarget<'a> {
             );
         }
         self.backdoor
-            .read_target(self.index, &self.info, start, count)
+            .read_target(self.index, &self.info, start, count, check_status)
     }
 }
 
@@ -347,6 +356,7 @@ impl Backdoor {
         start: u32,
         words: &[Word],
         write_all: bool,
+        check_status: bool,
     ) -> Result<()> {
         let width = info.width as usize;
         let regs_used = width.div_ceil(32);
@@ -383,16 +393,18 @@ impl Backdoor {
 
             self.dmi_write(regs::INDEX_REG_OFFSET, word_idx)
                 .context("cannot write (word) index")?;
-            let status = self
-                .dmi_read(regs::STATUS_REG_OFFSET)
-                .context("cannot read status")?;
-            if status & (0b1 << regs::STATUS_ERROR_BIT) != 0 {
-                bail!(
-                    "FPGA bkdr_loader reported an error writing {:08x?} to word idx {:?} of target {}",
-                    &regs[..regs_used],
-                    word_idx,
-                    info.id_str()
-                );
+            if check_status {
+                let status = self
+                    .dmi_read(regs::STATUS_REG_OFFSET)
+                    .context("cannot read status")?;
+                if status & (0b1 << regs::STATUS_ERROR_BIT) != 0 {
+                    bail!(
+                        "FPGA bkdr_loader reported an error writing {:08x?} to word idx {:?} of target {}",
+                        &regs[..regs_used],
+                        word_idx,
+                        info.id_str()
+                    );
+                }
             }
 
             first = false;
@@ -409,6 +421,7 @@ impl Backdoor {
         info: &BackdoorTargetInfo,
         start: u32,
         count: u32,
+        check_status: bool,
     ) -> Result<Vec<Word>> {
         let width = info.width as usize;
         let regs_used = width.div_ceil(32);
@@ -430,15 +443,17 @@ impl Backdoor {
         for word_idx in start..(start + count) {
             self.dmi_write(regs::INDEX_REG_OFFSET, word_idx)
                 .context("cannot write (word) index")?;
-            let status = self
-                .dmi_read(regs::STATUS_REG_OFFSET)
-                .context("cannot read status")?;
-            if status & (0b1 << regs::STATUS_ERROR_BIT) != 0 {
-                bail!(
-                    "FPGA bkdr_loader reported an error reading from word idx {:?} of target {}",
-                    word_idx,
-                    info.id_str()
-                );
+            if check_status {
+                let status = self
+                    .dmi_read(regs::STATUS_REG_OFFSET)
+                    .context("cannot read status")?;
+                if status & (0b1 << regs::STATUS_ERROR_BIT) != 0 {
+                    bail!(
+                        "FPGA bkdr_loader reported an error reading from word idx {:?} of target {}",
+                        word_idx,
+                        info.id_str()
+                    );
+                }
             }
 
             let mut regs = [0u32; regs::DATA_REGS_PER_WORD];

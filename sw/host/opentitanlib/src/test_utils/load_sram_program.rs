@@ -4,7 +4,6 @@
 
 use std::fs;
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::time::Duration;
 
 use anyhow::{Context, Result, ensure};
@@ -175,7 +174,7 @@ pub fn load_vmem_sram_program(
 ) -> Result<SramProgramInfo> {
     log::info!("Loading VMEM file {}", vmem_filename.display());
     let vmem_content = fs::read_to_string(vmem_filename)?;
-    let mut vmem = Vmem::from_str(&vmem_content)?;
+    let mut vmem = Vmem::from_str(&vmem_content, Some(WORD_SIZE_BYTES))?;
     vmem.merge_sections(Some(WORD_SIZE_BYTES));
 
     log::info!("Uploading program to SRAM at {:x}", load_addr);

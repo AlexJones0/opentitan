@@ -7,7 +7,6 @@
 //! This includes the [`Vmem'] representation which can be parsed from a string.
 
 use std::iter;
-use std::str::FromStr;
 
 mod parser;
 
@@ -31,15 +30,22 @@ pub struct Section {
 
 /// A singular word to assign to some element of memory - the width/size of a word depends on
 /// what the VMEM is being read into.
+/// TODO: maybe should be a Box<u8> instead?
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Word(pub Vec<u8>);
 
-impl FromStr for Vmem {
-    type Err = ParseError;
-
-    /// Parse the vmem file from a complete string.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        VmemParser::parse(s)
+impl Vmem {
+    /// Parse a complete VMEM file from a string.
+    ///
+    /// If word_bytes = Some(n) is given, then the VMEM is interpreted such that each
+    /// word is `n` bytes, and the stride is 1 byte per address. The SREC Verilog VMEM format
+    /// operates on units of bytes, so word sizes that are not byte-divisible will be zero-
+    /// extended (in the MSBs).
+    ///
+    /// If word_bytes = None is given, then the VMEM is interpreted such that the stride
+    /// is 1 word per address.
+    pub fn from_str(s: &str, word_bytes: Option<usize>) -> Result<Self, ParseError> {
+        VmemParser::parse(s, word_bytes)
     }
 }
 
@@ -85,11 +91,7 @@ impl Vmem {
             match res.last_mut() {
                 Some(ref mut last) => {
                     let nwords = last.data.len() as u32;
-                    let size = if let Some(b) = word_bytes {
-                        nwords * b as u32
-                    } else {
-                        nwords
-                    };
+                    let size = nwords * word_bytes.unwrap_or(1) as u32;
                     if last.addr + size == sec.addr {
                         last.data.append(&mut sec.data)
                     } else {
@@ -123,7 +125,7 @@ mod test {
 
     #[test]
     fn vmem_data() {
-        let vmem = Vmem::from_str("@10 12 23 34 @20 @26 45").unwrap();
+        let vmem = Vmem::from_str("@10 12 23 34 @20 @26 45", Some(4)).unwrap();
         let expected =
             [(0x40, 0x12), (0x44, 0x23), (0x48, 0x34), (0x98, 0x45)].map(|(addr, value)| Data {
                 addr,
