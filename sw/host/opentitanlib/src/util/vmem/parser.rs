@@ -18,7 +18,7 @@ use std::num::ParseIntError;
 
 use thiserror::Error;
 
-use super::{Section, Vmem};
+use super::{Section, Vmem, Word};
 
 pub type ParseResult<T> = Result<T, ParseError>;
 
@@ -28,6 +28,9 @@ pub enum ParseError {
     /// Failure to parse an integer from hexadecimal.
     #[error("failed to parse as hexadecimal integer")]
     ParseInt(#[from] ParseIntError),
+
+    #[error("failed to parse as hexadecimal integer")]
+    DecodeHex,
 
     /// An opened comment was not closed.
     #[error("unclosed comment")]
@@ -42,14 +45,14 @@ pub enum ParseError {
     UnknownChar(char),
 }
 /// Representation of the possible tokens found in vmem files.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Token {
     /// End of file.
     Eof,
     /// Address directive, e.g. `@123abc`.
     Addr(u32),
     /// Data value, e.g. `abc123`.
-    Value(u32),
+    Value(Vec<u8>),
     /// Comments, e.g. `/* comment */` or `// comment`.
     Comment,
     /// Whitespace, including newlines.
@@ -57,7 +60,7 @@ enum Token {
 }
 
 /// Some span of the input text representing a token.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Span {
     token: Token,
     len: usize,
@@ -91,7 +94,7 @@ impl VmemParser {
                 Token::Value(value) => {
                     // Add the value to the current (last added) section's data.
                     let section = vmem.sections.last_mut().unwrap();
-                    section.data.push(value)
+                    section.data.push(Word(value))
                 }
                 // Whitespace and comments are ignored.
                 Token::Whitespace => continue,
@@ -166,8 +169,14 @@ impl VmemParser {
             Some(len) => len,
             None => s.len(),
         };
+        let s = if len % 2 == 1 {
+            format!("0{s}")
+        } else {
+            s.to_string()
+        };
 
-        let val = u32::from_str_radix(&s[..len], 16)?;
+        // TODO: clean up, do this nicer
+        let val = hex::decode(&s[..len.div_ceil(2) * 2]).map_err(|_| ParseError::DecodeHex)?;
         let token = Token::Value(val);
         let span = Span { token, len };
 
@@ -225,11 +234,11 @@ mod test {
             sections: vec![
                 Section {
                     addr: 0x00,
-                    data: vec![0xAB, 0xCD, 0xEF],
+                    data: vec![Word(vec![0xAB]), Word(vec![0xCD]), Word(vec![0xEF])],
                 },
                 Section {
                     addr: 0x108,
-                    data: vec![0x12, 0x34],
+                    data: vec![Word(vec![0x12]), Word(vec![0x34])],
                 },
             ],
         };
@@ -243,7 +252,7 @@ mod test {
         let expected = [
             ("", Token::Eof, 0),
             ("@ff", Token::Addr(0xff), 3),
-            ("ff", Token::Value(0xff), 2),
+            ("12345678", Token::Value(vec![0x12, 0x34, 0x56, 0x78]), 8),
             ("// X", Token::Comment, 4),
             ("/* X */", Token::Comment, 7),
             (" 	", Token::Whitespace, 2),
@@ -299,9 +308,10 @@ mod test {
         // No value:
         assert_eq!(VmemParser::parse_value("/* X */").unwrap(), None);
 
+        let token = Token::Value(vec![0x01, 0x23, 0xab, 0xcd]);
         let expected = Some(Span {
             len: 8,
-            token: Token::Value(0x0123abcd),
+            token: token.clone(),
         });
         // Partially a value:
         assert_eq!(VmemParser::parse_value("0123ABCD FF").unwrap(), expected);
@@ -310,8 +320,16 @@ mod test {
         // Lower-case hex characters:
         assert_eq!(VmemParser::parse_value("0123abcd").unwrap(), expected);
 
-        // u32 overflow:
-        assert!(VmemParser::parse_value("123456789").is_err());
+        // Odd number of nibbles:
+        let expected = Some(Span { len: 7, token });
+        assert_eq!(VmemParser::parse_value("123ABCD").unwrap(), expected);
+
+        // Word sizes larger than u32:
+        let expected = Some(Span {
+            len: 10,
+            token: Token::Value(vec![0x01, 0x23, 0xab, 0xcd, 0xef]),
+        });
+        assert_eq!(VmemParser::parse_value("0123abcdef").unwrap(), expected);
     }
 
     #[test]
