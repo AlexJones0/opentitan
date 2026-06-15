@@ -12,8 +12,10 @@ use std::str::FromStr;
 
 use opentitanlib::app::TransportWrapper;
 use opentitanlib::app::command::CommandDispatch;
-use opentitanlib::io::fpga_bkdr::{BackdoorParams, enter_backdoor_loader};
-use opentitanlib::util::vmem::{Section, Vmem, Word};
+use opentitanlib::io::fpga_bkdr::{
+    BackdoorParams, enter_backdoor_loader, load_raw_words, load_vmem_words,
+};
+use opentitanlib::util::vmem::{Section, Word};
 
 /// Commands for interacting with the backdoor FPGA loader.
 #[derive(Debug, Subcommand, CommandDispatch)]
@@ -167,8 +169,8 @@ pub enum WriteInput {
     Hex(HexInput),
     /// Write data from a Verilog VMEM file
     Vmem(VmemInput),
-    ///// Write data from a raw binary file
-    //Bin(BinInput),
+    /// Write data from a raw binary file
+    Bin(BinInput),
 }
 
 #[derive(Args, Debug)]
@@ -184,23 +186,61 @@ pub struct VmemInput {
     pub path: PathBuf,
 }
 
-//#[derive(Args, Debug)]
-//pub struct BinInput {
-//    /// Path to the raw binary file.
-//    pub path: PathBuf,
-//
-//    /// The number of bits in each word.
-//    #[arg(long, default_value = 32)]
-//    pub word_bits: usize,
-//
-//    /// Whether words in the binary are tightly packed or not.
-//    #[arg(long)]
-//    pub packed: bool,
-//
-//    /// If true, read in little-endian bit order instead.
-//    #[arg(long)]
-//    pub swap_bits: bool
-//}
+#[derive(Args, Debug)]
+pub struct BinInput {
+    /// Path to the raw binary file.
+    pub path: PathBuf,
+
+    /// The number of bits in each word.
+    #[arg(long, default_value_t = 32)]
+    pub bits_per_word: usize,
+
+    /// Whether words in the binary are tightly packed or not (i.e. byte-aligned).
+    #[arg(long)]
+    pub packed: bool,
+
+    /// If true, read bits in an MSB-first order.
+    #[arg(long)]
+    pub swap_bits: bool,
+
+    /// If true, read bytes of words in a big-endian order.
+    #[arg(long)]
+    pub swap_bytes: bool,
+}
+
+impl WriteInfo {
+    fn left_trim_zeroes(word: &mut Word) {
+        match word.0.iter().position(|&x| x != 0) {
+            Some(i) => {
+                word.0.drain(0..i);
+            }
+            None => {
+                word.0.clear();
+            }
+        };
+    }
+
+    fn load_hex_words(hex: &HexInput) -> Result<Vec<Section>> {
+        let words = hex
+            .data
+            .split_whitespace()
+            .map(|word| {
+                let normalized = if word.len() % 2 != 0 {
+                    format!("0{word}")
+                } else {
+                    word.to_string()
+                };
+
+                Ok(Word(hex::decode(&normalized)?))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(vec![Section {
+            addr: 0,
+            data: words,
+        }])
+    }
+}
 
 impl CommandDispatch for WriteInfo {
     fn run(
@@ -212,35 +252,24 @@ impl CommandDispatch for WriteInfo {
 
         // Parse the input, which will depend on the given input type.
         let mut sections: Vec<Section> = match &self.input {
-            WriteInput::Hex(hex) => {
-                let words = hex
-                    .data
-                    .split_whitespace()
-                    .map(|word| {
-                        let normalized = if word.len() % 2 != 0 {
-                            format!("0{word}")
-                        } else {
-                            word.to_string()
-                        };
-
-                        Ok(Word(hex::decode(&normalized)?))
-                    })
-                    .collect::<Result<Vec<_>>>()?;
-
-                vec![Section {
-                    addr: 0,
-                    data: words,
-                }]
-            }
+            WriteInput::Hex(hex) => WriteInfo::load_hex_words(hex)?,
             WriteInput::Vmem(vmem) => {
                 log::info!("Loading VMEM file: {}", vmem.path.display());
                 let vmem_content = fs::read_to_string(&vmem.path)?;
-                //println!("{}", vmem_content);
-                let mut vmem = Vmem::from_str(&vmem_content, None)?;
-                //println!("{:?}", vmem);
-                vmem.merge_sections(None); // TODO: keep or remove? Need to test either way
-                vmem.sections().cloned().collect()
-            } //WriteInput::Bin(bin_path) => {},
+                load_vmem_words(&vmem_content)?
+            }
+            WriteInput::Bin(bin) => {
+                log::info!("Loading raw binary: {}", bin.path.display());
+                let bytes = fs::read(&bin.path)?;
+                let data = load_raw_words(
+                    &bytes,
+                    bin.bits_per_word,
+                    bin.packed,
+                    bin.swap_bits,
+                    bin.swap_bytes,
+                );
+                vec![Section { addr: 0, data }]
+            }
         };
 
         // If an offset is given, all sections must be offset by that amount.
@@ -267,19 +296,14 @@ impl CommandDispatch for WriteInfo {
                 self.target
             );
             target.write(section.addr, &section.data, false, false)?;
+
             if self.verify {
                 let readback = target.read(section.addr, section.data.len() as u32, false)?;
-                for (write_word, read_word) in readback.into_iter().zip(section.data) {
-                    let write_word = write_word
-                        .0
-                        .iter()
-                        .skip_while(|&x| *x == 0)
-                        .collect::<Vec<_>>();
-                    let read_word = read_word
-                        .0
-                        .iter()
-                        .skip_while(|&x| *x == 0)
-                        .collect::<Vec<_>>();
+
+                for (mut write_word, mut read_word) in readback.into_iter().zip(section.data) {
+                    WriteInfo::left_trim_zeroes(&mut write_word);
+                    WriteInfo::left_trim_zeroes(&mut read_word);
+
                     if write_word != read_word {
                         bail!(
                             "Readback of written data failed. Expected: {:?}, Got: {:?}",

@@ -10,7 +10,7 @@ use crate::app::TransportWrapper;
 use crate::debug::dmi::{Dmi, OpenOcdDmi};
 use crate::io::jtag::{JtagChain, JtagParams, JtagTap};
 use crate::transport::Capability;
-use crate::util::vmem::Word;
+use crate::util::vmem::{Section, Vmem, Word};
 
 /// FPGA Backdoor loader register offsets (byte-addressed) and field definitions.
 /// See hw/ip/bkdr_loader/doc/registers.md
@@ -142,24 +142,15 @@ impl std::fmt::Display for BackdoorTargetInfo {
 }
 
 impl Word {
-    //fn from_bytes_unchecked(bytes: &[u8]) -> Self {
-    //    Self(bytes.to_vec().into_boxed_slice())
-    //}
-
-    //pub fn zero(byte_len: usize) -> Self {
-    //    Self(vec![0u8; byte_len].into_boxed_slice())
-    //}
-
-    //pub fn as_bytes(&self) -> &[u8] {
-    //    &self.0
-    //}
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
 
     // TODO: is this needed? Or am I missing something?
     pub fn to_u32_chunks(&self) -> [u32; regs::DATA_REGS_PER_WORD] {
         let mut chunks = [0u32; regs::DATA_REGS_PER_WORD];
-        let bytes = &self.0;
 
-        for (i, &b) in bytes.iter().rev().enumerate() {
+        for (i, &b) in self.as_bytes().iter().rev().enumerate() {
             let chunk_idx = i / 4;
             let byte_pos = i % 4;
             chunks[chunk_idx] |= (b as u32) << (byte_pos * 8);
@@ -187,17 +178,69 @@ impl Word {
 }
 
 /// TODO
-pub fn word_regions_from_vmem(
-    _target_info: &BackdoorTargetInfo,
-    _input: &str,
-    _zero_gaps: bool,
-) -> Result<Vec<(u32, Vec<Word>)>> {
-    unimplemented!();
+pub fn load_vmem_words(vmem: &str) -> Result<Vec<Section>> {
+    let mut vmem = Vmem::from_str(&vmem, None)?;
+    vmem.merge_sections(None); // TODO: need to test
+    Ok(vmem.sections().cloned().collect())
 }
 
-/// TODO
-pub fn words_from_blob(_target_info: &BackdoorTargetInfo, _bytes: &[u8]) -> Result<Vec<Word>> {
-    unimplemented!();
+/// TODO - entirely untested
+pub fn load_raw_words(
+    data: &[u8],
+    bits_per_word: usize,
+    packed: bool,
+    msb_first: bool,
+    big_endian: bool,
+) -> Vec<Word> {
+    let mut parsed_words = Vec::new();
+
+    let byte_len = bits_per_word.div_ceil(8);
+    let total_bits = data.len() * 8;
+    let mut bit_index = 0;
+
+    while bit_index < total_bits {
+        let mut word = vec![0u8; byte_len];
+
+        for word_bit_index in 0..bits_per_word {
+            let bit_pos = if packed {
+                bit_index + word_bit_index
+            } else {
+                // Jump to the next byte boundary if not packed.
+                bit_index.div_ceil(8) * 8 + word_bit_index
+            };
+            let bit = if bit_pos < total_bits {
+                if msb_first {
+                    (data[bit_pos / 8] >> (7 - (bit_pos % 8))) & 1
+                } else {
+                    (data[bit_pos / 8] >> (bit_pos % 8)) & 1
+                }
+            } else {
+                0
+            };
+
+            let swapped_byte_index = if big_endian {
+                byte_len - 1 - (word_bit_index / 8)
+            } else {
+                word_bit_index / 8
+            };
+            let swapped_bit_index = if msb_first {
+                7 - (word_bit_index % 8)
+            } else {
+                word_bit_index % 8
+            };
+
+            word[swapped_byte_index] |= bit << swapped_bit_index;
+        }
+
+        parsed_words.push(Word(word));
+        bit_index = if packed {
+            bit_index + bits_per_word
+        } else {
+            bit_index.div_ceil(8) * 8 + bits_per_word
+        };
+    }
+
+    parsed_words
 }
 
 /// TODO: Information about a backdoor loader target
