@@ -28,7 +28,7 @@ pub mod regs {
     pub const CONTROL_TARGET_IDX_MASK: u32 = 0xff;
     pub const CONTROL_TARGET_IDX_OFFSET: usize = 8;
 
-    // Other registers (all have 1 32-bit `VAL` field)
+    // Other registers (all have one 32-bit `VAL` field)
     pub const NUM_BKDR_TARGETS_REG_OFFSET: usize = 0x8;
     pub const USR_ACCESS_TIMESTAMP_REG_OFFSET: usize = 0xc;
     pub const TARGET_INFO_0_REG_OFFSET: usize = 0x100;
@@ -67,12 +67,8 @@ pub struct BackdoorTap<'a> {
 }
 
 impl BackdoorTap<'_> {
-    /// Connect to backdoor TAP.
+    /// Connect to the backdoor TAP.
     pub fn connect(self, enumerate: bool) -> Result<Backdoor> {
-        // TODO: do we need to depend on openocd specifically, or can we use the JTAG
-        // abstraction? I think that we probbly to to be able to instantiate an `OpenOcdDmi`,
-        // but this seems like a failure of the DMI interface - is it not possible to create
-        // a `dyn Dmi` from the `dyn Jtag` abstraction?
         let openocd = self.jtag.connect(JtagTap::BackdoorTap)?.into_raw()?;
         Backdoor::new(OpenOcdDmi::new(openocd, "bkdr.tap")?, enumerate)
     }
@@ -80,7 +76,7 @@ impl BackdoorTap<'_> {
 
 #[derive(Debug, Args, Clone)]
 pub struct BackdoorParams {
-    // We need JTAG parameters to connect to the TAP.
+    /// Jtag options to apply to the backdoor TAP.
     #[command(flatten)]
     jtag: JtagParams,
 }
@@ -96,7 +92,7 @@ impl BackdoorParams {
 /// Information about a specific backdoor target, e.g. OTP, ROM, SRAM.
 #[derive(Debug, Clone)]
 pub struct BackdoorTargetInfo {
-    /// The unique identifier for the backdoor target
+    /// The unique identifier of the backdoor target
     pub id: u32,
     /// The word width of the memory of the backdoor target.
     pub width: u32,

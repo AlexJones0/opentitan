@@ -7,6 +7,7 @@ use clap::{Args, Subcommand};
 use std::any::Any;
 use std::convert::From;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -140,8 +141,83 @@ impl CommandDispatch for ReadInfo {
         transport: &TransportWrapper,
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
-        let _bkdr = context.params.create(transport)?;
-        unimplemented!()
+
+        // Connect to the backdoor and try and find the requested target.
+        let bkdr = context.params.create(transport)?;
+        let mut bkdr = bkdr.connect(true)?;
+        let mut target = bkdr
+            .target_by_id_str(&self.target)?
+            .context(format!("FPGA target '{}' not found", self.target))?;
+
+        // Perform the read
+        log::debug!(
+            "Reading {} words at offset {} from target {}...",
+            self.words,
+            self.start,
+            self.target
+        );
+        let words = target.read(self.start, self.words, true)?;
+
+        let mut out: Box<dyn Write> = if let Some(out_path) = &self.output {
+            Box::new(std::fs::File::create(out_path)?)
+        } else {
+            Box::new(std::io::stdout())
+        };
+
+        // TODO: untested, check and fix
+        match self.format {
+            DataFormat::Hex => {
+                write!(
+                    out,
+                    "{}",
+                    words
+                        .into_iter()
+                        .map(|w| hex::encode(w.0))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                )?;
+            }
+            DataFormat::Raw => {
+                for word in words {
+                    out.write_all(&word.0)?;
+                }
+            }
+            DataFormat::Vmem => {
+                let num_words = words.len();
+                let addr_width = (num_words - 1).to_string().len();
+
+                let num_bytes = target.info.width.div_ceil(8);
+                let word_width = (num_bytes * 2) as usize;
+
+                write!(
+                    out,
+                    "// {} memory file with {} x {} bit layout ({} x {} bytes)",
+                    target.info.id_str(),
+                    target.info.width,
+                    target.info.depth,
+                    num_bytes,
+                    target.info.depth
+                )?;
+                write!(
+                    out,
+                    "{}",
+                    words
+                        .into_iter()
+                        .enumerate()
+                        .map(|(index, word)| {
+                            format!(
+                                "@{:0addr_width$} {:0>word_width$}",
+                                index,
+                                hex::encode(word.0)
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                )?;
+            }
+        }
+
+        Ok(None)
     }
 }
 
@@ -170,7 +246,7 @@ pub enum WriteInput {
     /// Write data from a Verilog VMEM file
     Vmem(VmemInput),
     /// Write data from a raw binary file
-    Bin(BinInput),
+    Raw(RawInput),
 }
 
 #[derive(Args, Debug)]
@@ -187,7 +263,7 @@ pub struct VmemInput {
 }
 
 #[derive(Args, Debug)]
-pub struct BinInput {
+pub struct RawInput {
     /// Path to the raw binary file.
     pub path: PathBuf,
 
@@ -258,7 +334,7 @@ impl CommandDispatch for WriteInfo {
                 let vmem_content = fs::read_to_string(&vmem.path)?;
                 load_vmem_words(&vmem_content)?
             }
-            WriteInput::Bin(bin) => {
+            WriteInput::Raw(bin) => {
                 log::info!("Loading raw binary: {}", bin.path.display());
                 let bytes = fs::read(&bin.path)?;
                 let data = load_raw_words(
