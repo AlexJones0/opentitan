@@ -103,9 +103,6 @@ def exec_env_as_dict(ctx):
 
         result[field] = val
 
-    print("exec_env_as_dict({})".format(ctx.label))
-    for (k, v) in result.items():
-        print("- {}: {}".format(k, v))
     return result
 
 def exec_env_common_attrs(**kwargs):

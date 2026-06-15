@@ -18,6 +18,10 @@ use opentitanlib::io::fpga_bkdr::{
 };
 use opentitanlib::util::vmem::{Section, Word};
 
+// TODO: need to move most of this out of this file and into OTLib.
+// All the functionality should live there, this should just be lean
+// wrappers for the most part.
+
 /// Commands for interacting with the backdoor FPGA loader.
 #[derive(Debug, Subcommand, CommandDispatch)]
 pub enum InternalBkdrCommand {
@@ -511,9 +515,9 @@ pub struct BatchInfo {
     #[arg(long = "target", required = true, value_name = "TARGET=FILE")]
     pub targets: Vec<TargetWrite>,
 
-    // Override format for all targets (if omitted, these will be inferred from extensions)
+    /// After finishing programming, enter "mission mode" & start the chip.
     #[arg(long)]
-    pub format: Option<DataFormat>,
+    pub start: bool,
 
     /// Read back and verify the written data (may be reasonably longer).
     #[arg(long)]
@@ -537,6 +541,10 @@ impl CommandDispatch for BatchInfo {
                 path: write_op.path.clone(),
             });
             write_to_target(&mut bkdr, &write_op.target, &input, Some(0), self.verify)?;
+        }
+
+        if self.start {
+            bkdr.set_done()?;
         }
 
         Ok(None)

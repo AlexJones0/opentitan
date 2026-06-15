@@ -138,6 +138,7 @@ def _get_test_commands(ctx, param, exec_env):
     Common Param Fields:
       exit_success: The console output for test success.
       exit_failure: The console output for test failure.
+      # TODO: a lot of the documentation around this is wrong now that we need JTAG
       jtag_test_cmd: The JTAG test command (if testopt_needs_jtag is True).
       bitstream: The bitstream to load before test.
       firmware: The firmware to load with bootstrap.
@@ -169,9 +170,17 @@ def _get_test_commands(ctx, param, exec_env):
         test_setup_cmd.append('--exec="fpga clear-bitstream"')
     test_setup_cmd.append('--exec="fpga load-bitstream {bitstream}"')
 
-    # TODO reset with DFT strap
-    # FIXME just an example, CLI needs to be defined
-    test_setup_cmd.append('--exec="bkdr rom={rom} otp={otp}"')
+    # TODO: Maybe use USR_ACCESS_IDENTIFIER in bkdr to control bitstream loading as well?
+    # Could just make a very general `setup` command, or pass this a bitstream as well?
+
+    # Reset & enter the backdoor loader, and program the various target memories
+    # TODO: only for CW340; need to find a way to encode this here (maybe some `has_backdoor_loader`
+    # in the FPGA params) to try and not break the CW310 flows. But we no longer have bitstream
+    # splicing as a fallback. Should that stay around, or should that go?
+    test_setup_cmd.append('--exec="bkdr enter"')
+    test_setup_cmd.append('--exec="bkdr {jtag_test_cmd} batch --target ROM={rom} --target OTP={otp} --start"')
+    # TODO: should still bootstrap firmware into flash on FPGA or should just backdoor load it?
+
     if _get_bool(param, "testopt_bootstrap") and "firmware" in param:
         test_setup_cmd.append('--exec="bootstrap --leave-in-reset --clear-uart=true {firmware}"')
     test_setup_cmd = "\n".join(test_setup_cmd)
@@ -204,13 +213,6 @@ def _test_dispatch(ctx, exec_env, firmware):
         fail("CW310 is not capable of executing ROM tests")
 
     test_harness, data_labels, data_files, param, action_param = common_test_setup(ctx, exec_env, firmware)
-    print("dispatch({}, ev={})".format(ctx.label, ctx.attr.exec_env))
-    print("exec env:")
-    for k in dir(exec_env):
-        print("- {}: {}".format(k, getattr(exec_env, k)))
-    print("actions params:")
-    for (k, v) in action_param.items():
-        print("- {}: {}".format(k, v))
 
     # If the test requested an assembled image, then use opentitantool to
     # assemble the image.  Replace the firmware param with the newly assembled
@@ -349,7 +351,12 @@ def fpga_params(
 
     # Clear bitstream after the test if it changes the OTP.
     if changes_otp:
+        # TODO: needs to be more granular: this should no longer
+        # necessitate wiping the entire bitstream - just the OTP image.
+        # (which should also be overwritten on every test anyway).
         kwargs["testopt_clear_after_test"] = "True"
+
+    # JTAG is used for backdoor loading of memories - it is always needed.
     if needs_jtag:
         kwargs["testopt_needs_jtag"] = "True"
     return struct(
@@ -365,7 +372,8 @@ def fpga_params(
         rom_ext = rom_ext,
         otp = otp,
         bitstream = bitstream,
-        needs_jtag = needs_jtag,
+        # We always "needs JTAG" for the backdoor loader. But do we need to declare it here?
+        needs_jtag = True,
         test_cmd = test_cmd,
         data = data,
         param = kwargs,

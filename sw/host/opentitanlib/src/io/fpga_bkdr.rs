@@ -347,6 +347,8 @@ impl Backdoor {
 
     /// TODO
     pub fn set_done(&mut self) -> Result<()> {
+        log::debug!("Finished using backdoor loader until next reset");
+
         // We typically expect to see an error here due to a DMI operation fail. This is
         // because, when our write to `CTRL.DONE` goes through and the bkdr_loader enters
         // mission mode, it immediately switches the routing of the upstream JTAG port
