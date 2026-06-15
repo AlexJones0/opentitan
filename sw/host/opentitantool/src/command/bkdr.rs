@@ -31,9 +31,8 @@ pub enum InternalBkdrCommand {
     Read(ReadInfo),
     /// Write words to a target memory via the backdoor.
     Write(WriteInfo),
-    ///// Verify that the contents of some target memory matches some given data.
-    //Verify(VerifyInfo),
-    // TODO: clear command?
+    /// Verify that the contents of some target memory matches some given data.
+    Verify(VerifyInfo),
     /// A command that combines entering, writing several files to different targets, and starting.
     Batch(BatchInfo),
     /// Test write-readback command, TO BE REMOVED <-- TODO
@@ -198,6 +197,9 @@ impl CommandDispatch for ReadInfo {
                     num_bytes,
                     target.info.depth
                 )?;
+                // TODO: this might actually already be the correct number of bytes.
+                // Double check if hex::encode respects that in the output or not,
+                // and remove the additional width bounding logic if so.
                 write!(
                     out,
                     "{}",
@@ -241,11 +243,11 @@ pub struct WriteInfo {
 
 #[derive(Debug, Subcommand)]
 pub enum WriteInput {
-    /// Write words given as a whitespace-separated hex string over stdin
+    /// Input words given as a whitespace-separated hex string over stdin
     Hex(HexInput),
-    /// Write data from a Verilog VMEM file
+    /// Input data from a Verilog VMEM file
     Vmem(VmemInput),
-    /// Write data from a raw binary file
+    /// Input data from a raw binary file
     Raw(RawInput),
 }
 
@@ -275,25 +277,46 @@ pub struct RawInput {
     #[arg(long)]
     pub packed: bool,
 
-    /// If true, read bits in an MSB-first order.
+    /// If true, interpret bits in an MSB-first order.
     #[arg(long)]
     pub swap_bits: bool,
 
-    /// If true, read bytes of words in a big-endian order.
+    /// If true, interpret bytes of words in a big-endian order.
     #[arg(long)]
     pub swap_bytes: bool,
 }
 
-impl WriteInfo {
-    fn left_trim_zeroes(word: &mut Word) {
-        match word.0.iter().position(|&x| x != 0) {
-            Some(i) => {
-                word.0.drain(0..i);
+impl WriteInput {
+    fn load_input(input: &WriteInput, offset: Option<u32>) -> Result<Vec<Section>> {
+        let mut sections: Vec<Section> = match input {
+            WriteInput::Hex(hex) => WriteInput::load_hex_words(hex)?,
+            WriteInput::Vmem(vmem) => {
+                log::info!("Loading VMEM file: {}", vmem.path.display());
+                let vmem_content = fs::read_to_string(&vmem.path)?;
+                load_vmem_words(&vmem_content)?
             }
-            None => {
-                word.0.clear();
+            WriteInput::Raw(bin) => {
+                log::info!("Loading raw binary: {}", bin.path.display());
+                let bytes = fs::read(&bin.path)?;
+                let data = load_raw_words(
+                    &bytes,
+                    bin.bits_per_word,
+                    bin.packed,
+                    bin.swap_bits,
+                    bin.swap_bytes,
+                );
+                vec![Section { addr: 0, data }]
             }
         };
+
+        // If an offset is given, all sections must be offset by that amount.
+        if let Some(offset) = offset {
+            for section in &mut sections {
+                section.addr += offset;
+            }
+        }
+
+        Ok(sections)
     }
 
     fn load_hex_words(hex: &HexInput) -> Result<Vec<Section>> {
@@ -318,6 +341,38 @@ impl WriteInfo {
     }
 }
 
+// TODO: where should these live? Probably not here.
+fn left_trim_zeroes(word: &mut Word) {
+    match word.0.iter().position(|&x| x != 0) {
+        Some(i) => {
+            word.0.drain(0..i);
+        }
+        None => {
+            word.0.clear();
+        }
+    };
+}
+
+fn verify_readback(input: &mut [Word], readback: &mut [Word], mut offset: u32) -> Result<()> {
+    for (write_word, read_word) in readback.iter_mut().zip(input) {
+        left_trim_zeroes(write_word);
+        left_trim_zeroes(read_word);
+
+        if write_word != read_word {
+            bail!(
+                "Read verification at word {} failed. Expected: {:?}, Got: {:?}",
+                offset,
+                write_word,
+                read_word
+            );
+        }
+
+        offset += 1;
+    }
+
+    Ok(())
+}
+
 impl CommandDispatch for WriteInfo {
     fn run(
         &self,
@@ -327,33 +382,7 @@ impl CommandDispatch for WriteInfo {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
 
         // Parse the input, which will depend on the given input type.
-        let mut sections: Vec<Section> = match &self.input {
-            WriteInput::Hex(hex) => WriteInfo::load_hex_words(hex)?,
-            WriteInput::Vmem(vmem) => {
-                log::info!("Loading VMEM file: {}", vmem.path.display());
-                let vmem_content = fs::read_to_string(&vmem.path)?;
-                load_vmem_words(&vmem_content)?
-            }
-            WriteInput::Raw(bin) => {
-                log::info!("Loading raw binary: {}", bin.path.display());
-                let bytes = fs::read(&bin.path)?;
-                let data = load_raw_words(
-                    &bytes,
-                    bin.bits_per_word,
-                    bin.packed,
-                    bin.swap_bits,
-                    bin.swap_bytes,
-                );
-                vec![Section { addr: 0, data }]
-            }
-        };
-
-        // If an offset is given, all sections must be offset by that amount.
-        if let Some(offset) = self.offset {
-            for section in &mut sections {
-                section.addr += offset;
-            }
-        }
+        let sections: Vec<Section> = WriteInput::load_input(&self.input, self.offset)?;
 
         // Connect to the backdoor and try and find the requested target.
         let bkdr = context.params.create(transport)?;
@@ -364,7 +393,7 @@ impl CommandDispatch for WriteInfo {
 
         // Perform the write(s)
         log::info!("Writing to the {}...", self.target);
-        for section in sections {
+        for mut section in sections {
             log::debug!(
                 "Writing section of size {} to word {} of target {}",
                 section.data.len(),
@@ -374,20 +403,8 @@ impl CommandDispatch for WriteInfo {
             target.write(section.addr, &section.data, false, false)?;
 
             if self.verify {
-                let readback = target.read(section.addr, section.data.len() as u32, false)?;
-
-                for (mut write_word, mut read_word) in readback.into_iter().zip(section.data) {
-                    WriteInfo::left_trim_zeroes(&mut write_word);
-                    WriteInfo::left_trim_zeroes(&mut read_word);
-
-                    if write_word != read_word {
-                        bail!(
-                            "Readback of written data failed. Expected: {:?}, Got: {:?}",
-                            write_word,
-                            read_word
-                        );
-                    }
-                }
+                let mut readback = target.read(section.addr, section.data.len() as u32, false)?;
+                verify_readback(&mut section.data, &mut readback, section.addr)?;
             }
         }
 
@@ -395,35 +412,55 @@ impl CommandDispatch for WriteInfo {
     }
 }
 
-//#[derive(Debug, Args)]
-//pub struct VerifyInfo {
-//    /// Target to read from.
-//    pub target: String,
-//
-//    /// First word address / index to read from.
-//    #[arg(long)]
-//    pub offset: Option<u32>,
-//
-//    /// Verify data loaded from a given file.
-//    #[arg(long, conflicts_with = "data")]
-//    pub file: Option<PathBuf>,
-//
-//    /// The data format of the input if using `--file`.
-//    #[arg(long)]
-//    pub format: Option<DataFormat>,
-//}
-//
-//impl CommandDispatch for VerifyInfo {
-//    fn run(
-//        &self,
-//        context: &dyn Any,
-//        transport: &TransportWrapper,
-//    ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
-//        let context = context.downcast_ref::<BkdrCommand>().unwrap();
-//        let _bkdr = context.params.create(transport)?;
-//        unimplemented!()
-//    }
-//}
+// TODO: can I flatten `VerifyInfo` into `WriteInfo` and reduce a lot of duplication?
+// In both the parameter definitions and the implementation.
+#[derive(Debug, Args)]
+pub struct VerifyInfo {
+    /// Target to verify the contents of.
+    pub target: String,
+
+    /// First word address / index to read from.
+    #[arg(long)]
+    pub offset: Option<u32>,
+
+    /// The input source to verify against.
+    #[command(subcommand)]
+    pub input: WriteInput,
+}
+
+impl CommandDispatch for VerifyInfo {
+    fn run(
+        &self,
+        context: &dyn Any,
+        transport: &TransportWrapper,
+    ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
+        let context = context.downcast_ref::<BkdrCommand>().unwrap();
+
+        // Parse the input, which will depend on the given input type.
+        let sections: Vec<Section> = WriteInput::load_input(&self.input, self.offset)?;
+
+        // Connect to the backdoor and try and find the requested target.
+        let bkdr = context.params.create(transport)?;
+        let mut bkdr = bkdr.connect(true)?;
+        let mut target = bkdr
+            .target_by_id_str(&self.target)?
+            .context(format!("FPGA target '{}' not found", self.target))?;
+
+        // Read the data and check it matches our input.
+        for mut section in sections {
+            log::debug!(
+                "Verifying section of size {} to word {} of target {}",
+                section.data.len(),
+                section.addr,
+                self.target
+            );
+            let mut readback = target.read(section.addr, section.data.len() as u32, false)?;
+            verify_readback(&mut section.data, &mut readback, section.addr)?;
+        }
+
+        Ok(None)
+    }
+}
 
 #[allow(dead_code)] // TODO
 #[derive(Debug, Clone)]

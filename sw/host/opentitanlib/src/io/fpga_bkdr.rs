@@ -163,12 +163,6 @@ impl Word {
             *byte = (chunks[chunk_idx] >> (byte_pos * 8)) as u8;
         }
 
-        // TODO: maybe mask off padding in the MSB? But probably not needed.
-        // let spare_bits = (8 - (word_bits % 8)) % 8;
-        // if let Some(msb) = bytes.first_mut() {
-        //     *msb &= 0xFFu8 >> spare_bits;
-        // }
-
         Self(bytes)
     }
 }
