@@ -155,6 +155,42 @@ impl OpenOcdDmi {
 
         Ok(res)
     }
+
+    // Optimized batched DMI writes
+    pub fn batched_dmi_writes(&mut self, writes: &[(u32, u32)]) -> Result<()> {
+        ensure!(
+            !writes.is_empty(),
+            "must give at least one DMI write operation to batch"
+        );
+        //let mut cmd = String::from("batch_write ");
+        let mut cmd = String::new();
+        cmd.push_str(
+            &writes
+                .iter()
+                .map(|&(addr, value)| {
+                    format!(
+                        "drscan {} {} {:#x}",
+                        self.tap,
+                        self.abits + DMI_ADDRESS_SHIFT,
+                        (addr as u64) << DMI_ADDRESS_SHIFT
+                            | (value as u64) << DMI_DATA_SHIFT
+                            | DMI_OP_WRITE,
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
+        cmd.push_str(
+            format!(
+                "\nruntest 3\ndrscan {} {} 0",
+                self.tap,
+                self.abits + DMI_ADDRESS_SHIFT
+            )
+            .as_str(),
+        );
+        self.openocd.execute(&cmd)?;
+        Ok(())
+    }
 }
 
 impl Dmi for OpenOcdDmi {

@@ -377,6 +377,8 @@ impl Backdoor {
         self.dmi_write(regs::CONTROL_REG_OFFSET, control)
             .context("cannot write to control register")?;
 
+        let mut writes = Vec::new();
+
         for word in words {
             let regs = word.to_u32_chunks();
             for idx in 0..regs_used {
@@ -385,14 +387,15 @@ impl Backdoor {
                 // Should vastly minimize required DMI operations for repetitive payloads (e.g. zeroed memories).
                 if write_all || first || regs[idx] != prev_regs[idx] {
                     let addr_offset = idx * 4;
-                    self.dmi_write(regs::WRITE_DATA_0_REG_OFFSET + addr_offset, regs[idx])
-                        .context("cannot write to write_data_{idx}")?;
+                    writes.push((
+                        ((regs::WRITE_DATA_0_REG_OFFSET + addr_offset) >> 2) as u32,
+                        regs[idx],
+                    ));
                     prev_regs[idx] = regs[idx];
                 }
             }
-
-            self.dmi_write(regs::INDEX_REG_OFFSET, word_idx)
-                .context("cannot write (word) index")?;
+            writes.push(((regs::INDEX_REG_OFFSET >> 2) as u32, word_idx));
+            // TODO: all wrong whilst testing batched writes
             if check_status {
                 let status = self
                     .dmi_read(regs::STATUS_REG_OFFSET)
@@ -410,6 +413,10 @@ impl Backdoor {
             first = false;
             word_idx += 1;
         }
+
+        self.dmi
+            .batched_dmi_writes(&writes)
+            .context("failed to perform DMI writes")?;
 
         Ok(())
     }

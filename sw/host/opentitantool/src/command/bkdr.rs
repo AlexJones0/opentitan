@@ -290,7 +290,6 @@ impl CommandDispatch for WriteInfo {
                 }
             }
         }
-        log::info!("self.verify={}", self.verify);
 
         Ok(None)
     }
