@@ -14,7 +14,7 @@ use std::str::FromStr;
 use opentitanlib::app::TransportWrapper;
 use opentitanlib::app::command::CommandDispatch;
 use opentitanlib::io::fpga_bkdr::{
-    BackdoorParams, enter_backdoor_loader, load_raw_words, load_vmem_words,
+    Backdoor, BackdoorParams, enter_backdoor_loader, load_raw_words, load_vmem_words,
 };
 use opentitanlib::util::vmem::{Section, Word};
 
@@ -35,8 +35,6 @@ pub enum InternalBkdrCommand {
     Verify(VerifyInfo),
     /// A command that combines entering, writing several files to different targets, and starting.
     Batch(BatchInfo),
-    /// Test write-readback command, TO BE REMOVED <-- TODO
-    Test(TestInfo),
 }
 
 #[derive(Debug, Args)]
@@ -373,6 +371,42 @@ fn verify_readback(input: &mut [Word], readback: &mut [Word], mut offset: u32) -
     Ok(())
 }
 
+fn write_to_target(
+    bkdr: &mut Backdoor,
+    target_id: &str,
+    input: &WriteInput,
+    offset: Option<u32>,
+    verify: bool,
+) -> Result<()> {
+    // Parse the input, which will depend on the given input type.
+    let sections: Vec<Section> = WriteInput::load_input(input, offset)?;
+
+    // Try and find the requested target.
+    let mut target = bkdr
+        .target_by_id_str(target_id)?
+        .context(format!("FPGA target '{}' not found", target_id))?;
+
+    // Perform the write(s)
+    log::info!("Writing to the {}...", target_id);
+    for mut section in sections {
+        log::debug!(
+            "Writing section of size {} to word {} of target {}",
+            section.data.len(),
+            section.addr,
+            target_id
+        );
+        target.write(section.addr, &section.data, false, verify)?;
+
+        // Readback and verify if requested
+        if verify {
+            let mut readback = target.read(section.addr, section.data.len() as u32, false)?;
+            verify_readback(&mut section.data, &mut readback, section.addr)?;
+        }
+    }
+
+    Ok(())
+}
+
 impl CommandDispatch for WriteInfo {
     fn run(
         &self,
@@ -380,33 +414,15 @@ impl CommandDispatch for WriteInfo {
         transport: &TransportWrapper,
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
-
-        // Parse the input, which will depend on the given input type.
-        let sections: Vec<Section> = WriteInput::load_input(&self.input, self.offset)?;
-
-        // Connect to the backdoor and try and find the requested target.
         let bkdr = context.params.create(transport)?;
         let mut bkdr = bkdr.connect(true)?;
-        let mut target = bkdr
-            .target_by_id_str(&self.target)?
-            .context(format!("FPGA target '{}' not found", self.target))?;
-
-        // Perform the write(s)
-        log::info!("Writing to the {}...", self.target);
-        for mut section in sections {
-            log::debug!(
-                "Writing section of size {} to word {} of target {}",
-                section.data.len(),
-                section.addr,
-                self.target
-            );
-            target.write(section.addr, &section.data, false, false)?;
-
-            if self.verify {
-                let mut readback = target.read(section.addr, section.data.len() as u32, false)?;
-                verify_readback(&mut section.data, &mut readback, section.addr)?;
-            }
-        }
+        write_to_target(
+            &mut bkdr,
+            &self.target,
+            &self.input,
+            self.offset,
+            self.verify,
+        )?;
 
         Ok(None)
     }
@@ -462,7 +478,6 @@ impl CommandDispatch for VerifyInfo {
     }
 }
 
-#[allow(dead_code)] // TODO
 #[derive(Debug, Clone)]
 pub struct TargetWrite {
     pub target: String,
@@ -499,6 +514,10 @@ pub struct BatchInfo {
     // Override format for all targets (if omitted, these will be inferred from extensions)
     #[arg(long)]
     pub format: Option<DataFormat>,
+
+    /// Read back and verify the written data (may be reasonably longer).
+    #[arg(long)]
+    pub verify: bool,
 }
 
 impl CommandDispatch for BatchInfo {
@@ -508,42 +527,18 @@ impl CommandDispatch for BatchInfo {
         transport: &TransportWrapper,
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
-        let _bkdr = context.params.create(transport)?;
-        unimplemented!()
-    }
-}
-
-/// TODO: this is all meaningless implementation just for testing, to be removed.
-#[derive(Debug, Args)]
-pub struct TestInfo {}
-
-impl CommandDispatch for TestInfo {
-    fn run(
-        &self,
-        context: &dyn Any,
-        transport: &TransportWrapper,
-    ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
-        let context = context.downcast_ref::<BkdrCommand>().unwrap();
         let bkdr = context.params.create(transport)?;
         let mut bkdr = bkdr.connect(true)?;
-        let mut rom_bkdr = bkdr
-            .target_by_id_str("ROM")?
-            .context("Could not find ROM target for testing")?;
-        println!("{:?}", rom_bkdr.read(0x0, 10, true)?);
-        rom_bkdr.write(0x0, &[Word(vec![0u8])], false, true)?;
-        println!("{:?}", rom_bkdr.read(0x0, 1, true)?);
-        let words = (1u8..5u8).map(|v| Word(vec![v])).collect::<Vec<_>>();
-        rom_bkdr.write(0x0, &words, true, true)?;
-        println!("{:?}", rom_bkdr.read(0x2, 4, true)?);
-        let mut aon_bkdr = bkdr
-            .target_by_id_str("AON")?
-            .context("Could not find AON target for testing")?;
-        let words = [11, 22, 33, 44, 55, 66, 77, 88u8]
-            .into_iter()
-            .map(|v| Word(vec![v, v + 1, v + 2, v + 4]))
-            .collect::<Vec<_>>();
-        aon_bkdr.write(0x203, &words, false, false)?;
-        println!("{:?}", aon_bkdr.read(0x200, 16, false)?);
+
+        for write_op in &self.targets {
+            // TODO: currently assumes all inputs are VMems, maybe extend `TargetWrite`
+            // and/or make use of the file extension. Alo assumes offsets of 0 always.
+            let input = WriteInput::Vmem(VmemInput {
+                path: write_op.path.clone(),
+            });
+            write_to_target(&mut bkdr, &write_op.target, &input, Some(0), self.verify)?;
+        }
+
         Ok(None)
     }
 }
