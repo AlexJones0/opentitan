@@ -486,13 +486,19 @@ impl CommandDispatch for VerifyInfo {
 pub struct TargetWrite {
     pub target: String,
     pub path: PathBuf,
+    pub offset: Option<u32>,
 }
 
 impl FromStr for TargetWrite {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (target, path) = s
+        let (target_path, offset) = s
+            .split_once('@')
+            .map(|(x, y)| (x, y.parse::<u32>().ok()))
+            .unwrap_or((s, None));
+
+        let (target, path) = target_path
             .split_once('=')
             .context("expected target=file, got {s:?}")?;
         if target.is_empty() {
@@ -505,6 +511,7 @@ impl FromStr for TargetWrite {
         Ok(TargetWrite {
             target: target.to_string(),
             path: PathBuf::from(path),
+            offset,
         })
     }
 }
@@ -512,7 +519,7 @@ impl FromStr for TargetWrite {
 #[derive(Debug, Args)]
 pub struct BatchInfo {
     /// Mappings between targets & files to write to them (at offset 0).
-    #[arg(long = "target", required = true, value_name = "TARGET=FILE")]
+    #[arg(long = "target", required = true, value_name = "TARGET=FILE[@OFFSET]")]
     pub targets: Vec<TargetWrite>,
 
     /// After finishing programming, enter "mission mode" & start the chip.
@@ -540,7 +547,13 @@ impl CommandDispatch for BatchInfo {
             let input = WriteInput::Vmem(VmemInput {
                 path: write_op.path.clone(),
             });
-            write_to_target(&mut bkdr, &write_op.target, &input, Some(0), self.verify)?;
+            write_to_target(
+                &mut bkdr,
+                &write_op.target,
+                &input,
+                write_op.offset,
+                self.verify,
+            )?;
         }
 
         if self.start {
