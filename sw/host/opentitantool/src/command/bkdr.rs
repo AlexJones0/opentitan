@@ -120,11 +120,12 @@ pub struct ReadInfo {
     pub target: String,
 
     /// First word address / index to read from.
+    #[arg(long)]
     pub start: u32,
 
-    /// The number of words to read.
+    /// The number of words to read. If not given, reads the entire memory.
     #[arg(long)]
-    pub words: u32,
+    pub words: Option<u32>,
 
     /// Optional path to write the output to. If not given, outputs directly to stdout.
     #[arg(short, long)]
@@ -133,6 +134,10 @@ pub struct ReadInfo {
     /// The data format to use when outputting words that are read.
     #[arg(long, default_value = "hex")]
     pub format: DataFormat,
+
+    /// If outputting as a Vmem, omit extraneous element indexes for contiguous words
+    #[arg(long)]
+    pub group_vmem_words: bool,
 }
 
 impl CommandDispatch for ReadInfo {
@@ -149,15 +154,16 @@ impl CommandDispatch for ReadInfo {
         let mut target = bkdr
             .target_by_id_str(&self.target)?
             .context(format!("FPGA target '{}' not found", self.target))?;
+        let words = self.words.unwrap_or(target.info.depth - self.start);
 
         // Perform the read
         log::debug!(
             "Reading {} words at offset {} from target {}...",
-            self.words,
+            words,
             self.start,
             self.target
         );
-        let words = target.read(self.start, self.words, true)?;
+        let words = target.read(self.start, words, true)?;
 
         let mut out: Box<dyn Write> = if let Some(out_path) = &self.output {
             Box::new(std::fs::File::create(out_path)?)
@@ -190,7 +196,7 @@ impl CommandDispatch for ReadInfo {
                 let num_bytes = target.info.width.div_ceil(8);
                 let word_width = (num_bytes * 2) as usize;
 
-                write!(
+                writeln!(
                     out,
                     "// {} memory file with {} x {} bit layout ({} x {} bytes)",
                     target.info.id_str(),
@@ -202,21 +208,24 @@ impl CommandDispatch for ReadInfo {
                 // TODO: this might actually already be the correct number of bytes.
                 // Double check if hex::encode respects that in the output or not,
                 // and remove the additional width bounding logic if so.
-                write!(
+                let word_separator = if self.group_vmem_words { " " } else { "\n" };
+                writeln!(
                     out,
                     "{}",
                     words
                         .into_iter()
                         .enumerate()
                         .map(|(index, word)| {
-                            format!(
-                                "@{:0addr_width$} {:0>word_width$}",
-                                index,
-                                hex::encode(word.0)
-                            )
+                            let addr = if !self.group_vmem_words || index == 0 {
+                                format!("@{:0addr_width$} ", index + self.start as usize)
+                            } else {
+                                String::new()
+                            };
+
+                            format!("{}{:0>word_width$}", addr, hex::encode(word.0))
                         })
                         .collect::<Vec<_>>()
-                        .join("\n")
+                        .join(word_separator)
                 )?;
             }
         }
@@ -247,6 +256,8 @@ pub struct WriteInfo {
 pub enum WriteInput {
     /// Input words given as a whitespace-separated hex string over stdin
     Hex(HexInput),
+    /// Input words that are all-0s (or all-1s)
+    Clear(ClearInput),
     /// Input data from a Verilog VMEM file
     Vmem(VmemInput),
     /// Input data from a raw binary file
@@ -257,7 +268,17 @@ pub enum WriteInput {
 pub struct HexInput {
     /// Input hexadecimal words, with whitespace separating each word
     #[arg(required = true)]
-    pub data: String,
+    pub data: String, // TODO: maybe take many string and join with spaces?
+}
+
+#[derive(Args, Debug)]
+pub struct ClearInput {
+    /// The number of cleared words.
+    pub words: u32,
+
+    /// Clear with 1s instead of 0s
+    #[arg(long)]
+    pub ones: bool,
 }
 
 #[derive(Args, Debug)]
@@ -289,9 +310,19 @@ pub struct RawInput {
 }
 
 impl WriteInput {
-    fn load_input(input: &WriteInput, offset: Option<u32>) -> Result<Vec<Section>> {
+    fn load_input(
+        input: &WriteInput,
+        bits_per_word: u32,
+        offset: Option<u32>,
+    ) -> Result<Vec<Section>> {
         let mut sections: Vec<Section> = match input {
             WriteInput::Hex(hex) => WriteInput::load_hex_words(hex)?,
+            WriteInput::Clear(clear) => {
+                let byte = if clear.ones { 0xff } else { 0x00 };
+                let num_bytes = bits_per_word.div_ceil(8) as usize;
+                let data = vec![Word(vec![byte; num_bytes]); clear.words as usize];
+                vec![Section { addr: 0, data }]
+            }
             WriteInput::Vmem(vmem) => {
                 log::info!("Loading VMEM file: {}", vmem.path.display());
                 let vmem_content = fs::read_to_string(&vmem.path)?;
@@ -355,17 +386,35 @@ fn left_trim_zeroes(word: &mut Word) {
     };
 }
 
-fn verify_readback(input: &mut [Word], readback: &mut [Word], mut offset: u32) -> Result<()> {
+fn verify_readback(
+    input: &mut [Word],
+    readback: &mut [Word],
+    bits_per_word: u32,
+    mut offset: u32,
+) -> Result<()> {
     for (write_word, read_word) in readback.iter_mut().zip(input) {
+        // TODO; not sure if trimming leading zeroes makes sense - probably should NORMALIZE
+        // to the given word size instead? That makes much more sense
         left_trim_zeroes(write_word);
         left_trim_zeroes(read_word);
+        let bits = bits_per_word % 8;
+        let bitmask = ((1u32 << bits) - 1) as u8;
 
+        if bits > 0 {
+            // TODO: why is this at the start? Need to be consistent about bit orders
+            if !write_word.0.is_empty() {
+                write_word.0[0] &= bitmask;
+            }
+            if !read_word.0.is_empty() {
+                read_word.0[0] &= bitmask;
+            }
+        }
         if write_word != read_word {
             bail!(
-                "Read verification at word {} failed. Expected: {:?}, Got: {:?}",
+                "Read verification at word {} failed. Expected: {}, Got: {}",
                 offset,
-                write_word,
-                read_word
+                hex::encode(write_word.0.clone()),
+                hex::encode(read_word.0.clone()),
             );
         }
 
@@ -382,13 +431,13 @@ fn write_to_target(
     offset: Option<u32>,
     verify: bool,
 ) -> Result<()> {
-    // Parse the input, which will depend on the given input type.
-    let sections: Vec<Section> = WriteInput::load_input(input, offset)?;
-
     // Try and find the requested target.
     let mut target = bkdr
         .target_by_id_str(target_id)?
         .context(format!("FPGA target '{}' not found", target_id))?;
+
+    // Parse the input, which will depend on the given input type.
+    let sections: Vec<Section> = WriteInput::load_input(input, target.info.width, offset)?;
 
     // Perform the write(s)
     log::info!("Writing to the {}...", target_id);
@@ -404,7 +453,12 @@ fn write_to_target(
         // Readback and verify if requested
         if verify {
             let mut readback = target.read(section.addr, section.data.len() as u32, false)?;
-            verify_readback(&mut section.data, &mut readback, section.addr)?;
+            verify_readback(
+                &mut section.data,
+                &mut readback,
+                target.info.width,
+                section.addr,
+            )?;
         }
     }
 
@@ -456,15 +510,16 @@ impl CommandDispatch for VerifyInfo {
     ) -> Result<Option<Box<dyn erased_serde::Serialize>>> {
         let context = context.downcast_ref::<BkdrCommand>().unwrap();
 
-        // Parse the input, which will depend on the given input type.
-        let sections: Vec<Section> = WriteInput::load_input(&self.input, self.offset)?;
-
         // Connect to the backdoor and try and find the requested target.
         let bkdr = context.params.create(transport)?;
         let mut bkdr = bkdr.connect(true)?;
         let mut target = bkdr
             .target_by_id_str(&self.target)?
             .context(format!("FPGA target '{}' not found", self.target))?;
+
+        // Parse the input, which will depend on the given input type.
+        let sections: Vec<Section> =
+            WriteInput::load_input(&self.input, target.info.width, self.offset)?;
 
         // Read the data and check it matches our input.
         for mut section in sections {
@@ -475,7 +530,12 @@ impl CommandDispatch for VerifyInfo {
                 self.target
             );
             let mut readback = target.read(section.addr, section.data.len() as u32, false)?;
-            verify_readback(&mut section.data, &mut readback, section.addr)?;
+            verify_readback(
+                &mut section.data,
+                &mut readback,
+                target.info.width,
+                section.addr,
+            )?;
         }
 
         Ok(None)
