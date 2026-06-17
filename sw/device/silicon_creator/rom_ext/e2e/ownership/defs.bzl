@@ -4,6 +4,7 @@
 
 load(
     "//rules/opentitan:defs.bzl",
+    "fpga_params",
     "opentitan_test",
 )
 
@@ -17,6 +18,7 @@ def ownership_transfer_test(
         ecdsa_key = {
             "//sw/device/silicon_creator/lib/ownership/keys/dummy:ecdsa_keyset": "app_prod_0",
         },
+        fpga = None,
         manifest = None,
         data = [
             "//sw/device/silicon_creator/lib/ownership/keys/dummy:activate_key",
@@ -50,6 +52,14 @@ def ownership_transfer_test(
             "//sw/device/silicon_creator/lib/ownership:datatypes",
         ],
         **kwargs):
+    # FPGA should always clear the bitstream & bootstrap first, so
+    # enable these on every FPGA test unless overridden
+    if "test_cmd" in fpga:
+        fpga["test_cmd"] = """
+            --clear-bitstream
+        """ + fpga["test_cmd"]
+    fpga = fpga_params(**fpga)
+
     opentitan_test(
         name = name,
         srcs = srcs,
@@ -59,5 +69,6 @@ def ownership_transfer_test(
         data = data,
         defines = defines,
         deps = deps,
+        fpga = fpga,
         **kwargs
     )
