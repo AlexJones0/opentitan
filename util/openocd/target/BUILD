@@ -5,5 +5,6 @@
 exports_files([
     "lowrisc-earlgrey.cfg",
     "lowrisc-earlgrey-lc.cfg",
+    "lowrisc-earlgrey-fpga-bkdr.cfg",
     "lowrisc-earlgrey-z1-silicon.cfg",
 ])
