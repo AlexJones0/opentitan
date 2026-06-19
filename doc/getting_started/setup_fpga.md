@@ -57,26 +57,11 @@ cp util/git/hooks/post-checkout .git/hooks/
 
 ### Build an FPGA bitstream
 
+#### Using a Cached Bitstream
 
-#### Splicing a different ROM or OTP into a Cached Bitstream
-
-As mentioned above, the default bitstreams cached in our public GCS bucket are built with a test version of the boot ROM and a minimally configured OTP image.
-If you desire a bitstream with _only_ a different combination of ROM / OTP images (say if you want to build and splice in the production mask ROM), you can do so without rebuilding the entire bitstream from scratch.
-Specifically, you can build the [`//hw/bitstream/universal:splice`](https://github.com/lowRISC/opentitan/blob/e439226b6c5314be12ccf5cc055f2d4b8149d0ab/hw/bitstream/universal/BUILD#L30) Bazel target and specify any combination of:
-1. ROM image (using the `--//hw/bitstream/universal:rom=<ROM image Bazel target>` label flag),
-1. OTP image (using the `--//hw/bitstream/universal:otp=<OTP image Bazel target>` label flag), and/or
-1. `exec_env` (using the `--//hw/bitstream/universal:env=<exec_env Bazel target>` label flag; `exec_env`s define a collection of ROM, OTP, and base bitstream targets to use).
-
-For example, to splice a CW340 bitstream with the mask ROM image and a specific OTP image, you can run
-```sh
-bazel build \
-    --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp:img_dev \
-    --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_cw340_rom_with_fake_keys \
-    //hw/bitstream/universal:splice
-```
-
->**Note**: Splicing bitstreams will require the (free) Lab Edition of Vivado to be installed on your system, described [here](./install_vivado/README.md).
->General software development on the FPGA requires this as well, since bitstreams will be spliced locally by Bazel during test builds.
+The default bitstreams cached in our public GCS bucket are built with a test version of the boot ROM and a minimally configured OTP image.
+For FPGA workflows, there is a "backdoor loader" block that we use to load data into FPGA memories for test purposes.
+Because of this, it is sufficient to use the base CW340 bitstream which is available in the GCS bucket cache.
 
 #### From Scratch
 
@@ -195,8 +180,9 @@ To this end:
 5. Set the jumpers *JP1* and *JP2* to select the UART0 routing:
    1. If set to FTDI the UART0 will (likely) be routed to `/dev/ttyUSB2`.
    2. If set to SAM the UART0 will be routed to `/dev/ttyACM0`.
-6a. If you are connecting a HyperDebug board to your CW340 base board, follow the below instruction.
-6b. Otherwise, move the *Control Power* switch (top left corner, *SW7*) to the left (towards the barrel jack) to power on the board.
+6. Remove the jumper *JP5* connecting `USR_DBG_nRST`, as this can interfere with resetting the board when using the FTDI adaptor.
+7a. If you are connecting a HyperDebug board to your CW340 base board, follow the below instruction.
+7b. Otherwise, move the *Control Power* switch (top left corner, *SW7*) to the left (towards the barrel jack) to power on the board.
 
 #### HyperDebug Board
 
@@ -232,7 +218,8 @@ On your CW340 base board (the red board):
     3. JTAG TAP select straps (OpenTitan pins IOC5/8): JP11 & JP12
 2. Connect the following blue socket-to-socket jumpers in the middle of the board to `HD` (for "HyperDebug").
     1. SPI Device: connect J23 to J25
-    2. JTAG: connect J12 to J13
+    2. JTAG: connect J10 to J13 to select the FTDI adapter.
+    Alternatively, if you wish to use CMSIS-DAP as a JTAG adapter, connecting J12 to J13 instead.
 
 ##### Connecting HyperDebug to the CW340 Base Board
 
@@ -305,8 +292,9 @@ cd $REPO_TOP
 bazel test --test_output=streamed //sw/device/tests:uart_smoketest_fpga_${BOARD}_rom_with_fake_keys
 ```
 
-Under the hood, Bazel conveniently dispatches `opentitantool` to both:
+Under the hood, Bazel conveniently dispatches `opentitantool` to:
 * ensure the correct version of the FPGA bitstream has been loaded onto the FPGA, and
+* program the requested ROM and OTP images into relevant FPGA memories, and
 * bootstrap the desired software test image into the OpenTitan embedded flash.
 
 To get a better understanding of the `opentitantool` functions Bazel invokes automatically, follow the instructions for manually loading FPGA bitstreams below.
@@ -351,7 +339,7 @@ bazel run //sw/host/opentitantool -- fpga load-bitstream /tmp/bitstream-latest/l
 ##### if you built the bitstream yourself:
 ```sh
 cd $REPO_TOP
-bazel run //sw/host/opentitantool -- fpga load-bitstream $(ci/scripts/target-location.sh //hw/bitstream/vivado:fpga_${BOARD}_rom_with_fake_keys)
+bazel run //sw/host/opentitantool -- fpga load-bitstream $(ci/scripts/target-location.sh //hw/bitstream/vivado:fpga_${BOARD}_test_rom)
 ```
 
 Depending on the FPGA device, the flashing itself may take several seconds.
@@ -361,6 +349,78 @@ After completion, a message like this should be visible from the UART:
 I00000 test_rom.c:81] Version: earlgrey_silver_release_v5-5886-gde4cb1bb9, Build Date: 2022-06-13 09:17:56
 I00001 test_rom.c:87] TestROM:6b2ca9a1
 I00002 test_rom.c:118] Test ROM complete, jumping to flash!
+```
+
+#### Programming the FPGA with ROM & OTP Images
+
+##### Backdoor Loading
+
+When running a test, you may want to customize the ROM and OTP that are used to suit your execution environment.
+For FPGA, this is done using the unique "backdoor loader" IP", which you can communicate with using `opentitantool`.
+The backdoor loader can only be used by resetting OpenTitan with the both TAP straps enabled.
+After you have finished using the loader, it takes the chip out of reset, and the loader can no longer be used until the next reset.
+Because of this, `opentitantool` offers an `bkdr enter` to "enter" into the backdoor loading mode, and a `bkdr exit` command to finish.
+
+##### JTAG
+
+We communicate with the loader itself via JTAG.
+As such, you must tell OpenTitanTool which `openocd` binary it should use.
+Since we need to carry some patches, you should use the OpenOCD built with Bazel:
+
+```sh
+bazel build //third_party/openocd:openocd_bin
+```
+
+##### Using the Loader
+
+TODO FIXME: the use of `bkdr enter` creates a dependency on Hyperdebug for the TAP strappings, but I'm not sure if any of the rest of this document actually requries it - for example it uses interface="cw340" rather than interface="hyper340".
+I'm not sure if this could cause any issues - this probably needs a more thorough look.
+
+For example, to build & program the mask ROM on the CW340, you can use the following commands:
+
+```sh
+# Make sure OpenOCD is built
+bazel build //third_party/openocd:openocd_bin
+# Build the mask ROM for the CW340
+bazel build //sw/device/silicon_creator/rom:mask_rom_fpga_cw340
+# Enter the backdoor loader (which involves resetting OpenTitan)
+bazel run //sw/host/opentitantool -- --interface=${BOARD} bkdr enter
+# Load the ROM image
+bazel run //sw/host/opentitantool -- --interface=${BOARD} bkdr \
+    --openocd=$(ci/scripts/target-location.sh //third_party/openocd:openocd_bin) \
+    write ROM vmem $(ci/scripts/target-location.sh //sw/device/silicon_creator/rom:mask_rom_fpga_cw340)
+```
+
+If you need to load an OTP image, at this stage you can follow a similar flow:
+
+```sh
+# Build an OTP image that you want to use
+bazel build //hw/top_earlgrey/data/otp/emulation:otp_img_prod_manuf_personalized
+# Load the OTP image (assuming you already did `bkdr enter` and have not yet done `bkdr exit`)
+bazel run //sw/host/opentitantool -- --interface=${BOARD} bkdr \
+    --openocd=$(ci/scripts/target-location.sh //third_party/openocd:openocd_bin) \
+    write OTP vmem $(ci/scripts/target-location.sh //hw/top_earlgrey/data/otp/emulation:otp_img_prod_manuf_personalized)
+```
+
+Finally, when you're done using the backdoor loader to interact with FPGA memories, you can exit with the following command:
+
+```sh
+bazel run //sw/host/opentitantool -- --interface=${BOARD} bkdr \
+    --openocd=$(ci/scripts/target-location.sh //third_party/openocd:openocd_bin) \
+    exit
+```
+
+From this point onwards, you cannot use `opentitantool bkdr ...` without first calling `opentitantool bkdr enter`, which will reset the chip.
+
+##### USR_ACCESS and Loading Bitstreams
+
+Note that when using `opentitantool fpga load-bitstream`, it uses the `USR_ACCESS` value in the bitstream to determine whether it needs to load a bitstream.
+This is unique per bitstream, however it only tells you the identity of the bistream, and not any memories programmed after the bitstream was loaded.
+
+To be sure that a bitstream is definitely running on the board, without any additional programmed memories, you can either power cycle the board, or use the `--force` flag when loading the bitstream:
+
+```sh
+bazel run //sw/host/opentitantool -- fpga load-bitstream --force $(ci/scripts/target-location.sh //hw/bitstream/vivado:fpga_${BOARD}_test_rom)
 ```
 
 #### Bootstrapping the demo software

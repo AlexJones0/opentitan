@@ -90,7 +90,8 @@ filegroup(
     name = "data_dependencies",
     testonly = True,
     srcs = [
-        "//hw/bitstream/universal:splice",
+        # FIXME
+        # "//hw/bitstream/universal:splice",
         "//sw/device/silicon_creator/manuf/base:ft_personalize_all",
         "//sw/device/silicon_creator/manuf/base:sram_cp_provision",
         "//sw/device/silicon_creator/manuf/base:sram_ft_individualize_all",

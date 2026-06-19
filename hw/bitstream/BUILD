@@ -15,6 +15,8 @@ filegroup(
     srcs = glob(["**/*.md"]),
 )
 
+#FIXME: splicing
+
 # By default, targets in this file will use cached artifacts from the GCP bucket
 # instead of building them from scratch.
 #

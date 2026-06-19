@@ -153,6 +153,12 @@ opentitan_binary(
     ],
 )
 
+# FIXME: tests like this one which use `load-bitstream` manually
+# are going to be a pain with backdoor loading, since we need to reload
+# the memories. Probably there should be some joint `setup` command that
+# performs both bitstream loading and backdooring so this can still stay
+# roughly in one command. But it's going to be a bit of a pain to pass
+# through the ROM and OTP, I think.
 opentitan_test(
     name = "corrupted_digest_test",
     srcs = ["//sw/device/silicon_creator/rom_ext/e2e/verified_boot:boot_test"],

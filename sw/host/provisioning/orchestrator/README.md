@@ -13,6 +13,7 @@ To run on an FPGA for testing, run:
 ```
 # Select either cw340 or cw310
 export FPGA_TARGET=hyper310
+# FIXME
 bazel run \
   --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_${FPGA_TARGET}_rom_with_fake_keys \
   --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty \
@@ -45,6 +46,7 @@ dependencies.
 
 ```
 export FPGA_TARGET=hyper310
+# FIXME
 bazel build \
   --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_${FPGA_TARGET}_rom_with_fake_keys \
   --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty \
