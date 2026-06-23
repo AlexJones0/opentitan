@@ -186,8 +186,9 @@ To this end:
 5. Set the jumpers *JP1* and *JP2* to select the UART0 routing:
    1. If set to FTDI the UART0 will (likely) be routed to `/dev/ttyUSB2`.
    2. If set to SAM the UART0 will be routed to `/dev/ttyACM0`.
-6a. If you are connecting a HyperDebug board to your CW340 base board, follow the below instruction.
-6b. Otherwise, move the *Control Power* switch (top left corner, *SW7*) to the left (towards the barrel jack) to power on the board.
+6. Remove the jumper *JP5* connecting `USR_DBG_nRST`, as this can interfere with resetting the board when using the FTDI adaptor.
+7a. If you are connecting a HyperDebug board to your CW340 base board, follow the below instruction.
+7b. Otherwise, move the *Control Power* switch (top left corner, *SW7*) to the left (towards the barrel jack) to power on the board.
 
 #### HyperDebug Board
 
@@ -222,7 +223,8 @@ On your CW340 base board (the red board):
     3. JTAG TAP select straps (OpenTitan pins IOC5/8): JP11 & JP12
 2. Connect the following blue socket-to-socket jumpers in the middle of the board to `HD` (for "HyperDebug").
     1. SPI Device: connect J23 to J25
-    2. JTAG: connect J12 to J13
+    2. JTAG: connect J10 to J13 to select the FTDI adapter.
+    Alternatively, if you wish to use CMSIS-DAP as a JTAG adapter, connecting J12 to J13 instead.
 
 ##### Connecting HyperDebug to the CW340 Base Board
 
