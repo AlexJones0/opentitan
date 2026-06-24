@@ -99,6 +99,7 @@ filegroup(
         "//sw/host/provisioning/ft:ft_all",
         "//sw/host/provisioning/orchestrator/configs/skus:all",
         "//third_party/openocd:jtag_cmsis_dap_adapter_cfg",
+        "//third_party/openocd:jtag_ftdi_cfg",
         "//third_party/openocd:jtag_olimex_cfg",
         "//third_party/openocd:openocd_bin",
         "@sc_hsm",

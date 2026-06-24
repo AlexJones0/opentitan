@@ -21,6 +21,7 @@ from util import confirm, format_hex, resolve_runfile, run
 _FPGA_UNIVERSAL_SPLICE_BITSTREAM = "hw/bitstream/universal/splice.bit"
 
 # Opentitantool interface
+# FIXME: still has CW310 references, adapter is hardcoded for CW340 FTDI.
 _OTT_FPGA_INTERFACE = {
     "cw310": "hyper310",
     "cw340": "hyper340",
@@ -28,7 +29,7 @@ _OTT_FPGA_INTERFACE = {
 
 # CP and FT shared flags.
 _OPENOCD_BIN = "third_party/openocd/build_openocd/bin/openocd"
-_OPENOCD_ADAPTER_CONFIG = "external/openocd/tcl/interface/cmsis-dap.cfg"
+_OPENOCD_ADAPTER_CONFIG = "util/openocd/board/cw340_ftdi.cfg"
 _BASE_PROVISIONING_FLAGS = """
     --interface={ott_intf} \
     --openocd={openocd_bin} \
