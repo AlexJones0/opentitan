@@ -77,7 +77,7 @@ impl BackdoorTap<'_> {
 pub struct BackdoorParams {
     /// JTAG options to apply to the backdoor TAP.
     #[command(flatten)]
-    jtag: JtagParams,
+    pub jtag: JtagParams,
 }
 
 impl BackdoorParams {

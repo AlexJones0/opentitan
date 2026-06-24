@@ -8,6 +8,7 @@ source util/sh/lib/log.sh
 source util/sh/lib/error.sh
 source util/sh/lib/traps.sh
 
+#FIXME: the `gcp_spliced_test_rom` target does not exist; this script has probably been broken for a while.
 readonly BAZEL="./bazelisk.sh"
 readonly BITSTREAM_TARGET="//hw/bitstream:gcp_spliced_test_rom"
 readonly WORKSPACE_PATH

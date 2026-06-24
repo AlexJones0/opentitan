@@ -10,12 +10,14 @@ ways:
 
 To run on an FPGA for testing, run:
 
+<!--FIXME: this command appears to be broken on FPGA (at least).-->
 ```
 # Select either cw340 or cw310
 export FPGA_TARGET=hyper310
+# FIXME
 bazel run \
-  --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_${FPGA_TARGET}_rom_with_fake_keys \
-  --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty \
+  --//sw/host/provisioning/orchestrator/src:env=//hw/top_earlgrey:fpga_${FPGA_TARGET}_rom_with_fake_keys \
+  --//sw/host/provisioning/orchestrator/src:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty \
   //sw/host/provisioning/orchestrator/src:orchestrator -- \
     --sku-config=$(pwd)/sw/host/provisioning/orchestrator/configs/skus/sival.hjson \
     --test-unlock-token="0x11111111_11111111_11111111_11111111" \
@@ -46,8 +48,8 @@ dependencies.
 ```
 export FPGA_TARGET=hyper310
 bazel build \
-  --//hw/bitstream/universal:env=//hw/top_earlgrey:fpga_${FPGA_TARGET}_rom_with_fake_keys \
-  --//hw/bitstream/universal:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty \
+  --//sw/host/provisioning/orchestrator/src:env=//hw/top_earlgrey:fpga_${FPGA_TARGET}_rom_with_fake_keys \
+  --//sw/host/provisioning/orchestrator/src:otp=//hw/top_earlgrey/data/otp/emulation:otp_img_test_unlocked0_manuf_empty \
   //sw/host/provisioning/orchestrator/src:orchestrator.zip
 ```
 

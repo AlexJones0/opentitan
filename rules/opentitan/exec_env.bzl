@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@bazel_skylib//lib:types.bzl", "types")
-load("@lowrisc_opentitan//rules/opentitan:providers.bzl", "OpenTitanBinaryInfo")
+load("@lowrisc_opentitan//rules/opentitan:providers.bzl", "OpenTitanBinaryInfo", "get_one_binary_file")
 load("@lowrisc_opentitan//rules/opentitan:util.bzl", "get_fallback", "get_files")
 load("//rules/opentitan:toolchain.bzl", "LOCALTOOLS_TOOLCHAIN")
 
@@ -21,7 +21,7 @@ _FIELDS = {
     "rom_ext": ("attr.rom_ext", False),
     "otp": ("file.otp", False),
     "mmi": ("file.mmi", False),
-    "base_bitstream": ("file.base_bitstream", False),
+    "bitstream": ("file.base_bitstream", False),
     "args": ("attr.args", False),
     "test_cmd": ("attr.test_cmd", False),
     "param": ("attr.param", False),
@@ -391,7 +391,8 @@ def common_test_setup(ctx, exec_env, firmware):
     action_param = dict(param)
 
     # Collect all file resource specified in the exec_env or as overrides.
-    update_file_attr(ctx, "bitstream", ctx.attr.bitstream, None, data_files, param, action_param)
+    bitstream = get_fallback(ctx, "attr.bitstream", exec_env)
+    update_file_attr(ctx, "bitstream", bitstream, None, data_files, param, action_param)
 
     otp = get_fallback(ctx, "attr.otp", exec_env)
     update_file_attr(ctx, "otp", otp, None, data_files, param, action_param)
@@ -415,16 +416,12 @@ def common_test_setup(ctx, exec_env, firmware):
     if ctx.attr.needs_jtag:
         openocd = exec_env.openocd
         jtag_data = [openocd]
-        jtag_test_cmd = '''
-            --openocd="$(rootpath {})"
-        '''.format(openocd.label)
+        jtag_test_cmd = '''--openocd="$(rootpath {})"'''.format(openocd.label)
 
         openocd_adapter_config = get_fallback(ctx, "attr.openocd_adapter_config", exec_env)
         if openocd_adapter_config != None:
             jtag_data.append(openocd_adapter_config)
-            jtag_test_cmd += '''
-                --openocd-adapter-config="$(rootpath {})"
-            '''.format(openocd_adapter_config.label)
+            jtag_test_cmd += '''--openocd-adapter-config="$(rootpath {})"'''.format(openocd_adapter_config.label)
 
         data_labels += jtag_data
         data_files += get_files(jtag_data)
@@ -437,3 +434,73 @@ def common_test_setup(ctx, exec_env, firmware):
     param.update(slot_spec)
 
     return test_harness, data_labels, data_files, param, action_param
+
+def _bitstream_from_env_impl(ctx):
+    if ctx.attr.exec_env.label.name == "none":
+        # This is required so that this rule won't fail in Bazel queries.
+        print("{}: No exec_env. Nothing to do.".format(ctx.label))
+        return DefaultInfo()
+    if ExecEnvInfo not in ctx.attr.exec_env:
+        fail("Not an exec_env:", ctx.attr.exec_env.label)
+
+    exec_env = ctx.attr.exec_env[ExecEnvInfo]
+    src = ctx.file.src if ctx.file.src else exec_env.bitstream
+
+    # Re-export the input as an output of this rule; ensures the bitstream appears
+    # in runfiles under this target's path.
+    out = ctx.actions.declare_file("{}.bit".format(ctx.label.name))
+    ctx.actions.symlink(
+        output = out,
+        target_file = src,
+    )
+
+    # Regardless of whether we are configured to skip bitstream loading or not,
+    # just forward the file: opentitantool skips loading if the file is named
+    # 'skip.bit'.
+    return DefaultInfo(files = depset([out]))
+
+bitstream_from_env = rule(
+    implementation = _bitstream_from_env_impl,
+    attrs = {
+        "src": attr.label(allow_single_file = True, doc = "The bitstream to retrieve (i.e. an override)"),
+        "exec_env": attr.label(providers = [[ExecEnvInfo], [DefaultInfo]], mandatory = True, doc = "The exec_env to get the bitstream from"),
+    },
+)
+
+def _memory_from_env_impl(ctx):
+    if ctx.attr.exec_env.label.name == "none":
+        # This is required so that this rule won't fail in Bazel queries.
+        print("{}: No exec_env. Nothing to do.".format(ctx.label))
+        return DefaultInfo()
+    if ExecEnvInfo not in ctx.attr.exec_env:
+        fail("Not an exec_env:", ctx.attr.exec_env.label)
+
+    exec_env = ctx.attr.exec_env[ExecEnvInfo]
+    if ctx.file.src and ctx.attr.src.label.name != "none":
+        src = ctx.file.src
+    else:
+        src = getattr(exec_env, ctx.attr.memory)
+
+    # TODO: what if src wants to give one binary file instead of the entire ROM?
+    # When retrieving the Mask ROM, we just want to get the single binary file.
+    if ctx.attr.memory == "rom":
+        src = get_one_binary_file(src, field = ctx.attr.memory, providers = [exec_env.provider])
+
+    # Re-export the input as an output of this rule; ensures the bitstream appears
+    # in runfiles under this target's path.
+    out = ctx.actions.declare_file("{}.vmem".format(ctx.label.name))
+    ctx.actions.symlink(
+        output = out,
+        target_file = src,
+    )
+
+    return DefaultInfo(files = depset([out]))
+
+memory_from_env = rule(
+    implementation = _memory_from_env_impl,
+    attrs = {
+        "src": attr.label(allow_single_file = True, doc = "The VMEM to retrieve (i.e. an override)"),
+        "exec_env": attr.label(providers = [[ExecEnvInfo], [DefaultInfo]], mandatory = True, doc = "The exec_env to get the memory from"),
+        "memory": attr.string(mandatory = True, doc = "The type of memory to retrieve (e.g. 'rom', 'otp')"),
+    },
+)

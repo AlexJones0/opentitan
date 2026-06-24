@@ -4,6 +4,7 @@
 
 load("@ot_python_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("//rules/opentitan:exec_env.bzl", select_bitstream = "bitstream_from_env", select_memory = "memory_from_env")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -86,11 +87,53 @@ py_library(
     ],
 )
 
+label_flag(
+    name = "env",
+    build_setting_default = "//hw/bitstream/universal:none",
+)
+
+select_bitstream(
+    name = "test_bitstream",
+    testonly = True,
+    exec_env = ":env",
+    tags = ["manual"],
+)
+
+# Memories to be loaded onto the FPGA after the bitstream is loaded
+# to replicate the specified execution environment.
+FPGA_LOADED_MEORIES = [
+    "rom",
+    "otp",
+]
+
+[
+    label_flag(
+        name = memory,
+        build_setting_default = ":none",
+    )
+    for memory in FPGA_LOADED_MEORIES
+]
+
+
+[
+    select_memory(
+        name = "test_{}".format(memory),
+        testonly = True,
+        exec_env = ":env",
+        src = ":{}".format(memory),
+        memory = memory,
+        tags = ["manual"],
+    )
+    for memory in FPGA_LOADED_MEORIES
+]
+
 filegroup(
     name = "data_dependencies",
     testonly = True,
     srcs = [
-        "//hw/bitstream/universal:splice",
+        ":test_bitstream",
+        ":test_otp",
+        ":test_rom",
         "//sw/device/silicon_creator/manuf/base:ft_personalize_all",
         "//sw/device/silicon_creator/manuf/base:sram_cp_provision",
         "//sw/device/silicon_creator/manuf/base:sram_ft_individualize_all",

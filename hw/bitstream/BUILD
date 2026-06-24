@@ -15,6 +15,7 @@ filegroup(
     srcs = glob(["**/*.md"]),
 )
 
+
 # By default, targets in this file will use cached artifacts from the GCP bucket
 # instead of building them from scratch.
 #
@@ -32,8 +33,7 @@ filegroup(
 #   Vivado. You'll need to have Xilinx Vivado installed and have properly
 #   configured access to a license or license server.
 #
-# * `--define bitstream=gcp_splice` causes these targets to use a cached
-#   bitstream, but splice in a locally-built ROM image or OTP.
+# * `--define bitstream=gcp` causes these targets to use a cached bitstream.
 #
 # Downstream targets will see the effects of this caching logic. For example,
 # specifying `--define bitstream=vivado` when testing
@@ -55,9 +55,9 @@ config_setting(
 )
 
 config_setting(
-    name = "bitstream_gcp_splice",
+    name = "bitstream_gcp",
     define_values = {
-        "bitstream": "gcp_splice",
+        "bitstream": "gcp",
     },
 )
 
@@ -67,7 +67,7 @@ filegroup(
     srcs = select({
         "bitstream_skip": ["//hw/bitstream/universal:none"],
         "bitstream_vivado": ["//hw/bitstream/vivado:fpga_cw310_test_rom"],
-        "bitstream_gcp_splice": ["@bitstreams//:chip_earlgrey_cw310_bitstream"],
+        "bitstream_gcp": ["@bitstreams//:chip_earlgrey_cw310_bitstream"],
         "//conditions:default": ["@bitstreams//:chip_earlgrey_cw310_bitstream"],
     }),
     tags = ["manual"],
@@ -79,7 +79,7 @@ filegroup(
     srcs = select({
         "bitstream_skip": ["//hw/bitstream/universal:none"],
         "bitstream_vivado": ["//hw/bitstream/vivado:cw310_mmi"],
-        "bitstream_gcp_splice": ["@bitstreams//:chip_earlgrey_cw310_mmi"],
+        "bitstream_gcp": ["@bitstreams//:chip_earlgrey_cw310_mmi"],
         "//conditions:default": ["@bitstreams//:chip_earlgrey_cw310_mmi"],
     }),
     tags = ["manual"],

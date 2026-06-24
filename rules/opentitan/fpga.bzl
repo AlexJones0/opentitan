@@ -138,6 +138,7 @@ def _get_test_commands(ctx, param, exec_env):
     Common Param Fields:
       exit_success: The console output for test success.
       exit_failure: The console output for test failure.
+      # TODO: a lot of the documentation around this is wrong now that we need JTAG
       jtag_test_cmd: The JTAG test command (if testopt_needs_jtag is True).
       bitstream: The bitstream to load before test.
       firmware: The firmware to load with bootstrap.
@@ -169,6 +170,17 @@ def _get_test_commands(ctx, param, exec_env):
         test_setup_cmd.append('--exec="fpga clear-bitstream"')
     if "bitstream" in param:
         test_setup_cmd.append('--exec="fpga load-bitstream {bitstream}"')
+
+    # TODO: Maybe use USR_ACCESS_IDENTIFIER in bkdr to control bitstream loading as well?
+    # Could just make a very general `setup` command, or pass this a bitstream as well?
+    test_setup_cmd.append('--exec="bkdr enter"')
+    bkdr_writes = ""
+    if "rom" in param:
+        bkdr_writes += "--write ROM={rom} "
+    if "otp" in param:
+        bkdr_writes += "--write OTP={otp} "
+    test_setup_cmd.append('--exec="bkdr {{jtag_test_cmd}} batch {bkdr_writes} --start"'.format(bkdr_writes = bkdr_writes))
+
     if _get_bool(param, "testopt_bootstrap") and "firmware" in param:
         test_setup_cmd.append('--exec="bootstrap --leave-in-reset --clear-uart=true {firmware}"')
     test_setup_cmd = "\n".join(test_setup_cmd)
@@ -219,8 +231,6 @@ def _test_dispatch(ctx, exec_env, firmware):
         param["firmware"] = image.short_path
         action_param["firmware"] = image.path
         data_files.append(image)
-
-    # FIXME: maybe splice a bitstream here
 
     # Get the pre-test_cmd args.
     args = get_fallback(ctx, "attr.args", exec_env)
@@ -338,14 +348,14 @@ def fpga_params(
     Returns:
       struct of test parameters.
     """
-    if bitstream and (rom or otp):
-        fail("Cannot use rom or otp with bitstream.")
-    if not bitstream:
-        bitstream = "@//hw/bitstream/universal:splice"
 
     # Clear bitstream after the test if it changes the OTP.
     if changes_otp:
+        # TODO: make this more granular - wipe only the OTP image
+        # instead of the entire bitstream.
         kwargs["testopt_clear_after_test"] = "True"
+
+    # JTAG is used for backdoor loading of memories - it is always needed.
     if needs_jtag:
         kwargs["testopt_needs_jtag"] = "True"
     return struct(
@@ -361,7 +371,8 @@ def fpga_params(
         rom_ext = rom_ext,
         otp = otp,
         bitstream = bitstream,
-        needs_jtag = needs_jtag,
+        # We always "needs JTAG" for the backdoor loader. But do we need to declare it here?
+        needs_jtag = True,
         test_cmd = test_cmd,
         data = data,
         param = kwargs,
