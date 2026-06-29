@@ -83,13 +83,14 @@ class TestBitstreamCache(unittest.TestCase):
         os.walk.assert_called_once_with('cache/abcd')
 
     def test_write_build_file(self):
-        BITSTREAM_ORIG = 'lowrisc_systems_chip_earlgrey_cw340_0.1.bit.orig'
-        BITSTREAM_SPLICE = 'lowrisc_systems_chip_earlgrey_cw340_0.1.bit.splice'
+        BITSTREAM = 'lowrisc_systems_chip_earlgrey_cw340_0.1.bit'
+        # An extra bitstream, not included in the manifest (and thus not in the build file)
+        BITSTREAM_EXTRA = 'lowrisc_systems_chip_earlgrey_cw340_0.1.bit.extra'
 
         MOCKED_OS_WALK_RETURN = [
             # os.walk() yields tuples of the form (root, dir, files).
             ('cache/abcd', [],
-             [BITSTREAM_ORIG, BITSTREAM_SPLICE, 'manifest.json', 'memories.mmi']),
+             [BITSTREAM, BITSTREAM_EXTRA, 'manifest.json', 'memories.mmi']),
         ]
         os.walk = unittest.mock.MagicMock(name='os.walk',
                                           return_value=MOCKED_OS_WALK_RETURN)
