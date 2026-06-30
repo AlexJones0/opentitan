@@ -66,8 +66,14 @@ def fips_wrap_opentitan_test(name, exec_env):
     for env_label in exec_env.keys():
         env_suffix = env_label.split(":")[-1]
 
+        # FIXME: this is very hacky, we should find a better way to add tags with this wrapper.
+        tags = []
+        if "fpga" in env_suffix:
+            tags.append("fpga")
+
         # The new name of the test is {name}_fips_{exec_env}
         fips_transition_test(
             name = "{}_fips_{}".format(name, env_suffix),
             actual_test = ":{}_{}".format(name, env_suffix),
+            tags = tags,
         )
