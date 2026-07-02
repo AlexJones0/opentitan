@@ -11,6 +11,7 @@
 #include "sw/device/lib/dif/dif_csrng.h"
 #include "sw/device/lib/dif/dif_csrng_shared.h"
 #include "sw/device/lib/dif/dif_edn.h"
+#include "sw/device/lib/runtime/hart.h"
 #include "sw/device/lib/runtime/log.h"
 #include "sw/device/lib/testing/aes_testutils.h"
 #include "sw/device/lib/testing/csrng_testutils.h"
@@ -20,6 +21,7 @@
 
 enum {
   kTestTimeout = (1000 * 1000),
+  kRecoverableAlertReassertDelayMicros = 7 * 1000,
 };
 
 // The mask share, used to mask kKey. Note that the masking should not be done
@@ -109,6 +111,20 @@ status_t execute_test(const dif_csrng_t *csrng, const dif_edn_t *edn0) {
   // masking PRNG outputs an all-zero vector.
   CHECK_DIF_OK(dif_aes_trigger(&aes, kDifAesTriggerPrngReseed));
   AES_TESTUTILS_WAIT_FOR_STATUS(&aes, kDifAesStatusIdle, true, kTestTimeout);
+
+  // When running after the ROM_EXT in a SiVal configuration, only for the
+  // first `sival_rom_ext` test run after loading the bitstream, or when
+  // clearing the non-volatile memory, we can see the recoverable genbits
+  // alert be asserted again within the next 7 milliseconds or so.
+  // We wait regardless of the environment to be sure this doesn't happen.
+  //
+  // FIXME: The reason for this re-assertion should be investigated, and this
+  // test should be appropriately modified to address this issue. The problem
+  // is likely due to this particular environment requiring a lot of entropy
+  // to resolve - depending on entropy consumption of other HW IP blocks
+  // connected to the EDN, CSRNG generates more of the same entropy bits and
+  // so we see the alert fire again within a short interval.
+  busy_spin_micros(kRecoverableAlertReassertDelayMicros);
 
   uint32_t alerts;
   CHECK_DIF_OK(dif_edn_get_recoverable_alerts(&edn, &alerts));
