@@ -43,8 +43,6 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import List, Optional, Tuple
-import re
-import lz4.block
 
 import otbn_as
 import otbn_ld
@@ -214,24 +212,6 @@ def get_otbn_syms(elf_path: str) -> List[Tuple[str, int]]:
             return ret
 
 
-def compress_chunked(data: bytes, chunk_size: int = 1024) -> bytes:
-    # If there is no data (e.g., empty DMEM section),
-    # return a single 4-byte dummy header
-    # to prevent objcopy from crashing on an empty file.
-    if not data:
-        return bytes([0, 0, 0, 0])
-
-    result = bytearray()
-    for i in range(0, len(data), chunk_size):
-        chunk = data[i: i + chunk_size]
-        comp = lz4.block.compress(chunk, mode='high_compression', store_size=False)
-        # 4-byte header per chunk
-        result += len(comp).to_bytes(2, byteorder='little')
-        result += len(chunk).to_bytes(2, byteorder='little')
-        result += comp
-    return bytes(result)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -325,15 +305,8 @@ def main() -> int:
         # the objcopy.
         host_side_pfx = '_otbn_local_app_{}_'.format(app_name)
         otbn_side_pfx = '_otbn_remote_app_{}_'.format(app_name)
-        # Compute the CRC32 checksum and add it as a constant. Ibex can use
-        # this with the LOAD_CHECKSUM register to ensure the app was loaded
-        # correctly.
-        checksum = get_app_checksum(out_elf)
         out_embedded_obj = out_dir / (app_name + '.rv32embed.o')
-
-        # Generate the uncompressed object
-        uncomp_obj = out_dir / f"{app_name}_uncomp.o"
-        uncomp_args = [
+        args = [
             '-O', 'elf32-littleriscv',
             '--set-section-flags=*=alloc,load,readonly',
             '--remove-section=.scratchpad', '--remove-section=.bss',
