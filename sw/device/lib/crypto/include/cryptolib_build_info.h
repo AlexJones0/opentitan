@@ -26,8 +26,8 @@ extern "C" {
  * Returns the current version of the cryptolib as well as the
  * latest git commit hash of the `sw/device/lib/crypto` directory.
  *
- * @param ctx Pointer to the generic HMAC context struct.
  * @param[out] version The current version of the cryptolib.
+ * @param[out] released Whether cryptolib is released or not.
  * @param[out] build_hash_low The low portion of the git commit hash of
  * `sw/device/lib/crypto`.
  * @param[out] build_hash_high The high portion of the git commit hash of
