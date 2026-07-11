@@ -1,0 +1,348 @@
+diff --git a/src/jtag/jtag.h b/src/jtag/jtag.h
+index 4f94e9913..ddbc34f2e 100644
+--- a/src/jtag/jtag.h
++++ b/src/jtag/jtag.h
+@@ -12,6 +12,7 @@
+ #define OPENOCD_JTAG_JTAG_H
+ 
+ #include <helper/binarybuffer.h>
++#include <helper/list.h>
+ #include <helper/log.h>
+ #include <helper/replacements.h>
+ 
+@@ -139,6 +140,20 @@ struct jtag_tap {
+ 	void *priv;
+ };
+ 
++struct queued_drscan {
++	struct list_head list;
++	struct jtag_tap *tap;
++	struct scan_field *fields;
++	unsigned num_fields;
++	tap_state_t state;
++};
++
++struct drscan_batch_context {
++	bool active;
++	struct list_head scans;
++	unsigned count;
++};
++
+ void jtag_tap_init(struct jtag_tap *tap);
+ void jtag_tap_free(struct jtag_tap *tap);
+ 
+diff --git a/src/jtag/tcl.c b/src/jtag/tcl.c
+index b1815b79d..e335bbde4 100644
+--- a/src/jtag/tcl.c
++++ b/src/jtag/tcl.c
+@@ -31,6 +31,7 @@
+ #include <strings.h>
+ #endif
+ 
++#include <helper/list.h>
+ #include <helper/time_support.h>
+ #include "transport/transport.h"
+ 
+@@ -48,6 +49,8 @@ static const struct jim_nvp nvp_jtag_tap_event[] = {
+ 	{ .name = NULL, .value = -1 }
+ };
+ 
++static struct drscan_batch_context drscan_batch_ctx;
++
+ struct jtag_tap *jtag_tap_by_jim_obj(Jim_Interp *interp, Jim_Obj *o)
+ {
+ 	const char *cp = Jim_GetString(o, NULL);
+@@ -212,6 +215,258 @@ static int jim_command_drscan(Jim_Interp *interp, int argc, Jim_Obj * const *arg
+ 	return JIM_OK;
+ }
+ 
++static void drscan_batch_free(void)
++{
++	struct queued_drscan *scan;
++	struct queued_drscan *tmp;
++	
++	list_for_each_entry_safe(scan, tmp, &drscan_batch_ctx.scans, list) {
++		for (unsigned i = 0; i < scan->num_fields; i++) {
++			/* out_value and in_value are the same; only free once. */
++			free(scan->fields[i].in_value);
++		}
++		free(scan->fields);
++		list_del(&scan->list);
++		free(scan);
++	}
++
++	drscan_batch_ctx.active = false;
++	drscan_batch_ctx.count = 0;
++}
++
++static int jim_command_drscan_batch_start(Jim_Interp *interp, int argc, Jim_Obj * const *args)
++{
++	if (argc != 1) {
++		Jim_WrongNumArgs(interp, 1, args, "wrong arguments");
++		return JIM_ERR;
++	}
++
++	if (drscan_batch_ctx.active) {
++		Jim_SetResultString(interp, "drscan_batch_start: already started", -1);
++		return JIM_ERR;
++	}
++
++	INIT_LIST_HEAD(&drscan_batch_ctx.scans);
++	drscan_batch_ctx.active = true;
++	drscan_batch_ctx.count = 0;
++
++	return JIM_OK;
++}
++
++static int jim_command_drscan_batch_add(Jim_Interp *interp, int argc, Jim_Obj * const *args)
++{
++	struct scan_field *fields;
++	int num_fields;
++	int field_count = 0;
++	int i, e;
++	struct jtag_tap *tap;
++	tap_state_t endstate;
++	struct queued_drscan *scan;
++
++	/* args[1] = device
++	 * args[2] = num_bits
++	 * args[3] = hex string
++	 * ... repeat num bits and hex string ...
++	 *
++	 * .. optionally:
++	*     args[N-2] = "-endstate"
++	 *     args[N-1] = statename
++	 */
++	if ((argc < 4) || ((argc % 2) != 0)) {
++		Jim_WrongNumArgs(interp, 1, args, "wrong arguments");
++		return JIM_ERR;
++	}
++
++	endstate = TAP_IDLE;
++
++	/* validate arguments as numbers */
++	e = JIM_OK;
++	for (i = 2; i < argc; i += 2) {
++		long bits;
++		const char *cp;
++
++		e = Jim_GetLong(interp, args[i], &bits);
++		/* If valid - try next arg */
++		if (e == JIM_OK)
++			continue;
++
++		/* Not valid.. are we at the end? */
++		if (((i + 2) != argc)) {
++			/* nope, then error */
++			return e;
++		}
++
++		/* it could be: "-endstate FOO"
++		 * e.g. DRPAUSE so we can issue more instructions
++		 * before entering RUN/IDLE and executing them.
++		 */
++
++		/* get arg as a string. */
++		cp = Jim_GetString(args[i], NULL);
++		/* is it the magic? */
++		if (strcmp("-endstate", cp) == 0) {
++			/* is the statename valid? */
++			cp = Jim_GetString(args[i + 1], NULL);
++
++			/* see if it is a valid state name */
++			endstate = tap_state_by_name(cp);
++			if (endstate < 0) {
++				/* update the error message */
++				Jim_SetResultFormatted(interp, "endstate: %s invalid", cp);
++			} else {
++				if (!scan_is_safe(endstate))
++					LOG_WARNING("drscan with unsafe "
++						"endstate \"%s\"", cp);
++
++				/* valid - so clear the error */
++				e = JIM_OK;
++				/* and remove the last 2 args */
++				argc -= 2;
++			}
++		}
++
++		/* Still an error? */
++		if (e != JIM_OK)
++			return e;	/* too bad */
++	}	/* validate args */
++
++	assert(e == JIM_OK);
++
++	tap = jtag_tap_by_jim_obj(interp, args[1]);
++	if (!tap)
++		return JIM_ERR;
++
++	num_fields = (argc-2)/2;
++	if (num_fields <= 0) {
++		Jim_SetResultString(interp, "drscan_batch_add: no scan fields supplied", -1);
++		return JIM_ERR;
++	}
++	fields = malloc(sizeof(struct scan_field) * num_fields);
++	for (i = 2; i < argc; i += 2) {
++		long bits;
++		int len;
++		const char *str;
++
++		Jim_GetLong(interp, args[i], &bits);
++		str = Jim_GetString(args[i + 1], &len);
++
++		fields[field_count].num_bits = bits;
++		void *t = malloc(DIV_ROUND_UP(bits, 8));
++		fields[field_count].out_value = t;
++		str_to_buf(str, len, t, bits, 0);
++		fields[field_count].in_value = t;
++		field_count++;
++	}
++
++	scan = calloc(1, sizeof(*scan));
++	if (!scan)
++		return JIM_ERR;
++	
++	scan->tap = tap;
++	scan->num_fields = num_fields;
++	scan->fields = fields;
++
++	list_add_tail(&scan->list, &drscan_batch_ctx.scans);
++	drscan_batch_ctx.count++;
++
++	return JIM_OK;
++}
++
++static int jim_command_drscan_batch_execute(Jim_Interp *interp, int argc, Jim_Obj * const *args)
++{
++	int e;
++
++	size_t window_size;
++	size_t queued;
++	struct queued_drscan *scan;
++
++	/* optionally:
++	 *    args[1] = "-window"
++	 *    args[2] = window_size
++	 */
++	if ((argc != 1) && (argc != 3)) {
++		Jim_WrongNumArgs(interp, 1, args, "wrong arguments");
++		return JIM_ERR;
++	}
++
++	window_size = SIZE_MAX;
++
++	/* validate optional arguments */
++	e = JIM_OK;
++	if (argc == 3) {
++		const char *cp;
++
++		cp = Jim_GetString(args[1], NULL);
++		if (strcmp("-window", cp) == 0) {
++			long bits;
++
++			e = Jim_GetLong(interp, args[2], &bits);
++			if (e != JIM_OK)
++				return e;
++			
++			window_size = (bits > (long)SIZE_MAX || bits <= 0) ? SIZE_MAX : (size_t)bits;
++		}
++	}
++
++	assert(e == JIM_OK);
++
++	if (!drscan_batch_ctx.active) {
++		Jim_SetResultString(interp, "drscan_batch_execute: no active batch", -1);
++		return JIM_ERR;
++	}
++
++	queued = 0;
++
++	list_for_each_entry(scan, &drscan_batch_ctx.scans, list) {
++		jtag_add_dr_scan(scan->tap, scan->num_fields, scan->fields, TAP_IDLE);
++		queued++;
++
++		if (queued == window_size) {
++			int retval;
++
++			retval = jtag_execute_queue();
++			if (retval != ERROR_OK) {
++				drscan_batch_free();
++				Jim_SetResultString(interp, "drscan_batch_execute: jtag execute failed", -1);
++				return JIM_ERR;
++			}
++
++			queued = 0;
++		}
++	}
++
++	if (queued) {
++		int retval;
++
++		retval = jtag_execute_queue();
++		if (retval != ERROR_OK) {
++			drscan_batch_free();
++			Jim_SetResultString(interp, "drscan_batch_execute: jtag execute failed", -1);
++			return JIM_ERR;
++		}
++	}
++
++	drscan_batch_free();
++
++	return JIM_OK;
++}
++
++static int jim_command_drscan_batch_abort(Jim_Interp *interp, int argc, Jim_Obj * const *args)
++{
++	if (argc != 1) {
++		Jim_WrongNumArgs(interp, 1, args, "wrong arguments");
++		return JIM_ERR;
++	}
++
++	if (!drscan_batch_ctx.active) {
++		Jim_SetResultString(interp, "drscan_batch_abort: no active batch", -1);
++		return JIM_ERR;
++	}
++
++	drscan_batch_free();
++
++	return JIM_OK;
++}
+ 
+ static int jim_command_pathmove(Jim_Interp *interp, int argc, Jim_Obj * const *args)
+ {
+@@ -291,6 +546,34 @@ static const struct command_registration jtag_command_handlers_to_move[] = {
+ 		.help = "Move JTAG state machine from current state "
+ 			"(start_state) to state1, then state2, state3, etc.",
+ 	},
++	{
++		.name = "drscan_batch_start",
++		.mode = COMMAND_EXEC,
++		.jim_handler = jim_command_drscan_batch_start,
++		.help = "Begin a batched drscan operation."
++	},
++	{
++		.name = "drscan_batch_add",
++		.mode = COMMAND_EXEC,
++		.jim_handler = jim_command_drscan_batch_add,
++		.help = "Add a Data Register (DR) scan operation to the "
++			"current batch.",
++		.usage = "tap_name [num_bits value]* ['-endstate' state_name]",
++	},
++	{
++		.name = "drscan_batch_execute",
++		.mode = COMMAND_EXEC,
++		.jim_handler = jim_command_drscan_batch_execute,
++		.help = "Execute all batched drscan operations. Values that are "
++			"scanned out are ignored.",
++		.usage = "['-window' window_size]",
++	},
++	{
++		.name = "drscan_batch_abort",
++		.mode = COMMAND_EXEC,
++		.jim_handler = jim_command_drscan_batch_abort,
++		.help = "Abort the current batched drscan operations."
++	},
+ 	COMMAND_REGISTRATION_DONE
+ };
+ 

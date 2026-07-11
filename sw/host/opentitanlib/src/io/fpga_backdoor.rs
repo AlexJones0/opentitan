@@ -473,9 +473,12 @@ impl Backdoor {
             word_idx += 1;
         }
 
-        self.dmi
-            .batched_dmi_writes(&writes)
-            .context("failed to perform DMI writes")?;
+        let chunk_size = writes.len().div_ceil(6);
+        for chunk_of_writes in writes.chunks(chunk_size) {
+            self.dmi
+                .batched_dmi_writes(chunk_of_writes)
+                .context("failed to perform DMI writes")?;
+        }
 
         if check_status {
             let status = self

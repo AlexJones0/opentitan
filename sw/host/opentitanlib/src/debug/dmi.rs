@@ -5,7 +5,7 @@
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 
-use anyhow::{Result, bail, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use thiserror::Error;
 
 use super::openocd::OpenOcd;
@@ -105,6 +105,9 @@ pub struct OpenOcdDmi {
     openocd: OpenOcd,
     tap: String,
     abits: u32,
+
+    /// Whether this OpenOCD has custom batched DMI write commands implemented
+    custom_dmi_batch_cmds: Option<bool>,
 }
 
 impl OpenOcdDmi {
@@ -135,6 +138,7 @@ impl OpenOcdDmi {
             openocd,
             tap: tap.to_owned(),
             abits,
+            custom_dmi_batch_cmds: None,
         })
     }
 
@@ -166,6 +170,21 @@ impl OpenOcdDmi {
         );
 
         Ok(res)
+    }
+
+    /// Check whether custom OpenOCD commands for batched DMI writes are implemented.
+    /// The result is cached for the connection after this first time that this is queried.
+    pub fn has_custom_dmi_batch_cmds(&mut self) -> Result<bool> {
+        if let Some(has_cmds) = self.custom_dmi_batch_cmds {
+            Ok(has_cmds)
+        } else {
+            let res = self.openocd.execute(
+                "if {[llength [info commands drscan_batch_start]] > 0} {return \"exists\"}",
+            )?;
+            let has_cmds = res.contains("exists");
+            self.custom_dmi_batch_cmds = Some(has_cmds);
+            Ok(has_cmds)
+        }
     }
 }
 
@@ -200,20 +219,49 @@ impl Dmi for OpenOcdDmi {
                 .join(", ")
         );
 
+        // TODO: reorganize and update this comment
         // For optimized writes via drscan, we perform direct drscan write operations without
         // worrying about the returned scanned values. We only wait in the RunTest state for a
         // number of cycles at the very end, to allow the final few writes to run and complete,
         // and we then perform a final write to check the scan status (as errors are sticky).
-        let mut cmd = writes
+
+        let optimized_batch_cmds = self.has_custom_dmi_batch_cmds()?;
+
+        let mut cmd = String::new();
+        if optimized_batch_cmds {
+            cmd.push_str("drscan_batch_start\n");
+        }
+
+        // TODO: do I need to consider the TAP in the optimized write? How? Why?
+        // I guess it is already configured - I need to define a target for this then?
+        // But that conflicts with other raw DMI operations...
+        // Need to think about this properly...
+        let write_cmd = writes
             .iter()
             .map(|&(addr, value)| {
                 let data = (addr as u64) << DMI_ADDRESS_SHIFT
                     | (value as u64) << DMI_DATA_SHIFT
                     | DMI_OP_WRITE;
-                self.openocd.drscan_cmd(&self.tap, self.drscan_bits(), data)
+                let write_cmd = self.openocd.drscan_cmd(&self.tap, self.drscan_bits(), data);
+                if optimized_batch_cmds {
+                    Ok(format!(
+                        "drscan_batch_add {}",
+                        write_cmd
+                            .strip_prefix("drscan ")
+                            .context("drscan command implementation has changed")?
+                    ))
+                } else {
+                    Ok(write_cmd)
+                }
             })
-            .collect::<Vec<_>>()
+            .collect::<Result<Vec<_>>>()?
             .join("\n");
+        cmd.push_str(write_cmd.as_str());
+
+        if optimized_batch_cmds {
+            cmd.push_str("\ndrscan_batch_execute");
+        }
+
         cmd.push_str(
             // Wait 10 cycles for last write(s) to complete (arbitrary).
             format!(
@@ -222,7 +270,13 @@ impl Dmi for OpenOcdDmi {
             )
             .as_str(),
         );
-        self.openocd.execute(&cmd)?;
+
+        if let Err(err) = self.openocd.execute(&cmd) {
+            if optimized_batch_cmds {
+                let _ = self.openocd.execute("drscan_batch_abort");
+            }
+            return Err(err);
+        }
         Ok(())
     }
 }

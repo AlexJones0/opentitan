@@ -444,10 +444,10 @@ impl CommandDispatch for BackdoorBatch {
 
         self.target_clears
             .iter()
-            .try_for_each(|t| t.backdoor_write(&mut backdoor, false))?;
+            .try_for_each(|t| t.backdoor_write(&mut backdoor, self.verify))?;
         self.target_writes
             .iter()
-            .try_for_each(|t| t.backdoor_write(&mut backdoor, false))?;
+            .try_for_each(|t| t.backdoor_write(&mut backdoor, self.verify))?;
 
         if self.start {
             backdoor.set_done()?;
