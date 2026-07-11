@@ -1,0 +1,20 @@
+diff --git a/src/jtag/drivers/cmsis_dap.c b/src/jtag/drivers/cmsis_dap.c
+index 44a7dd8cb..9f1fc4f1b 100644
+--- a/src/jtag/drivers/cmsis_dap.c
++++ b/src/jtag/drivers/cmsis_dap.c
+@@ -1207,8 +1207,13 @@ static int cmsis_dap_init(void)
+ 	if (retval != ERROR_OK)
+ 		goto init_err;
+ 
+-	if (data[0] == 2) {  /* short */
+-		uint16_t pkt_sz = data[1] + (data[2] << 8);
++	if (data[0] == 2 || data[0] == 0) {  /* short or empty */
++		uint16_t pkt_sz;
++		if (data[0] == 0) { /* hack; special-case for HyperDebug */
++			pkt_sz = 256;
++		} else {
++			pkt_sz = data[1] + (data[2] << 8);
++		}
+ 		if (pkt_sz != cmsis_dap_handle->packet_size) {
+ 
+ 			/* 4 bytes of command header + 5 bytes per register

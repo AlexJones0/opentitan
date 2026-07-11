@@ -288,6 +288,8 @@ impl JtagChain for OpenOcdJtagChain {
         };
         self.openocd.execute(target)?;
 
+        self.openocd.execute("cmsis_dap_backend usb_bulk")?;
+
         // Capture outputs during initialization to see if error has occurred during the process.
         let resp = self.openocd.execute("capture init")?;
         if resp.contains("JTAG scan chain interrogation failed") {

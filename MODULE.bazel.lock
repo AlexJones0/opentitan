@@ -798,7 +798,7 @@
     },
     "//third_party/openocd:extensions.bzl%openocd": {
       "general": {
-        "bzlTransitiveDigest": "VFStBmloaxb1BcJnPzpekk+U+zTOVCFPyGBNi+LPHyI=",
+        "bzlTransitiveDigest": "P0V459/tIeszWaIchn/zzbSdA2ofKZxLnxA1XulHK/g=",
         "usagesDigest": "giKGt5Wo0D2+JMrFRS+ZKL1DUlZv/ijawcJ0jxEQXyQ=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -818,7 +818,8 @@
                 "@@//third_party/openocd/patches:calloc_transpose.patch",
                 "@@//third_party/openocd/patches:reset_on_dmi_op_error.patch",
                 "@@//third_party/openocd/patches:string_truncate_build_error.patch",
-                "@@//third_party/openocd/patches:add_batched_dmi_writes.patch"
+                "@@//third_party/openocd/patches:add_batched_dmi_writes.patch",
+                "@@//third_party/openocd/patches:hyperdebug_pkt_size_hack.patch"
               ],
               "patch_args": [
                 "-p1"

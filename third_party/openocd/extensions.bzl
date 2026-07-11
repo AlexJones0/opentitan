@@ -27,6 +27,7 @@ def _openocd_repos():
             Label("@lowrisc_opentitan//third_party/openocd/patches:reset_on_dmi_op_error.patch"),
             Label("@lowrisc_opentitan//third_party/openocd/patches:string_truncate_build_error.patch"),
             Label("@lowrisc_opentitan//third_party/openocd/patches:add_batched_dmi_writes.patch"),
+            Label("@lowrisc_opentitan//third_party/openocd/patches:hyperdebug_pkt_size_hack.patch"),
         ],
         patch_args = ["-p1"],
     )
