@@ -1665,6 +1665,17 @@ opentitan_test(
     ],
 )
 
+# Test cryptolib with a version extracted & imported from a devbundle release tarball
+opentitan_test(
+    name = "otcrypto_import_test",
+    srcs = ["otcrypto_export_test.c"],
+    exec_env = CRYPTOTEST_EXEC_ENVS,
+    deps = [
+        "//sw/device/lib/testing/test_framework:ottf_main",
+        "@devbundle//:cryptolib",
+    ],
+)
+
 filegroup(
     name = "template_files",
     srcs = [

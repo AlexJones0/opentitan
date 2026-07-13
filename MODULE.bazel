@@ -271,6 +271,9 @@ use_repo(tock, "elf2tab", "libtock", "tock")
 openocd = use_extension("//third_party/openocd:extensions.bzl", "openocd")
 use_repo(openocd, "openocd")
 
+devbundle = use_extension("//third_party/devbundle:extensions.bzl", "devbundle")
+use_repo(devbundle, "devbundle")
+
 freertos = use_extension("//third_party/freertos:extensions.bzl", "freertos")
 use_repo(freertos, "freertos")
 

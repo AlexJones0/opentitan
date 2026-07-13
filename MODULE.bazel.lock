@@ -249,6 +249,34 @@
         ]
       }
     },
+    "//third_party/devbundle:extensions.bzl%devbundle": {
+      "general": {
+        "bzlTransitiveDigest": "e5NrFleLXomvUia/tPwz5la1oRrQAmMdIvDN0sna2Ww=",
+        "usagesDigest": "HFHEw1LCI4tMc3BlDlF9D+Lv4xrhqc60E+V6U2ifYgo=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "devbundle": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "urls": [
+                "file:////home/alexj/lr/opentitan/third_party/devbundle/devbundle.tar.xz"
+              ],
+              "sha256": "a453cce21a152d2499c3b6b031d52050cd08a16b5ee4acf1736498d6bef573fb",
+              "build_file": "@@//third_party/devbundle:BUILD.devbundle.bazel"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "",
+            "bazel_tools",
+            "bazel_tools"
+          ]
+        ]
+      }
+    },
     "//third_party/freertos:extensions.bzl%freertos": {
       "general": {
         "bzlTransitiveDigest": "dcyR3f2/N8A1kC++ukkTcsSUWMPhglCNCfJlTrQ9trU=",

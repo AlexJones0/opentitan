@@ -1,0 +1,19 @@
+# Copyright lowRISC contributors (OpenTitan project).
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+exports_files(glob(["**"]))
+
+package(default_visibility = ["//visibility:public"])
+
+cc_import(
+    name = "cryptolib_import",
+    static_library = "libotcrypto/lib/libotcrypto.a",
+)
+
+cc_library(
+    name = "cryptolib",
+    hdrs = glob(["libotcrypto/include/libotcrypto/**/*.h"]),
+    includes = ["libotcrypto/include/libotcrypto"],
+    deps = [":cryptolib_import"],
+)
