@@ -21,7 +21,7 @@ rust_library(
     ],
     compile_data = glob(["config/*.json5"]) + [
         "@hyperdebug_firmware//:hyperdebug/ec.bin",
-        "//third_party/openocd:jtag_cmsis_dap_adapter_cfg",
+        "//third_party/openocd:jtag_ftdi_cfg",
     ],
     crate_features = [
         "include_hyperdebug_firmware",
@@ -29,7 +29,7 @@ rust_library(
     crate_name = "ot_transport_hyperdebug",
     rustc_env = {
         "hyperdebug_firmware": "$(location @hyperdebug_firmware//:hyperdebug/ec.bin)",
-        "openocd_cmsis_dap_adapter_cfg": "$(location //third_party/openocd:jtag_cmsis_dap_adapter_cfg)",
+        "openocd_jtag_ftdi_cfg": "$(location //third_party/openocd:jtag_ftdi_cfg)",
     },
     deps = [
         "//sw/host/opentitanlib:opentitanlib_base",

@@ -877,16 +877,11 @@ impl<T: Flavor> Transport for Hyperdebug<T> {
         );
         // Tell OpenOCD to use its CMSIS-DAP driver, and to connect to the same exact USB
         // HyperDebug device that we are.
-        let usb_device = &self.inner.usb_device;
+        //let usb_device = &self.inner.usb_device;
         let new_jtag = Box::new(OpenOcdJtagChain::new(
             &format!(
-                "{}; cmsis_dap_vid_pid 0x{:04x} 0x{:04x}; adapter serial \"{}\";",
-                include_str!(env!("openocd_cmsis_dap_adapter_cfg")),
-                usb_device.get_vendor_id(),
-                usb_device.get_product_id(),
-                usb_device
-                    .get_serial_number()
-                    .expect("hyperdebug with no serial number!"),
+                "{}",
+                include_str!(env!("openocd_jtag_ftdi_cfg")),
             ),
             opts,
         )?);
