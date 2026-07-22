@@ -139,7 +139,7 @@ buildSite () {
     mkdir -p "${rustdoc_dir}"
     local bazel_out target_rustdoc target_rustdoc_output_path
     bazel_out="$(./bazelisk.sh info output_path 2>/dev/null)"
-    for target_rustdoc in "sw/host/opentitanlib:opentitanlib_doc" "sw/host/hsmtool:hsmlib_doc" "sw/host/ot_certs:ot_certs_doc"
+    for target_rustdoc in "sw/host/opentitanlib:opentitanlib_doc" "sw/host/hsmtool:hsmlib_doc" "sw/host/ot_certs:ot_certs_doc"  # FIXME: hsmtool
     do
       target_rustdoc_output_path="${bazel_out}/k8-fastbuild/bin/$(echo ${target_rustdoc} | tr ':' '/').rustdoc" #TODO : get the target's path using cquery
       ./bazelisk.sh build --experimental_convenience_symlinks=ignore "${target_rustdoc}"

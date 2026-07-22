@@ -3,9 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@opentitan_signing_infra//signing:defs.bzl", "offline_signature_attach")
 load("//rules:const.bzl", "CONST", "hex")
 load("//rules:manifest.bzl", "manifest")
-load("//rules:signing.bzl", "offline_presigning_artifacts", "offline_signature_attach")
+load("//rules:signing.bzl", "offline_presigning_artifacts")
 load("//rules/coverage:view.bzl", "coverage_view_test")
 load("//rules/opentitan:defs.bzl", "opentitan_binary")
 load(

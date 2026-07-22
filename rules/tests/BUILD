@@ -4,7 +4,7 @@
 
 load("//rules/tests:const_unittest.bzl", "const_test_suite")
 load("//rules/tests:otp_unittest.bzl", "otp_test_suite")
-load("//rules:signing.bzl", "signature_test")
+load("@opentitan_signing_infra//signing:defs.bzl", "signature_test")
 
 const_test_suite()
 

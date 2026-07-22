@@ -21,10 +21,11 @@ sh_test(
     data = [
         "//signing/softhsm",
         "//signing/softhsm:conf",
-        "//sw/host/hsmtool",
+        "@opentitan_signing_infra//hsmtool",
         "@softhsm2//:gen_dir",
     ],
     env = {
+        "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
         "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
     },
 )
@@ -47,11 +48,12 @@ sh_test(
         "//signing/softhsm",
         "//signing/softhsm:conf",
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset",
-        "//sw/host/hsmtool",
         "//sw/host/opentitantool",
+        "@opentitan_signing_infra//hsmtool",
         "@softhsm2//:gen_dir",
     ],
     env = {
+        "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
         "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
         "FIRST": "opentitantool",
         "OTTOOL_ARGS": """
@@ -84,11 +86,12 @@ sh_test(
         "//signing/softhsm",
         "//signing/softhsm:conf",
         "//sw/device/silicon_creator/lib/ownership/keys/fake:app_prod_ecdsa_pub",
-        "//sw/host/hsmtool",
         "//sw/host/opentitantool",
+        "@opentitan_signing_infra//hsmtool",
         "@softhsm2//:gen_dir",
     ],
     env = {
+        "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
         "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
         "FIRST": "hsmtool",
         "OTTOOL_ARGS": """
@@ -141,11 +144,12 @@ _SPX_TESTS = {
             "//signing/softhsm",
             "//signing/softhsm:conf",
             "//sw/device/silicon_creator/lib/ownership/keys/fake:spx_keyset",
-            "//sw/host/hsmtool",
             "//sw/host/opentitantool",
+            "@opentitan_signing_infra//hsmtool",
             "@softhsm2//:gen_dir",
         ],
         env = {
+            "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
             "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
             "FIRST": "opentitantool",
             "OTTOOL_ARGS": """
@@ -189,11 +193,12 @@ _SPX_TESTS = {
             "//signing/softhsm",
             "//signing/softhsm:conf",
             "//sw/device/silicon_creator/lib/ownership/keys/fake:spx_keyset",
-            "//sw/host/hsmtool",
             "//sw/host/opentitantool",
+            "@opentitan_signing_infra//hsmtool",
             "@softhsm2//:gen_dir",
         ],
         env = {
+            "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
             "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
             "FIRST": "hsmtool",
             "OTTOOL_ARGS": """
@@ -276,11 +281,12 @@ sh_test(
         "//signing/softhsm",
         "//signing/softhsm:conf",
         "//sw/device/silicon_creator/lib/ownership/keys/fake:ecdsa_keyset",
-        "//sw/host/hsmtool",
         "//sw/host/opentitantool",
+        "@opentitan_signing_infra//hsmtool",
         "@softhsm2//:gen_dir",
     ],
     env = {
+        "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
         "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
         "FIRST": "opentitantool",
         "OTTOOL_ARGS": """
@@ -313,11 +319,12 @@ sh_test(
         "//signing/softhsm",
         "//signing/softhsm:conf",
         "//sw/device/silicon_creator/lib/ownership/keys/fake:app_prod_ecdsa_pub",
-        "//sw/host/hsmtool",
         "//sw/host/opentitantool",
+        "@opentitan_signing_infra//hsmtool",
         "@softhsm2//:gen_dir",
     ],
     env = {
+        "HSMTOOL": "$(rootpath @opentitan_signing_infra//hsmtool:hsmtool)",
         "SOFTHSM2_CONF": "$(rootpath //signing/softhsm:conf)",
         "FIRST": "hsmtool",
         "PREPARE_CMD": """

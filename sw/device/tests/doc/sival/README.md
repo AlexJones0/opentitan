@@ -32,7 +32,7 @@ environment.
 *   **[hsmtool](https://github.com/lowRISC/opentitan/tree/master/sw/host/hsmtool)**:
     utility used to interface with hardware used to manage signing keys. The
     tool uses PKCS#11 to access HSM and USB tokens. Only NitroKey HSM2 is
-    supported at the moment.
+    supported at the moment.<!--FIXME-->
 
 #### Device Test Harness
 

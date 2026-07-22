@@ -18,7 +18,7 @@ load(
     "TEST_OWNER_CONFIGS",
 )
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
-load("//rules:signing.bzl", "signature_test")
+load("@opentitan_signing_infra//signing:defs.bzl", "signature_test")
 load("//util/design:hardened.bzl", "hardened_comparison_test")
 
 package(default_visibility = ["//visibility:public"])

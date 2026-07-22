@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files")
-load("//rules:signing.bzl", "keyset")
+load("@opentitan_signing_infra//signing:defs.bzl", "keyset")
 
 package(default_visibility = ["//visibility:public"])
 

@@ -128,10 +128,11 @@ pkg_tar(
         "//sw/device/lib/testing/test_rom:package",
         "//sw/device/silicon_creator/lib/ownership/keys/fake:fpga_dev_pkg",
         "//sw/device/silicon_creator/rom_ext:fpga_dev_pkg",
+        # FIXME
         # Note: a static build of hsmtool doesn't work because the PKCS#11
         # middleware libraries are typically dynamically linked and load
         # glibc and friends.
-        "//sw/host/hsmtool:package",
+        #"//sw/host/hsmtool:package",
         # Credits
         ":opentitan_credits",
         ":ibex_credits",

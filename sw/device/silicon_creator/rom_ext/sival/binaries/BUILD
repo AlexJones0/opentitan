@@ -4,7 +4,7 @@
 
 load("//rules/opentitan:cc.bzl", "exec_env_filegroup")
 load("//rules:files.bzl", "copy_files")
-load("//rules:signing.bzl", "signature_test")
+load("@opentitan_signing_infra//signing:defs.bzl", "signature_test")
 
 package(default_visibility = ["//visibility:public"])
 
