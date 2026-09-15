@@ -39,7 +39,7 @@ signature_test(
     ],
     ecdsa_key = {"//sw/device/silicon_creator/rom/keys/fake/ecdsa:ecdsa_keyset": "prod_key_0"},
     spx_domain = "Pure",  # "Pure", "PrehashedSha256"
-    spx_key = {"//sw/device/silicon_creator/rom/keys/fake/spx:spx_keyset": "prod_key_0"},
+    spx_key = {"//sw/device/silicon_creator/rom/keys/fake/slh_dsa:slh_dsa_keyset": "prod_key_1"},
 )
 
 string_flag(
@@ -346,7 +346,7 @@ manifest(d = {
         linker_script = ":ld_slot_{}".format(slot),
         manifest = ":manifest",
         slot_spec = variation.slot_spec,
-        spx_key = {"//sw/device/silicon_creator/rom/keys/fake/spx:spx_keyset": "prod_key_0"},
+        spx_key = {"//sw/device/silicon_creator/rom/keys/fake/slh_dsa:slh_dsa_keyset": "prod_key_1"},
         deps = [
             ":rom_ext_{}".format(variation_name),
             "//sw/device/lib/crt",
