@@ -215,7 +215,6 @@ _SPX_BACKENDS = {
         "label": "fake_app_prod_spx",
         "key": "app_prod_spx.pem",
         "keyset": "//sw/device/silicon_creator/lib/ownership/keys/fake:spx_keyset",
-        # `hsmtool spx verify` takes <INPUT> <SIGNATURE>.
         "verify_args": "$(rootpath :tqbf_digest)\n                    tqbf.spx_sig",
     },
     "slh_dsa": {
@@ -223,9 +222,7 @@ _SPX_BACKENDS = {
         "label": "fake_app_prod_slh_dsa",
         "key": "app_prod_slh_dsa.pem",
         "keyset": "//sw/device/silicon_creator/lib/ownership/keys/fake:slh_dsa_keyset",
-        # `hsmtool slh-dsa verify` takes <SIGNATURE> <INPUT>, the opposite order
-        # from every other hsmtool verify subcommand.
-        "verify_args": "tqbf.spx_sig\n                    $(rootpath :tqbf_digest)",
+        "verify_args": "$(rootpath :tqbf_digest)\n                    tqbf.spx_sig",
     },
 }
 
@@ -491,8 +488,8 @@ sh_test(
                 --label=fake_app_prod_slh_dsa
                 --domain=Pure
                 --format=plain-text
-                tqbf.spx_sig
                 $(rootpath :tqbf_digest)
+                tqbf.spx_sig
         """,
     },
     deps = [":test_lib"],
