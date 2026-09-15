@@ -7,13 +7,13 @@ load("//rules:signing.bzl", "keyset")
 package(default_visibility = ["//visibility:public"])
 
 keyset(
-    name = "spx_keyset",
+    name = "slh_dsa_keyset",
     build_setting_default = "",
     keys = {
-        "test_key_0_spx.pem": "test_key_0:legacy=True",
-        "dev_key_0_spx.pem": "dev_key_0:legacy=True",
-        "prod_key_0_spx.pem": "prod_key_0:legacy=false",
-        "prod_key_1_spx.pem": "prod_key_1:legacy=false",
+        "test_key_0_slh_dsa.pem": "test_key_0:legacy=True",
+        "dev_key_0_slh_dsa.pem": "dev_key_0:legacy=True",
+        "prod_key_0_slh_dsa.pem": "prod_key_0:legacy=false",
+        "prod_key_1_slh_dsa.pem": "prod_key_1:legacy=false",
     },
     profile = "local",
     tool = "//signing/tokens:local",

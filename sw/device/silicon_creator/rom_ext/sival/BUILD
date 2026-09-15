@@ -178,8 +178,9 @@ offline_presigning_artifacts(
         for slot in SLOTS
     ],
     ecdsa_key = {
-        "//hw/ip/otp_ctrl/data/earlgrey_skus/sival/keys:keyset": "sv00-earlgrey-a1-root-ecdsa-prod-0",
+        "//sw/device/silicon_creator/rom/keys/fake/ecdsa:ecdsa_keyset": "prod_key_0",
     },
+    spx_key = {"//sw/device/silicon_creator/rom/keys/fake/slh_dsa:slh_dsa_keyset": "prod_key_1"},
     manifest = ":manifest_sival",
     tags = ["manual"],
 )
