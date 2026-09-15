@@ -13,7 +13,7 @@ keyset(
         "test_key_0_slh_dsa.pem": "test_key_0:legacy=false",
         "dev_key_0_slh_dsa.pem": "dev_key_0:legacy=false",
         "prod_key_0_slh_dsa.pem": "prod_key_0:legacy=false",
-        "prod_key_1_slh_dsa.pem": "prod_key_1:legacy=false",
+        "prod_key_1_slh_dsa.pem": "prod_key_1:domain=PreHashedSha256:legacy=false",
     },
     profile = "local",
     tool = "//signing/tokens:local",
