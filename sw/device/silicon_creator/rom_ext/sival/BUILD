@@ -203,7 +203,7 @@ offline_signature_attach(
         "//sw/device/silicon_creator/rom_ext/sival/signatures:ecdsa_signatures",
     ],
     spx_signatures = [
-        "//sw/device/silicon_creator/rom_ext/sival/signatures:spx_signatures",
+        "//sw/device/silicon_creator/rom_ext/sival/signatures:slh_dsa_signatures",
     ],
     tags = ["manual"],
 )
