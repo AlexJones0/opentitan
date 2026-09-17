@@ -249,26 +249,25 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
     # Compute message to be signed with SPX+ / SLH-DSA.
     spxmsg = None
     if spx_key:
-        legacy = _get_bool(spx_key.config, "legacy", "false")
-        alg = "spx" if legacy else "slh-dsa"
+        keytype = _get_bool(spx_key.config, "keytype", "spx")
         if spx_domain.lower() == "prehashedsha256":
             spxmsg = digest
             rev = spx_key.config.get("byte-reversal-bug", "false")
             fmt = "Sha256HashReversed" if rev == "true" else "Sha256Hash"
             signing_directives.append(struct(
-                command = "{}-sign".format(alg),
+                command = "{}-sign".format(keytype),
                 id = None,
                 label = spx_key.name,
                 format = fmt,
                 domain = spx_domain,
-                output = "{}.{}_sig".format(basename, alg.replace("-","_")),
+                output = "{}.{}_sig".format(basename, keytype.replace("-","_")),
                 input = "{}.digest".format(basename),
             ))
         else:
             # `opentitantool image spx-message is agnostic of SPX+ vs. SLH-DSA.
             # The message to be signed is the same, we just change the declared file name.
-            algl = alg.replace("-","_")
-            spxmsg = ctx.actions.declare_file("{}.{}-message".format(basename, algl))
+            keytype_l = keytype.replace("-","_")
+            spxmsg = ctx.actions.declare_file("{}.{}-message".format(basename, keytype_l))
             ctx.actions.run(
                 outputs = [spxmsg],
                 inputs = [pre],
@@ -284,13 +283,13 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
                 mnemonic = "PreSigningSpxMessage",
             )
             signing_directives.append(struct(
-                command = "{}-sign".format(alg),
+                command = "{}-sign".format(keytype),
                 id = None,
                 label = spx_key.name,
                 format = "PlainText",
                 domain = spx_domain,
-                output = "{}.{}_sig".format(basename, algl),
-                input = "{}.{}-message".format(basename, algl),
+                output = "{}.{}_sig".format(basename, keytype_l),
+                input = "{}.{}-message".format(basename, keytype_l),
             ))
 
     return struct(pre = pre, digest = digest, spxmsg = spxmsg, script = signing_directives)
@@ -349,8 +348,7 @@ def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = 
         spx_sig = ctx.actions.declare_file(paths.replace_extension(spxmsg.basename, ".spx_sig"))
         domain = spx_key.config.get("domain", "Pure")
         rev = spx_key.config.get("byte-reversal-bug", "false")
-        legacy = _get_bool(spx_key.config, "legacy", "false")
-        alg = "spx" if legacy else "slh-dsa"
+        keytype = _get_bool(spx_key.config, "keytype", "spx")
         # Signing with OpenTitanTool always uses SPHINCS+, but this will work
         # for both SPHINCS+ and SLH-DSA since they are equivalent
         ctx.actions.run(
@@ -368,7 +366,7 @@ def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = 
                 private_key.path,
             ],
             executable = tool.tool,
-            mnemonic = "Local{}Sign".format(alg.replace("-","").capitalize()),
+            mnemonic = "Local{}Sign".format(keytype.replace("-","").capitalize()),
         )
 
     if rsa_key:
