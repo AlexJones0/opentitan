@@ -275,10 +275,6 @@ impl DecodeKey for SpxPublicKey {
             .split_once(' ')
             .ok_or_else(|| SpxError::ParseError(format!("failed to parse label: {label:?}")))?;
         if !label.contains("PUBLIC KEY") {
-            if label.contains("PRIVATE KEY") {
-                // Decode the private key and convert to public key.
-                return SpxSecretKey::from_pem_bytes(pem).map(|ref k| k.into());
-            }
             return Err(SpxError::ParseError(format!("not a public key: {label:?}")));
         };
         // WORKAROUND: Additionally fallback to handle parsing ASN.1 SPKIs with
@@ -345,10 +341,6 @@ mod test {
         // Public key encode/decode.
         let public_pem = pk.to_pem()?;
         let xk = SpxPublicKey::from_pem(&public_pem)?;
-        assert_eq!(pk, xk);
-
-        // Public key decode from private key.
-        let xk = SpxPublicKey::from_pem(&secret_pem)?;
         assert_eq!(pk, xk);
 
         // Error conditions for confusing secret/public.
