@@ -275,10 +275,6 @@ impl DecodeKey for SpxPublicKey {
             .split_once(' ')
             .ok_or_else(|| SpxError::ParseError(format!("failed to parse label: {label:?}")))?;
         if !label.contains("PUBLIC KEY") {
-            if label.contains("PRIVATE KEY") {
-                // Decode the private key and convert to public key.
-                return SpxSecretKey::from_pem_bytes(pem).map(|ref k| k.into());
-            }
             return Err(SpxError::ParseError(format!("not a public key: {label:?}")));
         };
         // If the algorithm is not a "RAW:" legacy format PEM public key, fallback
