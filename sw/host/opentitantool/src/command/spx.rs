@@ -188,7 +188,7 @@ impl CommandDispatch for SpxVerifyCommand {
 }
 
 #[derive(Debug, Subcommand, CommandDispatch)]
-/// SPHICS+ commands.
+/// SPHINCS+ commands.
 #[allow(clippy::large_enum_variant)]
 pub enum Spx {
     #[command(subcommand)]
