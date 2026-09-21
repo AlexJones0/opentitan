@@ -134,6 +134,14 @@ filegroup(
     srcs = ["app_prod_slh_dsa.pub.pem"],
 )
 
+# Fake private ML-DSA seed for DICE testing. This is a compact form of the ML-DSA private key.
+# It is currently imported into an HSM via `hsmtool object write` as an elementary file
+# (`CKO_DATA` object containing this PKCS#8 DER-encoded key).
+filegroup(
+    name = "dice_mldsa_seed",
+    srcs = ["dice_mldsa_seed.der"],
+)
+
 pkg_files(
     name = "fpga_dev_files",
     testonly = True,
