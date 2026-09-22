@@ -249,9 +249,6 @@ _SPX_TEST_CASES = {
                 fmt = param["format"],
             ),
         } | ({"HSMTOOL_SPX_MODULE": "pkcs11-ef"} if algorithm == "spx" else {}),
-        # The vendored SoftHSM SLH-DSA patch only implements `Pure` mode, i.e. it does not implement
-        # the `CKM_HASH_SLH_DSA` mechanism. While this is the case, these tests will be broken.
-        tags = ["broken"] if algorithm == "slh_dsa" and param["domain"] == "PreHashedSha256" else [],
         deps = [":test_lib"],
     )
     for algorithm in _SPX_HIERARCHIES
@@ -303,9 +300,6 @@ _SPX_TEST_CASES = {
                 fmt = param["format"],
             ),
         } | ({"HSMTOOL_SPX_MODULE": "pkcs11-ef"} if algorithm == "spx" else {}),
-        # The vendored SoftHSM SLH-DSA patch only implements `Pure` mode, i.e. it does not implement
-        # the `CKM_HASH_SLH_DSA` mechanism. While this is the case, these tests will be broken.
-        tags = ["broken"] if algorithm == "slh_dsa" and param["domain"] == "PreHashedSha256" else [],
         deps = [":test_lib"],
     )
     for algorithm in _SPX_HIERARCHIES
