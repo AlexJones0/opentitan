@@ -91,7 +91,7 @@ def key_ext(ecdsa, rsa, spx):
     Args:
         ecdsa: struct; The ECDSA key.
         rsa: struct; The RSA key.
-        spx: struct; The SPX+ key.
+        spx: struct; The SPHINCS+ / SLH-DSA key.
     Returns:
         str: The key extension.
     """
@@ -120,13 +120,13 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
         manifest_attr: Target; The manifest target.
         ecdsa_key: struct; The ECDSA public key.
         rsa_key: struct; The RSA public key.
-        spx_key: struct; The SPX+ public key.
+        spx_key: struct; The SPHINCS+ / SLH-DSA public key.
         basename: str; Optional basename of the outputs.  Defaults to src.basename.
         keyname_in_filenames: bool; Whether or not to use the key names to construct filenames.
                               Used in test-signing flows to maintain compatibility with existing
                               naming conventions for DV tests.
     Returns:
-        struct: A struct containing the pre-signing binary, the digest and spx message files.
+        struct: A struct containing the pre-signing binary, the digest and SPHINCS+/SLH-DSA message files.
     """
     if ecdsa_key and rsa_key:
         fail("Only one of ECDSA or RSA key should be provided")
@@ -172,6 +172,8 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
     if spx_key:
         spx_domain = spx_key.config.get("domain", "Pure")
         selected_spx_key = getattr(spx_key, "file", None)
+        # `opentitantool --spx-key` is able to handle both SPHINCS+ and SLH-DSA
+        # keys and add their signatures as a manifest extension.
         spx_args.extend([
             "--spx-key={}".format(selected_spx_key.path),
             "--domain={}".format(spx_domain),
@@ -237,24 +239,31 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
             input = "{}.digest".format(basename),
         ))
 
-    # Compute message to be signed with SPX+.
+    # Compute message to be signed with SPHINCS+/SLH-DSA.
     spxmsg = None
     if spx_key:
+        keytype = spx_key.config.get("keytype", "spx").replace("-", "_")
+        if keytype not in ("spx", "slh_dsa"):
+            fail("The selected `spx_key` must be either the `spx` or `slh-dsa` keytype")
+        command = keytype.replace("_", "-")
+
         if spx_domain.lower() == "prehashedsha256":
             spxmsg = digest
             rev = spx_key.config.get("byte-reversal-bug", "false")
             fmt = "Sha256HashReversed" if rev == "true" else "Sha256Hash"
             signing_directives.append(struct(
-                command = "spx-sign",
+                command = "{}-sign".format(command),
                 id = None,
                 label = spx_key.name,
                 format = fmt,
                 domain = spx_domain,
-                output = "{}.spx_sig".format(basename),
+                output = "{}.{}_sig".format(basename, keytype),
                 input = "{}.digest".format(basename),
             ))
         else:
-            spxmsg = ctx.actions.declare_file("{}.spx-message".format(basename))
+            # `opentitantool image spx-message` handles both SPHINCS+ and SLH-DSA keys --
+            # the SPX message to be signed is the same. We only change the file name.
+            spxmsg = ctx.actions.declare_file("{}.{}-message".format(basename, keytype))
             ctx.actions.run(
                 outputs = [spxmsg],
                 inputs = [pre],
@@ -270,13 +279,13 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
                 mnemonic = "PreSigningSpxMessage",
             )
             signing_directives.append(struct(
-                command = "spx-sign",
+                command = "{}-sign".format(command),
                 id = None,
                 label = spx_key.name,
                 format = "PlainText",
                 domain = spx_domain,
-                output = "{}.spx_sig".format(basename),
-                input = "{}.spx-message".format(basename),
+                output = "{}.{}_sig".format(basename, keytype),
+                input = "{}.{}-message".format(basename, keytype),
             ))
 
     return struct(pre = pre, digest = digest, spxmsg = spxmsg, script = signing_directives)
@@ -290,11 +299,11 @@ def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = 
         digest: file; The digest of the binary to be signed.
         ecdsa_key: struct; The ECDSA private key.
         rsa_key: struct; The RSA private key.
-        spxmsg: file; The SPX+ message to be signed.
-        spx_key: struct; The SPX+ private key.
+        spxmsg: file; The SPHINCS+/SLH-DSA message to be signed.
+        spx_key: struct; The SPHINCS+/SLH-DSA private key.
         profile: str; The token profile.  Not used by this function.
     Returns:
-        file, file, file: The ECDSA, RSA and SPX signature files.
+        file, file, file: The ECDSA, RSA and SPHINCS+/SLH-DSA signature files.
     """
     if rsa_key and ecdsa_key:
         fail("Only one of ECDSA or RSA key should be provided")
@@ -332,9 +341,18 @@ def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = 
     spx_sig = None
     if spxmsg and spx_key:
         private_key = spx_key.file
-        spx_sig = ctx.actions.declare_file(paths.replace_extension(spxmsg.basename, ".spx_sig"))
+        keytype = spx_key.config.get("keytype", "spx").replace("-", "_")
+        if keytype not in ("spx", "slh_dsa"):
+            fail("The selected `spx_key` must be either the `spx` or `slh-dsa` keytype")
+        mnemonic = ''.join([element.capitalize() for element in keytype.split("_")])
+        ext = ".{}_sig".format(keytype)
+        spx_sig = ctx.actions.declare_file(paths.replace_extension(spxmsg.basename, ext))
         domain = spx_key.config.get("domain", "Pure")
         rev = spx_key.config.get("byte-reversal-bug", "false")
+
+        # `opentitantool spx sign` handles both SPHINCS+ and SLH-DSA keys.
+        # It currently always dispatches to the SPHNICS+ reference implementation
+        # for its signing operations.
         ctx.actions.run(
             outputs = [spx_sig],
             inputs = [spxmsg, private_key],
@@ -350,7 +368,7 @@ def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = 
                 private_key.path,
             ],
             executable = tool.tool,
-            mnemonic = "LocalSpxSign",
+            mnemonic = "Local{}Sign".format(mnemonic),
         )
 
     if rsa_key:
@@ -418,6 +436,9 @@ def _hsmtool_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key 
 
     spx_sig = None
     if spxmsg and spx_key:
+        keytype = spx_key.config.get("keytype", "spx").replace("-", "_")
+        if keytype not in ("spx", "slh_dsa"):
+            fail("The selected `spx_key` must be either the `spx` or `slh-dsa` keytype")
         domain = spx_key.config.get("domain", "Pure")
         if domain.lower() == "prehashedsha256":
             rev = spx_key.config.get("byte-reversal-bug", "false")
@@ -432,7 +453,8 @@ def _hsmtool_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key 
                 "--format=plain-text",
                 "--domain={}".format(domain),
             ]
-        spx_sig = ctx.actions.declare_file(paths.replace_extension(spxmsg.basename, ".spx-sig"))
+        ext = ".{}-sig".format(keytype)
+        spx_sig = ctx.actions.declare_file(paths.replace_extension(spxmsg.basename, ext))
         ctx.actions.run(
             outputs = [spx_sig],
             inputs = [spxmsg, tool.tool] + tool.data,
