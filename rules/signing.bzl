@@ -291,6 +291,50 @@ def _presigning_artifacts(ctx, opentitantool, src, manifest_attr, ecdsa_key, rsa
 
     return struct(pre = pre, digest = digest, spxmsg = spxmsg, script = signing_directives)
 
+def _local_spx_sign(ctx, tool, spx_msg, spx_key):
+    """Sign a digest with a local on-disk SPHINCS+ / SLH-DSA private key.
+
+    Args:
+        ctx: The rule context.
+        tool: SigningToolInfo; A provider referring to the opentitantool binary.
+        spx_msg: file; The SPHINCS+ / SLH-DSA message to be signed.
+        spx_key: struct; The SPHINCS+ / SLH-DSA private key.
+    Returns:
+        file: The SPHINCS+ / SLH-DSA signature file.
+    """
+    private_key = spx_key.file
+    keytype = spx_key.config.get("keytype", "spx").replace("-", "_")
+    if keytype not in ("spx", "slh_dsa"):
+        fail("The selected `spx_key` must be either the `spx` or `slh-dsa` keytype")
+    mnemonic = ''.join([element.capitalize() for element in keytype.split("_")])
+    ext = ".{}_sig".format(keytype)
+    spx_sig = ctx.actions.declare_file(paths.replace_extension(spx_msg.basename, ext))
+    domain = spx_key.config.get("domain", "Pure")
+    rev = spx_key.config.get("byte-reversal-bug", "false")
+
+    # `opentitantool spx sign` handles both SPHINCS+ and SLH-DSA keys.
+    # It currently always dispatches to the SPHINCS+ reference implementation
+    # for its signing operations.
+    ctx.actions.run(
+        outputs = [spx_sig],
+        inputs = [spx_msg, private_key],
+        arguments = [
+            "--rcfile=",
+            "--quiet",
+            "spx",
+            "sign",
+            "--spx-hash-reversal-bug={}".format(rev),
+            "--domain={}".format(domain),
+            "--output={}".format(spx_sig.path),
+            spx_msg.path,
+            private_key.path,
+        ],
+        executable = tool.tool,
+        mnemonic = "Local{}Sign".format(mnemonic),
+    )
+
+    return spx_sig
+
 def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = None, profile = None):
     """Sign a digest with a local on-disk RSA private key.
 
@@ -341,36 +385,7 @@ def _local_sign(ctx, tool, digest, ecdsa_key, rsa_key, spxmsg = None, spx_key = 
 
     spx_sig = None
     if spxmsg and spx_key:
-        private_key = spx_key.file
-        keytype = spx_key.config.get("keytype", "spx").replace("-", "_")
-        if keytype not in ("spx", "slh_dsa"):
-            fail("The selected `spx_key` must be either the `spx` or `slh-dsa` keytype")
-        mnemonic = ''.join([element.capitalize() for element in keytype.split("_")])
-        ext = ".{}_sig".format(keytype)
-        spx_sig = ctx.actions.declare_file(paths.replace_extension(spxmsg.basename, ext))
-        domain = spx_key.config.get("domain", "Pure")
-        rev = spx_key.config.get("byte-reversal-bug", "false")
-
-        # `opentitantool spx sign` handles both SPHINCS+ and SLH-DSA keys.
-        # It currently always dispatches to the SPHNICS+ reference implementation
-        # for its signing operations.
-        ctx.actions.run(
-            outputs = [spx_sig],
-            inputs = [spxmsg, private_key],
-            arguments = [
-                "--rcfile=",
-                "--quiet",
-                "spx",
-                "sign",
-                "--spx-hash-reversal-bug={}".format(rev),
-                "--domain={}".format(domain),
-                "--output={}".format(spx_sig.path),
-                spxmsg.path,
-                private_key.path,
-            ],
-            executable = tool.tool,
-            mnemonic = "Local{}Sign".format(mnemonic),
-        )
+        spx_sig = _local_spx_sign(ctx, tool, spxmsg, spx_key)
 
     if rsa_key:
         return None, output_sig, spx_sig
@@ -604,6 +619,10 @@ def _offline_fake_rsa_sign(ctx):
         # Skip the presigning script.
         if file.basename.endswith(".json"):
             continue
+        # If using SPHINCS+ / SLH-DSA in the Pure domain, a separate message will
+        # be produced. Unlike the regular digests, we don't want to sign this.
+        if file.basename.endswith(".spx-message") or file.basename.endswith(".slh_dsa-message"):
+            continue
         _, sig, _ = _local_sign(ctx, tool, file, None, rsa_key)
         outputs.append(sig)
     return [DefaultInfo(files = depset(outputs), data_runfiles = ctx.runfiles(files = outputs))]
@@ -631,6 +650,10 @@ def _offline_fake_ecdsa_sign(ctx):
         # Skip the presigning script.
         if file.basename.endswith(".json"):
             continue
+        # If using SPHINCS+ / SLH-DSA in the Pure domain, a separate SPX message will
+        # be produced. Unlike the regular digests, we don't want to sign this.
+        if file.basename.endswith(".spx-message") or file.basename.endswith(".slh_dsa-message"):
+            continue
         sig, _, _ = _local_sign(ctx, tool, file, ecdsa_key, None)
         outputs.append(sig)
     return [DefaultInfo(files = depset(outputs), data_runfiles = ctx.runfiles(files = outputs))]
@@ -643,6 +666,45 @@ offline_fake_ecdsa_sign = rule(
             allow_files = True,
             mandatory = True,
             doc = "ECDSA private key to sign this image",
+        ),
+    },
+    toolchains = [LOCALTOOLS_TOOLCHAIN],
+    doc = "Create detached signatures using on-disk private keys via opentitantool.",
+)
+
+def _offline_fake_spx_sign(ctx):
+    tc = ctx.toolchains[LOCALTOOLS_TOOLCHAIN]
+    outputs = []
+    spx_key = key_from_dict(ctx.attr.spx_key, "spx_key")
+    spx_domain = spx_key.config.get("domain", "Pure")
+    keytype = spx_key.config.get("keytype", "spx").replace("-", "_")
+    if keytype not in ("spx", "slh_dsa"):
+        fail("The selected `spx_key` must be either the `spx` or `slh-dsa` keytype")
+    expected_input_ext = ".{}-message".format(keytype)
+    if spx_domain.lower() == "prehashedsha256":
+        expected_input_ext = ".digest"
+    tool, _, _ = _signing_tool_info(ctx, ctx.attr.spx_key, tc.tools.opentitantool)
+    files = {}
+    for file in ctx.files.srcs:
+        # Skip the presigning script.
+        if file.basename.endswith(".json"):
+            continue
+        if file.basename.endswith(expected_input_ext):
+            spx_sig = _local_spx_sign(ctx, tool, file, spx_key)
+            outputs.append(spx_sig)
+    if not outputs:
+        fail("No SPHINCS+ / SLH-DSA messages found for SPX signing")
+
+    return [DefaultInfo(files = depset(outputs), data_runfiles = ctx.runfiles(files = outputs))]
+
+offline_fake_spx_sign = rule(
+    implementation = _offline_fake_spx_sign,
+    attrs = {
+        "srcs": attr.label_list(allow_files = True, doc = "Digest files to sign"),
+        "spx_key": attr.label_keyed_string_dict(
+            allow_files = True,
+            mandatory = True,
+            doc = "SPHINCS+ / SLH-DSA private key to sign this image",
         ),
     },
     toolchains = [LOCALTOOLS_TOOLCHAIN],
