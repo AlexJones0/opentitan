@@ -172,6 +172,7 @@ keyset(
         "app_test_ecdsa_p256.der": "app_test_0",
         "app_unauthorized_ecdsa_p256.der": "app_unauthorized_0",
     },
+    keytype = "ecdsa",
     profile = "local",
     tool = "//signing/tokens:local",
 )
@@ -197,6 +198,7 @@ _SPX_HIERARCHIES = [
             "{}_{}.pem".format(key, algorithm): key_params
             for key, key_params in _SPX_APP_KEYS.items()
         },
+        keytype = algorithm.replace("_", "-"),
         profile = "Local",
         tool = "//signing/tokens:local",
     )
