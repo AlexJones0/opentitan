@@ -38,7 +38,7 @@ signature_test(
         ":signed_spx_binaries",
     ],
     ecdsa_key = {"//sw/device/silicon_creator/rom/keys/fake/ecdsa:ecdsa_keyset": "prod_key_0"},
-    spx_domain = "PrehashedSha256",  # "Pure", "PrehashedSha256"
+    spx_domain = "Pure",  # "Pure", "PrehashedSha256"
     spx_key = {"//sw/device/silicon_creator/rom/keys/fake/slh_dsa:slh_dsa_keyset": "prod_key_1"},
 )
 

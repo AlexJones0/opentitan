@@ -13,7 +13,7 @@ keyset(
         "test_key_0_slh_dsa.pem": "test_key_0",
         "dev_key_0_slh_dsa.pem": "dev_key_0",
         "prod_key_0_slh_dsa.pem": "prod_key_0",
-        "prod_key_1_slh_dsa.pem": "prod_key_1:domain=PreHashedSha256",
+        "prod_key_1_slh_dsa.pem": "prod_key_1:domain=Pure",
     },
     keytype = "slh-dsa",
     profile = "local",

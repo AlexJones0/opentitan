@@ -13,7 +13,7 @@ keyset(
         "test_key_0_spx.pem": "test_key_0",
         "dev_key_0_spx.pem": "dev_key_0",
         "prod_key_0_spx.pem": "prod_key_0",
-        "prod_key_1_spx.pem": "prod_key_1:domain=PreHashedSha256",
+        "prod_key_1_spx.pem": "prod_key_1:domain=Pure",
     },
     keytype = "spx",
     profile = "local",
