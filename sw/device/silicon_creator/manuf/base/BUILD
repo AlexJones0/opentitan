@@ -352,7 +352,7 @@ manifest(d = {
         },
         linker_script = "//sw/device/lib/testing/test_framework:ottf_ld_silicon_creator_slot_a",
         manifest = ":manifest_perso",
-        spx_key = {"//sw/device/silicon_creator/rom/keys/fake/spx:spx_keyset": "prod_key_0"},
+        spx_key = {"//sw/device/silicon_creator/rom/keys/fake/slh_dsa:slh_dsa_keyset": "prod_key_0"},
         deps = [
             ":flash_info_permissions",
             ":perso_tlv_data",
@@ -416,7 +416,7 @@ manifest(d = {
         linker_script = "//sw/device/lib/testing/test_framework:ottf_ld_silicon_creator_slot_a",
         linkopts = ["-Wl,--allow-multiple-definition"],
         manifest = ":manifest_perso",
-        spx_key = {"//sw/device/silicon_creator/rom/keys/fake/spx:spx_keyset": "prod_key_0"},
+        spx_key = {"//sw/device/silicon_creator/rom/keys/fake/slh_dsa:slh_dsa_keyset": "prod_key_0"},
         deps = [
             ":flash_info_permissions",
             ":perso_tlv_data",
@@ -574,9 +574,9 @@ offline_signature_attach(
         if data["signature_prefix"] and not disqualified_for_signing(sku, data)
     ]).to_list(),
     spx_signatures = [
-        "//sw/device/silicon_creator/manuf/base/signatures:spx_signatures",
+        "//sw/device/silicon_creator/manuf/base/signatures:slh_dsa_signatures",
     ] + depset([
-        "{}:spx_signatures".format(data["signature_prefix"])
+        "{}:slh_dsa_signatures".format(data["signature_prefix"])
         for sku, data in EARLGREY_SKUS.items()
         if data["signature_prefix"] and not disqualified_for_signing(sku, data)
     ]).to_list(),
