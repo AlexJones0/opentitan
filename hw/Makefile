@@ -126,10 +126,9 @@ top: $(tops_gen)
 $(tops_gen): %_gen:
 	${PRJ_DIR}/util/topgen.py -t $(top_hjson) -s $(top_seed_hjson) -o ${PRJ_DIR}/hw/$*/ ${toolflags}
 
-# This runs cmdgen on all md files of the repo using xargs for parallelism
+# Run cmdgen on all Markdown files in the repository
 cmdgen:
-	(cd ${PRJ_DIR}; find . -name "*.md" -print0 | \
-	 xargs -0 -P 8 $(XARGS_REPLACE) ./util/cmdgen.py -u {})
+	${PRJ_DIR}/util/cmdgen.py --update '**/*.md'
 
 top_and_cmdgen: top cmdgen
 

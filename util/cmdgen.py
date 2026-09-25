@@ -2,163 +2,226 @@
 # Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-"""Mechanism to auto-generate documentation based on inline shell commands.
+"""Script to automatically generate documentation using inline shell commands.
 
-This is a generic, repeatable method of inserting generated/rendered content
-into documentation files. The populated files can then be committed into the
-repository, so the in-repo representation matches the generated content.
+This is a generic & repeatable way to insert generated/rendered content into
+documentation files, which is used to populate files that are then checked
+into the repository.
 
 CMDGEN blocks are declared within a file as follows:
+
 ```
 <!-- BEGIN CMDGEN util/selfdoc.py reggen -->
-                   `--------------------`
-                            `cmd`
+                  ^^^^^^^^^^^^^^^^^^^^^^ the command is specified here
 
-... generated_content ...
+[... generated content will appear here ...]
 
 <!-- END CMDGEN -->
 ```
-
-CI tooling can automatically check that files are out of date due to
-changes to the repository from which the documentation is generated.
 """
 
-import sys
+import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
+import os
 from pathlib import Path
 import re
 import subprocess
-import argparse
+import sys
+import time
+from typing import Sequence
 
-import logging
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(Path(__file__).stem)
 
-REPO_ROOT = Path(__file__).parents[1].resolve()
+LOG_FORMAT: str = "%(levelname)s [%(name)s]: %(message)s"
+LOG_LEVELS: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-# The CMDGEN block delimiters:
-START_MARKER_PATTERN = re.compile(
-    r"""^<!--            \s*
-        BEGIN \s* CMDGEN \s*
-        (?P<cmd>.+)      \s* # The command to generate content
-        -->$""",
-    flags=(re.M | re.X))
-END_MARKER_PATTERN = re.compile(
-    r"""^<!--            \s*
-        END \s* CMDGEN   \s*
-        -->$""",
-    flags=(re.M | re.X))
+REPO_ROOT: Path = Path(__file__).resolve().parents[1]
+
+CMDGEN_BLOCK_RE: re.Pattern = re.compile(
+    r"""
+    (?P<start>^[ \t]*<!--\s*BEGIN\s+CMDGEN(?P<command>[^>]+)\s*-->[ \t]*$)  # Start marker
+    (?P<content>[\s\S]*?)                                                # Generated content
+    (?P<end>^[ \t]*<!--\s*END\s+CMDGEN\s*-->[ \t]*$)                     # End marker
+    """,
+    re.MULTILINE | re.VERBOSE,
+)
 
 
-def cmdgen_rewrite_md(filepath: Path, dry_run: bool, update: bool) -> bool:
-    '''Find all CMDGEN blocks in a file and check their content is up to date.
+def cmdgen_file(path: Path, *, dry_run: bool = False, update: bool = False) -> bool:
+    """Find all CMDGEN blocks in a file and check their content is up-to-date.
 
-    See this module's docstring to see how these blocks are declared.
+    Find all CMDGEN blocks in a file and optionally replace their content
+    with the result of running each specified shell command.
 
     Args:
-        filepath (Path): The file to check.
-        dry_run (bool): If set, commands will be printed, but not executed.
-        update (bool): If set, when content is out of date it will be updated.
+        filepath: The path to the file to check.
+        dry_run: Log commands instead of running them.
+        update: Overwrite the file if the generated contents do not match.
 
     Returns:
-        bool: If neither dry_run or update are set, will return True if an update is required.
-    '''
-    rel_path = filepath.relative_to(REPO_ROOT)
-    modified = False
-    needs_updating = False
-    content = filepath.read_text()
-    pos = 0
-    while True:
-        # search next start marker
-        match_start = START_MARKER_PATTERN.search(content, pos)
-        if match_start is None:
-            break  # no more replacements to do
-        match_start_linum = 1 + content[0:match_start.start(0)].count("\n")
-        cmd = match_start.group('cmd').strip()
+        A boolean: true if there was a mismatch, false if not.
+    """
+    relative_path = path.relative_to(REPO_ROOT)
+    content = path.read_text(encoding="utf-8", errors="backslashreplace")
 
-        # search end marker after the start marker
-        match_end = END_MARKER_PATTERN.search(content, pos)
-        if match_end is None:
-            sys.exit(
-                f"Error in {rel_path}: start marker on L{match_start_linum} "
-                "missing a matching end marker!"
-            )
+    # Line number are 1-indexed. We keep track of the last result to
+    # avoid quadratic O(nm) scanning of lines for multiple matches.
+    prev_lineno, prev_index = 1, 0
 
+    def transform(match: re.Match) -> str:
+        """Regex substitution function for CMDGEN blocks."""
+        # Determine which line we've matched on
+        nonlocal prev_lineno, prev_index, content
+        lineno = prev_lineno + content.count("\n", prev_index, match.start())
+        prev_index = match.start()
+        prev_lineno = lineno
+
+        command = match.group("command").strip()
         if dry_run:
-            logger.info(f"{rel_path}:L{match_start_linum}: `{cmd}`")
-            # don't run
-            pos = match_end.end(0)
-            continue
+            logger.info("%s:%d: `%s`", relative_path, lineno, command)
+            return match.group(0)
+        else:
+            logger.debug("%s:%d: `%s`", relative_path, lineno, command)
 
-        # Run the found-command in a subshell
-        res = subprocess.run(cmd, shell=True, capture_output=True,
-                             cwd=REPO_ROOT)
+        # Run the command in a sub-shell
+        res = subprocess.run(
+            command,
+            shell=True,
+            text=True,
+            encoding="utf-8",
+            errors="backslashreplace",
+            capture_output=True,
+            cwd=REPO_ROOT,
+            check=False,
+        )
         if res.stderr:
-            logger.info(
-                f"{rel_path}:L{match_start_linum}: `{cmd}` "
-                f"output the following error messages:\n{res.stderr.decode()}"
+            logger.warning(
+                "%s:%d: `%s` output the following error messages:\n%s",
+                relative_path,
+                lineno,
+                command,
+                res.stderr,
             )
         if res.returncode != 0:
-            sys.exit(
-                f"{rel_path}:L{match_start_linum}: `{cmd}` "
-                "had a non-zero return code of {res.returncode}."
+            logger.error(
+                "%s:%d: `%s` had a non-zero return code of %d",
+                relative_path,
+                lineno,
+                command,
+                res.returncode,
             )
+            return match.group(0)
 
-        pos = match_end.end(0)
+        # Wrap the final result in the start and end markers and return it
+        start, end = match.group("start"), match.group("end")
+        return f"{start}\n{res.stdout}\n{end}"
 
-        new_content = '\n' + res.stdout.decode() + '\n'
-        old_content = content[match_start.end(0):match_end.start(0)]
-        if new_content != old_content:
-            if update:
-                logger.info(
-                    f"{rel_path}:L{match_start_linum}: Updating generated content."
-                )
-                # replace content
-                content = \
-                    content[0:match_start.end(0)] + \
-                    new_content + \
-                    content[match_end.start(0):]
-                modified = True
-                # update position to account for new content size
-                pos += len(new_content) - len(old_content)
-            else:
-                logger.info(
-                    f"{rel_path}:L{match_start_linum}: Generated content needs updating."
-                )
-                needs_updating = True
+    new_content = CMDGEN_BLOCK_RE.sub(transform, content)
+    modified = new_content != content
 
-    # write back
-    if modified:
-        filepath.write_text(content)
+    # Only update the file if it has been requested, and we actually made changes
+    if modified and update:
+        path.write_text(new_content, encoding="utf-8")
 
-    return needs_updating
+    return modified
 
 
-def main() -> int:
-    '''Either check or update all CMDGEN blocks found in the given files.'''
-    parser = argparse.ArgumentParser(prog="cmdgen")
-    parser.add_argument(
-        "globs", nargs="+", type=str, metavar="file",
-        help="File(s) to check with paths relative to the repository root, "
-             "these can be given as glob patterns.",
+def cmdgen_files(
+    files: Sequence[Path], max_workers: int = 1, *, dry_run: bool = False, update: bool = False
+) -> int:
+    """Find CMDGEN blocks in a list of files, and check their contents are up-to-date.
+
+    Uses a ThreadPool to process multiple files for CMDGEN blocks in parallel.
+    Their contents are optionally replaced with the results of running the
+    shell commands that they specify.
+
+    Args:
+        files: The list of paths to files to be processed.
+        max_workers: The maximum number of threadpool workers. Set to 1 (default) for
+          serial processing.
+        dry_run: Log commands instead of running them.
+        update: Overwrite the file if the generated contents do not match.
+
+    Returns:
+        The integer number of files that had content mismatches after CMDGEN.
+    """
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(cmdgen_file, file, dry_run=dry_run, update=update) for file in files
+        ]
+        return sum(future.result() for future in as_completed(futures))
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Either check or update all CMDGEN blocks found in the given files."""
+    parser = argparse.ArgumentParser(
+        prog="cmdgen", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--dry-run", help="Print commands but do not execute.", action="store_true",
+        "globs",
+        nargs="+",
+        type=str,
+        metavar="file",
+        help="File(s) to check with paths relative to the repository root. "
+        "These can be given as glob patterns.",
     )
     parser.add_argument(
-        "-u", "--update", help="Update out of date content.", action="store_true",
+        "-d",
+        "--dry-run",
+        help="Log commands but do not execute them.",
+        action="store_true",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-u",
+        "--update",
+        help="Update any out-of-date content. If this is not set, any files "
+        "that are out-of-date are treated as an error.",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-w",
+        "--workers",
+        type=int,
+        help="Number of parallel workers processing files. Set to 1 to execute "
+        "sequentially, in case commands might conflict if run in parallel.",
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=LOG_LEVELS,
+        default="INFO",
+        help="Set the log level (defaults to INFO).",
+    )
+    args = parser.parse_args(argv)
 
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)  # root -> most-permissive
-    logger.setLevel(logging.INFO)
+    logging.basicConfig(level=args.log_level, stream=sys.stderr, format=LOG_FORMAT)
 
-    needs_updating = False
-    for glob in args.globs:
-        for file in REPO_ROOT.glob(glob):
-            needs_updating |= cmdgen_rewrite_md(file, args.dry_run, args.update)
+    if args.workers is not None and args.workers <= 0:
+        logger.error("Cannot have %d workers: must have at least 1", args.workers)
+        sys.exit(1)
+    try:
+        args.workers = len(os.sched_getaffinity(0))
+    except (AttributeError, NotImplementedError, OSError):
+        args.workers = os.cpu_count()
+    if not args.workers:
+        args.workers = 1
 
-    return 1 if needs_updating else 0
+    start_time = time.perf_counter()
+    files = [file for glob in args.globs for file in REPO_ROOT.glob(glob)]
+    files_changed = cmdgen_files(
+        files, max_workers=args.workers, dry_run=args.dry_run, update=args.update
+    )
+    execution_time = time.perf_counter() - start_time
+    logger.info(
+        "Processed %d files in %.2f seconds: %d %s modified",
+        len(files),
+        execution_time,
+        files_changed,
+        "were" if args.update else "would have been",
+    )
+
+    return 1 if files_changed and not args.update else 0
 
 
-if __name__ == '__main__':
-    exit(main())
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
