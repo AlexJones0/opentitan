@@ -96,10 +96,13 @@ def _transform(ctx, exec_env, name, elf, binary, signed_bin, disassembly, mapfil
             fill = "0x00" if is_rram else "0xff",
         )
         if is_rram and exec_env.rram_scramble_tool != None:
+            # FIXME: the Verilator testbench currently only supports loading
+            # firmware into slot A.
             vmem = scramble_rram(
                 ctx,
                 name = name,
                 suffix = "128.scr.vmem",
+                slot = "a",
                 src = vmem_base,
                 otp = get_fallback(ctx, "file.otp", exec_env),
                 otp_mmap = exec_env.otp_mmap,
