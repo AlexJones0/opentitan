@@ -663,34 +663,39 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .we_a_i           (shadow_rf_we_wb)
     );
   end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
-    ibex_register_file_fpga #(
-      .BaseIsa          (BaseIsa),
-      .RV32E            (RV32E),
-      .DataWidth        (RegFileDataEccWidth - RegFileDataWidth),
-      .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth]),
-      .CapWidth         (7),
-      .CapWordZeroVal   (SecdedInv6457ZeroEcc)
-    ) register_file_shadow_i (
-      .clk_i            (clk_i),
-      .rst_ni           (rst_shadow_n),
-
-      .test_en_i        (test_en_i),
-      .dummy_instr_id_i (shadow_dummy_instr_id),
-      .dummy_instr_wb_i (shadow_dummy_instr_wb),
-      .cheriot_enable_i (shadow_inputs_q[0].cheriot_enable),
-
-      .raddr_a_i        (shadow_rf_raddr_a),
-      .rdata_a_o        (shadow_rf_rdata_a_intg),
-      .rcap_a_o         (shadow_rf_rcap_a_ecc),
-      .raddr_b_i        (shadow_rf_raddr_b),
-      .rdata_b_o        (shadow_rf_rdata_b_intg),
-      .rcap_b_o         (shadow_rf_rcap_b_ecc),
-      .waddr_a_i        (shadow_rf_waddr_wb),
-      .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
-      .wcap_a_i         (shadow_rf_wcap_ecc_wb[RegFileCapEccWidth-1:REGCAP_W]),
-      .we_a_i           (shadow_rf_we_wb)
+    // Avoid stale shadow ECC if a reset happens during the `LockstepOffset` cycles.
+    // For now, just skip the shadow ECC, and instead directly recompute the ECC.
+    logic [38:0] data_a_ecc, data_b_ecc;
+    prim_secded_inv_39_32_enc u_data_a_enc (
+      .data_i(shadow_inputs_q[0].rf_rdata_a),
+      .data_o(data_a_ecc)
     );
+    prim_secded_inv_39_32_enc u_data_b_enc (
+      .data_i(shadow_inputs_q[0].rf_rdata_b),
+      .data_o(data_b_ecc)
+    );
+    assign shadow_rf_rdata_a_intg = data_a_ecc[38:32];
+    assign shadow_rf_rdata_b_intg = data_b_ecc[38:32];
+
+    // Do the same for capabilities.
+    logic [63:0] cap_a_ecc, cap_b_ecc;
+    prim_secded_inv_64_57_enc u_cap_a_enc (
+      .data_i({22'b0, cheriot_regcap_to_vec(shadow_inputs_q[0].rf_rcap_a)}),
+      .data_o(cap_a_ecc)
+    );
+    prim_secded_inv_64_57_enc u_cap_b_enc (
+      .data_i({22'b0, cheriot_regcap_to_vec(shadow_inputs_q[0].rf_rcap_b)}),
+      .data_o(cap_b_ecc)
+    );
+    assign shadow_rf_rcap_a_ecc = cap_a_ecc[63:57];
+    assign shadow_rf_rcap_b_ecc = cap_b_ecc[63:57];
+
+    logic unused_signals;
+    assign unused_signals = ^{data_a_ecc[31:0], data_b_ecc[31:0], cap_a_ecc[56:0],
+                              cap_b_ecc[56:0], shadow_rf_raddr_a, shadow_rf_raddr_b,
+                              shadow_rf_waddr_wb, shadow_rf_we_wb, shadow_dummy_instr_id,
+                              shadow_dummy_instr_wb, shadow_rf_wdata_wb_ecc,
+                              shadow_rf_wcap_ecc_wb};
   end else if (RegFile == RegFileLatch) begin : gen_regfile_latch
     ibex_register_file_latch #(
       .BaseIsa          (BaseIsa),
