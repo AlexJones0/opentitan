@@ -97,7 +97,7 @@ certificate_codegen = rule(
 # - <name>_hdrs: filegroup corresponding to the `headers` output group of <name>
 # - <name>_library: cc_library that compiles the sources, exports the headers and links to the asn1
 #   library.
-def certificate_template(name, template, cert_format = "x509"):
+def certificate_template(name, template, cert_format = "x509", include_prefix = None):
     certificate_codegen(
         name = name,
         template = template,
@@ -131,6 +131,10 @@ def certificate_template(name, template, cert_format = "x509"):
             "@lowrisc_opentitan//sw/device/silicon_creator/lib/cert:cbor",
         ]
 
+    strip_include_prefix = None
+    if include_prefix:
+        strip_include_prefix = "/" + native.package_name()
+
     native.cc_library(
         name = "{}_library".format(name),
         srcs = [":{}_srcs".format(name)],
@@ -138,6 +142,11 @@ def certificate_template(name, template, cert_format = "x509"):
         # Include the codegen rule in data to propagate the instrumented files.
         data = [":{}".format(name)],
         deps = runtime_deps,
+        # SKUs may use a different CA issuer for a UDS certificate, or even use their own
+        # cert template, which may be at a different location. Hence, we expose the
+        # ability to change the include prefix as downstream users need.
+        strip_include_prefix = strip_include_prefix,
+        include_prefix = include_prefix,
     )
 
     native.cc_test(
