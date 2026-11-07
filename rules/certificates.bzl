@@ -8,7 +8,11 @@ load("//rules/opentitan:toolchain.bzl", "LOCALTOOLS_TOOLCHAIN")
 def _certificate_codegen_impl(ctx):
     tc = ctx.toolchains[LOCALTOOLS_TOOLCHAIN]
 
-    basename = paths.replace_extension(ctx.file.template.basename, "")
+    # Base name defaults to the template base name unless overridden.
+    if ctx.attr.out_basename:
+        basename = ctx.attr.out_basename
+    else:
+        basename = paths.replace_extension(ctx.file.template.basename, "")
 
     # Output files before formatting.
     pre_c = ctx.actions.declare_file("{}.pre.c".format(basename))
@@ -85,6 +89,13 @@ certificate_codegen = rule(
             values = ["cwt", "x509"],
             doc = "certificate format of the template",
         ),
+        "out_basename": attr.string(
+            doc = """
+                The base name to use for all generated files, which must match the certificate's
+                "name" field inside the template. If a name is not provided, this defaults to
+                the given `template`'s base name.
+            """,
+        ),
     },
     toolchains = [LOCALTOOLS_TOOLCHAIN],
 )
@@ -97,11 +108,12 @@ certificate_codegen = rule(
 # - <name>_hdrs: filegroup corresponding to the `headers` output group of <name>
 # - <name>_library: cc_library that compiles the sources, exports the headers and links to the asn1
 #   library.
-def certificate_template(name, template, cert_format = "x509", include_prefix = None):
+def certificate_template(name, template, cert_format = "x509", out_basename = None, include_prefix = None):
     certificate_codegen(
         name = name,
         template = template,
         cert_format = cert_format,
+        out_basename = out_basename,
     )
 
     native.filegroup(
